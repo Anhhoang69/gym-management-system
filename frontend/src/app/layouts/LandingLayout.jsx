@@ -1,34 +1,20 @@
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
+import LandingHeader from '../../features/landing/components/LandingHeader';
+import LandingFooter from '../../features/landing/components/LandingFooter';
 
 export default function LandingLayout() {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-white">
       {/* Header */}
-      <header className="w-full bg-gray-900 p-4 text-white">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between">
-          <Link to="/" className="text-2xl font-bold">
-            GymChain
-          </Link>
-          <div className="space-x-4">
-            <Link to="/" className="hover:text-yellow-400">
-              Home
-            </Link>
-            <Link to="/about" className="hover:text-yellow-400">
-              About
-            </Link>
-          </div>
-        </nav>
-      </header>
+      <LandingHeader />
 
-      {/* Main */}
-      <main className="w-full flex-1 p-4">
+      {/* Nội dung trang */}
+      <main className="flex-1">
         <Outlet />
       </main>
 
       {/* Footer */}
-      <footer className="w-full bg-gray-800 p-4 text-center text-white">
-        &copy; 2025 GymChain. All rights reserved.
-      </footer>
+      <LandingFooter />
     </div>
   );
 }

@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingLayout from '../layouts/LandingLayout.jsx';
 import HomePage from '../../features/landing/pages/HomePage.jsx';
 import AboutPage from '../../features/landing/pages/AboutPage.jsx';
+import BranchesPage from '../../features/landing/pages/BranchesPage.jsx';
+
 import NotFoundPage from '../../shared/components/NotFoundPage.jsx';
 
 export default function AppRouter() {
@@ -12,6 +14,7 @@ export default function AppRouter() {
         <Route element={<LandingLayout />}>
           <Route index element={<HomePage />} />
           <Route path="about" element={<AboutPage />} />
+          <Route path="branches" element={<BranchesPage />} />
         </Route>
 
         {/* Fallback */}
