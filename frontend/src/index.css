@@ -19,8 +19,6 @@
   --color-yellow: #fedd21;
 
   /* Default light/dark fallback */
-  color: var(--color-white);
-  background-color: #242424;
 }
 
 body {
