@@ -1,3 +1,7 @@
+import React, { useState } from 'react';
+import Banner from '../components/Banner'; // import đúng file Banner.jsx
+import { Link } from 'react-router-dom';
+
 export default function AboutPage() {
   return (
     <div className="space-y-4">

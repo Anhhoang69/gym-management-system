@@ -3,6 +3,10 @@ import LandingLayout from '../layouts/LandingLayout.jsx';
 import HomePage from '../../features/landing/pages/HomePage.jsx';
 import AboutPage from '../../features/landing/pages/AboutPage.jsx';
 import BranchesPage from '../../features/landing/pages/BranchesPage.jsx';
+import BranchDetailPage from '../../features/landing/pages/BranchDetailPage';
+import PtPage from '../../features/landing/pages/PtPage.jsx';
+import PackagePage from '../../features/landing/pages/PackagePage.jsx';
+import FaqPage from '../../features/landing/pages/FaqPage.jsx';
 import ContactPage from '../../features/landing/pages/ContactPage.jsx';
 import NotFoundPage from '../../shared/components/NotFoundPage.jsx';
 
@@ -15,6 +19,10 @@ export default function AppRouter() {
           <Route index element={<HomePage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="branches" element={<BranchesPage />} />
+          <Route path="/branches/:city" element={<BranchDetailPage />} />
+          <Route path="pt" element={<PtPage />} />
+          <Route path="packages" element={<PackagePage />} />
+          <Route path="faq" element={<FaqPage />} />
           <Route path="contact" element={<ContactPage />} />
         </Route>
 
