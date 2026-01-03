@@ -17,17 +17,33 @@
   /* ===== Colors ===== */
   --bg: #ffffff;
   --bg-secondary: #f5f5f5;
+  --bg-third: #efeded;
   --surface: #ffffff;
   --hover: #f3f4f6;
 
   --text-primary: #1b1b1b;
   --text-secondary: #4b5563;
+  --text-inverse: #ffffff;
+
 
   --border: #e5e7eb;
 
   /* Brand */
-  --brand: #fedd21;
+  --brand: #FFC107;
   --on-brand: #000000;
+  /* Inverse - secondary button */
+  --inverse: #404040;
+  --on-inverse: #ffffff;
+
+  /* Package accents */
+  --plan-basic: #2563EB;
+  --on-plan-basic: #ffffff;
+
+  --plan-premium: #FF6B35;
+  --on-plan-premium: #ffffff;
+
+  --plan-elite: #FFC107;
+  --on-plan-elite: #000000;
 }
 
 /* ===================== */
@@ -36,16 +52,32 @@
 .dark {
   --bg: #0f0f0f;
   --bg-secondary: #1b1b1b;
+  --bg-third: #222222;
   --surface: #181818;
   --hover: #262626;
 
   --text-primary: #ffffff;
   --text-secondary: #d1d5db;
+  --text-inverse: #000000;
 
   --border: #2f2f2f;
 
-  --brand: #fedd21;
+  --brand: #FFC107;
   --on-brand: #000000;
+
+  /* Inverse - secondary button */
+  --inverse: #ffffff;
+  --on-inverse: #000000;
+
+  /* Package accents */
+  --plan-basic: #2563EB;
+  --on-plan-basic: #000000;
+
+  --plan-premium: #FF6B35;
+  --on-plan-premium: #000000;
+
+  --plan-elite: #FFC107;
+  --on-plan-elite: #000000;
 }
 
 /* ===================== */
