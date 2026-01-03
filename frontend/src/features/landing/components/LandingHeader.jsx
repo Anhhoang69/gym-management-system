@@ -17,8 +17,10 @@ export default function LandingHeader() {
 
   const menuItems = [
     { name: 'Trang chủ', path: '/' },
-    { name: 'Về chúng tôi', path: '/about' },
     { name: 'Chi nhánh', path: '/branches' },
+    { name: 'Huấn luyện viên', path: '/pt' },
+    { name: 'Gói tập', path: '/packages' },
+    { name: 'FAQ', path: '/faq' },
     { name: 'Liên hệ', path: '/contact' },
   ];
 
@@ -73,9 +75,8 @@ export default function LandingHeader() {
 
       {/* MOBILE NAV */}
       <div
-        className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-(--bg) text-(--text-primary) transition-transform duration-300 ${
-          isNavOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-(--bg) text-(--text-primary) transition-transform duration-300 ${isNavOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
       >
         <ul className="flex flex-col gap-6 text-2xl font-semibold">
           {menuItems.map((item) => (
