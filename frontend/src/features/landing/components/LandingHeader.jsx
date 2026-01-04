@@ -17,8 +17,8 @@ export default function LandingHeader() {
 
   const menuItems = [
     { name: 'Trang chủ', path: '/' },
-    { name: 'Về chúng tôi', path: '/about' },
     { name: 'Chi nhánh', path: '/branches' },
+    { name: 'Huấn luyện viên', path: '/pt' },
     { name: 'Gói tập', path: '/packages' },
     { name: 'FAQ', path: '/faqs' },
     { name: 'Liên hệ', path: '/contact' },

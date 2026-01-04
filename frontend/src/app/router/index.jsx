@@ -5,9 +5,11 @@ import AboutPage from '../../features/landing/pages/AboutPage.jsx';
 import BranchesPage from '../../features/landing/pages/BranchesPage.jsx';
 import BranchDetailPage from '../../features/landing/pages/BranchDetailPage';
 import BranchCityPage from '../../features/landing/pages/BranchCityPage.jsx';
+import PtPage from '../../features/landing/pages/PtPage.jsx';
+import PackagePage from '../../features/landing/pages/PackagePage.jsx';
+import ContactPage from '../../features/landing/pages/ContactPage.jsx';
 import NotFoundPage from '../../shared/components/NotFoundPage.jsx';
 import FAQPage from '../../features/landing/pages/FAQPage.jsx';
-import PackagePage from '../../features/landing/pages/PackagePage.jsx';
 
 export default function AppRouter() {
   return (
@@ -22,6 +24,8 @@ export default function AppRouter() {
           <Route path="branches/:city/:slug" element={<BranchDetailPage />} />
           <Route path="faqs" element={<FAQPage />} />
           <Route path="packages" element={<PackagePage />} />
+          <Route path="pt" element={<PtPage />} />
+          <Route path="contact" element={<ContactPage />} />
         </Route>
 
         {/* Fallback */}
