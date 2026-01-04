@@ -4,8 +4,10 @@ import HomePage from '../../features/landing/pages/HomePage.jsx';
 import AboutPage from '../../features/landing/pages/AboutPage.jsx';
 import BranchesPage from '../../features/landing/pages/BranchesPage.jsx';
 import BranchDetailPage from '../../features/landing/pages/BranchDetailPage';
-
+import BranchCityPage from '../../features/landing/pages/BranchCityPage.jsx';
 import NotFoundPage from '../../shared/components/NotFoundPage.jsx';
+import FAQPage from '../../features/landing/pages/FAQPage.jsx';
+import PackagePage from '../../features/landing/pages/PackagePage.jsx';
 
 export default function AppRouter() {
   return (
@@ -16,7 +18,10 @@ export default function AppRouter() {
           <Route index element={<HomePage />} />
           <Route path="about" element={<AboutPage />} />
           <Route path="branches" element={<BranchesPage />} />
-          <Route path="/branches/:city" element={<BranchDetailPage />} />
+          <Route path="/branches/:city" element={<BranchCityPage />} />
+          <Route path="branches/:city/:slug" element={<BranchDetailPage />} />
+          <Route path="faqs" element={<FAQPage />} />
+          <Route path="packages" element={<PackagePage />} />
         </Route>
 
         {/* Fallback */}

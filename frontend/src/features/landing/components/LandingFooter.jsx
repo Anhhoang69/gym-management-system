@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { FaLinkedin, FaGithub, FaInstagram, FaFacebookF } from 'react-icons/fa6';
-import LogoSVG from '../../../assets/LogoWhiteText.svg';
+import LogoWhite from '../../../assets/LogoWhiteText.svg';
+import LogoBlack from '../../../assets/LogoBlackText.svg';
 
 export default function LandingFooter() {
   const socialMediaLinks = [
@@ -11,21 +12,32 @@ export default function LandingFooter() {
   ];
 
   return (
-    <footer className="bg-black px-6 py-32 text-white shadow-2xl">
+    <footer className="bg-(--bg-secondary) px-6 py-28 text-(--text-primary) shadow-inner">
       <div className="container mx-auto grid w-full gap-20 md:grid-cols-[1.4fr_1fr_1fr]">
-        {/* --- LEFT SECTION --- */}
+        {/* LEFT */}
         <div className="space-y-10">
-          <div className="space-y-4">
-            <Link to="/" className="block">
-              <img src={LogoSVG} alt="Energym Logo" className="h-16 w-auto" />
+          <div className="space-y-5">
+            <Link to="/" className="inline-block">
+              <img
+                src={LogoWhite}
+                alt="Energym Logo Dark"
+                className="hidden h-20 w-auto in-[.dark]:block"
+              />
+              <img
+                src={LogoBlack}
+                alt="Energym Logo Light"
+                className="block h-20 w-auto in-[.dark]:hidden"
+              />
             </Link>
-            <p className="text-sm leading-relaxed text-gray-400">
+
+            <p className="max-w-md text-sm leading-relaxed text-(--text-secondary)">
               Take your health and body to the next level with our comprehensive program designed to
               help you reach your fitness goals.
             </p>
           </div>
 
-          <ul className="flex gap-3">
+          {/* Social */}
+          <ul className="flex gap-4">
             {socialMediaLinks.map(({ name, url, icon }) => (
               <li key={name}>
                 <a
@@ -33,7 +45,7 @@ export default function LandingFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={name}
-                  className="flex h-11 w-11 items-center justify-center rounded-full bg-neutral-800 text-gray-300 transition-all duration-300 hover:bg-[#fedd21] hover:text-black"
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-(--surface) text-(--text-secondary) ring-1 ring-(--border) transition-all duration-300 hover:bg-(--brand) hover:text-(--on-brand)"
                 >
                   {icon}
                 </a>
@@ -41,16 +53,15 @@ export default function LandingFooter() {
             ))}
           </ul>
 
-          <div className="text-sm leading-relaxed text-gray-400">
-            <p>
-              All Rights Reserved | &copy; <span>{new Date().getFullYear()}</span> Energym
-            </p>
+          {/* Copyright */}
+          <div className="text-sm leading-relaxed text-(--text-secondary)">
+            <p>All Rights Reserved © {new Date().getFullYear()} Energym</p>
             <p className="mt-1">
               Designed by{' '}
               <Link
                 to="https://sharjeel-siddiqui.vercel.app"
                 target="_blank"
-                className="text-[#fedd21] hover:underline"
+                className="font-medium text-(--brand) hover:underline"
               >
                 ....
               </Link>
@@ -58,11 +69,13 @@ export default function LandingFooter() {
           </div>
         </div>
 
-        {/* --- CLASSES SECTION --- */}
-        <div className="space-y-5">
-          <h4 className="relative pb-2 text-xl font-semibold before:absolute before:bottom-0 before:h-1 before:w-16 before:bg-[#fedd21]">
+        {/* CLASSES */}
+        <div className="space-y-6">
+          <h4 className="relative pb-2 text-xl font-semibold">
             Our classes
+            <span className="absolute bottom-0 left-0 h-1 w-16 bg-(--brand)" />
           </h4>
+
           <ul className="space-y-4">
             {[
               'Fitness classes',
@@ -72,7 +85,7 @@ export default function LandingFooter() {
               'Full-body strength',
             ].map((item) => (
               <li key={item}>
-                <Link className="font-medium text-gray-400 transition-all duration-300 hover:ml-2 hover:text-[#fedd21]">
+                <Link className="block font-medium text-(--text-secondary) transition-all duration-300 hover:translate-x-2 hover:text-(--brand)">
                   {item}
                 </Link>
               </li>
@@ -80,21 +93,24 @@ export default function LandingFooter() {
           </ul>
         </div>
 
-        {/* --- HOURS SECTION --- */}
-        <div className="space-y-5">
-          <h4 className="relative pb-2 text-xl font-semibold before:absolute before:bottom-0 before:h-1 before:w-16 before:bg-[#fedd21]">
+        {/* HOURS */}
+        <div className="space-y-6">
+          <h4 className="relative pb-2 text-xl font-semibold">
             Working hours
+            <span className="absolute bottom-0 left-0 h-1 w-16 bg-(--brand)" />
           </h4>
 
-          <ul className="space-y-4 font-medium text-gray-400">
+          <ul className="space-y-4 text-(--text-secondary)">
             <li>
-              <span className="font-semibold text-white">Monday – Friday: </span>9:00 am - 10 pm
+              <span className="font-semibold text-(--text-primary)">Monday – Friday:</span> 9:00 am
+              - 10 pm
             </li>
             <li>
-              <span className="font-semibold text-white">Saturday: </span>10:00 am - 12:00 am
+              <span className="font-semibold text-(--text-primary)">Saturday:</span> 10:00 am -
+              12:00 am
             </li>
             <li>
-              <span className="font-semibold text-white">Sunday: </span>Closed
+              <span className="font-semibold text-(--text-primary)">Sunday:</span> Closed
             </li>
           </ul>
         </div>

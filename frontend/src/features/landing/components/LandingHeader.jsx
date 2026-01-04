@@ -19,13 +19,15 @@ export default function LandingHeader() {
     { name: 'Trang chủ', path: '/' },
     { name: 'Về chúng tôi', path: '/about' },
     { name: 'Chi nhánh', path: '/branches' },
+    { name: 'Gói tập', path: '/packages' },
+    { name: 'FAQ', path: '/faqs' },
     { name: 'Liên hệ', path: '/contact' },
   ];
 
   return (
     <>
       {/* HEADER */}
-      <nav className="fixed top-0 left-0 z-50 flex w-full items-center justify-between border-b border-(--border) bg-(--surface) px-8 py-5 text-(--text-primary)">
+      <nav className="fixed top-0 left-0 z-50 flex w-full items-center justify-between border-b border-(--border) bg-(--surface) px-8 py-3 text-(--text-primary)">
         {/* Logo */}
         <Link to="/" className="z-50">
           {/* Hiện khi có class dark trên html */}

@@ -15,34 +15,33 @@
   -moz-osx-font-smoothing: grayscale;
 
   /* ===== Colors ===== */
-  --bg: #ffffff;
+  --bg: #efeded;
   --bg-secondary: #f5f5f5;
-  --bg-third: #efeded;
-  --surface: #ffffff;
+  --bg-third: #ffffff;
+  --surface: #efeded;
   --hover: #f3f4f6;
 
   --text-primary: #1b1b1b;
   --text-secondary: #4b5563;
   --text-inverse: #ffffff;
 
-
   --border: #e5e7eb;
 
   /* Brand */
-  --brand: #FFC107;
+  --brand: #ffc107;
   --on-brand: #000000;
   /* Inverse - secondary button */
   --inverse: #404040;
   --on-inverse: #ffffff;
 
   /* Package accents */
-  --plan-basic: #2563EB;
+  --plan-basic: #2563eb;
   --on-plan-basic: #ffffff;
 
-  --plan-premium: #FF6B35;
+  --plan-premium: #ff6b35;
   --on-plan-premium: #ffffff;
 
-  --plan-elite: #FFC107;
+  --plan-elite: #ffc107;
   --on-plan-elite: #000000;
 }
 
@@ -51,7 +50,7 @@
 /* ===================== */
 .dark {
   --bg: #0f0f0f;
-  --bg-secondary: #1b1b1b;
+  --bg-secondary: #000000;
   --bg-third: #222222;
   --surface: #181818;
   --hover: #262626;
@@ -62,7 +61,7 @@
 
   --border: #2f2f2f;
 
-  --brand: #FFC107;
+  --brand: #ffc107;
   --on-brand: #000000;
 
   /* Inverse - secondary button */
@@ -70,13 +69,13 @@
   --on-inverse: #000000;
 
   /* Package accents */
-  --plan-basic: #2563EB;
+  --plan-basic: #2563eb;
   --on-plan-basic: #000000;
 
-  --plan-premium: #FF6B35;
+  --plan-premium: #ff6b35;
   --on-plan-premium: #000000;
 
-  --plan-elite: #FFC107;
+  --plan-elite: #ffc107;
   --on-plan-elite: #000000;
 }
 
