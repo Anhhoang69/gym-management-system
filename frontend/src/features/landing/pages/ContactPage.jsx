@@ -1,11 +1,14 @@
-export default function AboutPage() {
+import ContactHero from '../components/contact_page/ContactHero';
+import ContactSection from "../components/contact_page/ContactSection";
+import ContactMap from "../components/contact_page/ContactMap";
+
+export default function ContactPage() {
   return (
-    <div className="space-y-4">
-      <h1 className="text-3xl font-bold text-gray-900">About GymChain</h1>
-      <p className="text-gray-700">
-        GymChain is a modern platform for managing gym branches, memberships, trainers, and staff
-        efficiently.
-      </p>
-    </div>
+    <>
+      <ContactHero/>
+      <ContactSection />
+
+    </>
   );
 }
+

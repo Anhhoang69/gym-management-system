@@ -7,7 +7,7 @@ import pkg3 from "../../../../assets/package-3.webp";
 
 export default function PackageSection() {
     return (
-        <section className="bg-third py-10">
+        <section className="bg-[var(--bg)] py-10">
             {/* HEADER */}
             <div className="text-center mx-auto">
 
@@ -25,7 +25,8 @@ export default function PackageSection() {
                             absolute inset-0
                             flex items-center justify-center
                             font-bold italic
-                            text-black
+                            --text-secondary
+                            
                             tracking-wide
                             text-4xl md:text-6xl
                         "
@@ -35,7 +36,7 @@ export default function PackageSection() {
                 </div>
 
                 {/* DESCRIPTION */}
-                <p className="block text-xl md:text-2xl italic text-primary">
+                <p className="block text-xl md:text-2xl italic --text-primary">
                     EnerGym mang đến các gói tập được thiết kế linh hoạt,
                     phù hợp với nhiều mục tiêu và trình độ khác nhau.
                 </p>

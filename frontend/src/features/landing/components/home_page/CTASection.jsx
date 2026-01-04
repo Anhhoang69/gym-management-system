@@ -40,7 +40,7 @@ export default function CTASection() {
                         </p>
 
                         <button
-                            onClick={() => navigate("/trainers")}
+                            onClick={() => navigate("/pt")}
                             className="
                                 group
                                 mt-10

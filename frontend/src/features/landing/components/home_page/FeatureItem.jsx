@@ -8,7 +8,7 @@ export default function FeatureItem({ icon, label }) {
                 bg-white
                 shadow-md
                 text-7xl
-                text-gray-900 
+                text-black 
             ">
                 {icon}
             </div>
