@@ -15,7 +15,7 @@ export default function CTASection() {
             />
 
             {/* OVERLAY */}
-            <div className="absolute inset-0 bg-black/70" />
+            <div className="absolute inset-0 bg-black/40" />
 
             {/* CONTENT */}
             <div className="
