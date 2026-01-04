@@ -1,28 +1,21 @@
 import { Users, Gift } from 'lucide-react';
+import Brush from '../../../../assets/brush.svg';
 
 export default function SpecialOffers() {
   return (
     <section className="bg-(--bg) px-4 py-16 sm:px-6 lg:px-8">
-      <div className="container mx-auto">
-        <div className="relative mx-auto mb-12 block text-center">
-          <svg
-            className="absolute inset-0 -z-0 h-full w-full"
-            viewBox="0 0 450 100"
-            preserveAspectRatio="none"
-            style={{ transform: 'scale(1.3)' }}
-          >
-            <path
-              d="M10,50 Q120,20 220,45 T440,50"
-              fill="none"
-              stroke="var(--brand)"
-              strokeWidth="70"
-              strokeLinecap="round"
-              opacity="0.9"
-            />
-          </svg>
-          <h2 className="relative px-8 py-4 text-center text-3xl font-bold text-(--text-primary) sm:text-4xl lg:text-5xl">
+      <div className="container mx-auto text-center">
+        <div className="relative mx-auto inline-block">
+          <img
+            src={Brush}
+            alt=""
+            aria-hidden="true"
+            className="block w-[440px] md:w-[540px] lg:w-[570px]"
+          />
+
+          <span className="--text-secondary absolute inset-0 flex items-center justify-center text-4xl font-bold tracking-wide italic md:text-6xl">
             Ưu đãi đặc biệt
-          </h2>
+          </span>
         </div>
 
         <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2">

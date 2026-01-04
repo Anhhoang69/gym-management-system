@@ -39,17 +39,27 @@ export default function LandingHeader() {
 
         {/* Desktop Menu */}
         <ul className="absolute top-1/2 left-1/2 hidden -translate-x-1/2 -translate-y-1/2 gap-8 text-lg font-medium lg:flex">
-          {menuItems.map((item) => (
-            <li key={item.path}>
-              <Link
-                to={item.path}
-                className="hover:text-(--brand)"
-                style={location.pathname === item.path ? { color: 'var(--brand)' } : {}}
-              >
-                {item.name}
-              </Link>
-            </li>
-          ))}
+          {menuItems.map((item) => {
+            // Logic để giữ menu sáng khi ở trang con:
+            // 1. Nếu là Trang chủ (/): chỉ sáng khi khớp chính xác.
+            // 2. Nếu là các mục khác: sáng khi đường dẫn hiện tại bắt đầu bằng path đó (ví dụ: /branches/hcm bắt đầu bằng /branches)
+            const isActive =
+              item.path === '/'
+                ? location.pathname === '/'
+                : location.pathname.startsWith(item.path);
+
+            return (
+              <li key={item.path}>
+                <Link
+                  to={item.path}
+                  className="transition-colors hover:text-(--brand)"
+                  style={isActive ? { color: 'var(--brand)' } : {}}
+                >
+                  {item.name}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
 
         {/* Right actions */}
@@ -80,21 +90,31 @@ export default function LandingHeader() {
         }`}
       >
         <ul className="flex flex-col gap-6 text-2xl font-semibold">
-          {menuItems.map((item) => (
-            <li key={item.path}>
-              <Link
-                to={item.path}
-                onClick={() => setIsNavOpen(false)}
-                className="hover:text-(--brand)"
-                style={location.pathname === item.path ? { color: 'var(--brand)' } : {}}
-              >
-                {item.name}
-              </Link>
-            </li>
-          ))}
+          {menuItems.map((item) => {
+            const isActive =
+              item.path === '/'
+                ? location.pathname === '/'
+                : location.pathname.startsWith(item.path);
+
+            return (
+              <li key={item.path}>
+                <Link
+                  to={item.path}
+                  onClick={() => setIsNavOpen(false)}
+                  className="transition-colors hover:text-(--brand)"
+                  style={isActive ? { color: 'var(--brand)' } : {}}
+                >
+                  {item.name}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
 
-        <button onClick={() => setIsNavOpen(false)} className="absolute top-8 right-8">
+        <button
+          onClick={() => setIsNavOpen(false)}
+          className="absolute top-8 right-8 text-(--text-primary)"
+        >
           <FaTimes size={32} />
         </button>
       </div>

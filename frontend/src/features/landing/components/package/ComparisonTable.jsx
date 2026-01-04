@@ -1,4 +1,5 @@
 import { Check, X } from 'lucide-react';
+import Brush from '../../../../assets/brush.svg';
 
 export default function ComparisonTable() {
   const features = [
@@ -36,26 +37,18 @@ export default function ComparisonTable() {
     >
       <div className="absolute inset-0 bg-black/60"></div>
 
-      <div className="relative z-10 container mx-auto">
-        <div className="relative mx-auto mb-12 block text-center">
-          <svg
-            className="absolute inset-0 -z-0 h-full w-full"
-            viewBox="0 0 400 100"
-            preserveAspectRatio="none"
-            style={{ transform: 'scale(1.3)' }}
-          >
-            <path
-              d="M10,50 Q100,20 200,40 T390,45"
-              fill="none"
-              stroke="var(--brand)"
-              strokeWidth="70"
-              strokeLinecap="round"
-              opacity="0.9"
-            />
-          </svg>
-          <h2 className="relative px-8 py-4 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
+      <div className="relative z-10 container mx-auto text-center">
+        <div className="relative mx-auto inline-block">
+          <img
+            src={Brush}
+            alt=""
+            aria-hidden="true"
+            className="block w-[440px] md:w-[540px] lg:w-[570px]"
+          />
+
+          <span className="--text-secondary absolute inset-0 flex items-center justify-center text-4xl font-bold tracking-wide italic md:text-6xl">
             Quyền lợi
-          </h2>
+          </span>
         </div>
 
         <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl bg-white/95 backdrop-blur-md">

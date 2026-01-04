@@ -1,10 +1,10 @@
 export default function RegisterCTA() {
   return (
     <section id="register" className="py-10">
-      <div className="mx-auto max-w-6xl px-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-2xl bg-(--bg-third) px-6 py-10 shadow-lg sm:px-10">
           {/* Title */}
-          <h2 className="mb-2 text-center text-2xl font-bold tracking-wide uppercase">
+          <h2 className="mb-2 text-center text-3xl font-bold tracking-wide uppercase">
             Đăng ký tập thử miễn phí ngay hôm nay!
           </h2>
 

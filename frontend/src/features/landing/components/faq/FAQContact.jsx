@@ -2,13 +2,13 @@ import { Phone, Mail, MapPin } from 'lucide-react';
 
 export default function FAQContact() {
   return (
-    <div className="px-4 py-16" style={{ backgroundColor: 'var(--surface)' }}>
+    <div className="px-4 py-16" style={{ backgroundColor: 'var(--bg-four)' }}>
       <div className="mx-auto max-w-6xl">
         <div className="mb-12 text-center">
           <h2 className="mb-4 text-4xl font-bold md:text-5xl" style={{ color: 'var(--brand)' }}>
             Vẫn còn thắc mắc?
           </h2>
-          <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-lg text-white">
             Đội ngũ hỗ trợ của chúng tôi luôn sẵn sàng giải đáp mọi câu hỏi của bạn.
             <br />
             Hãy liên hệ với chúng tôi!
@@ -103,11 +103,11 @@ export default function FAQContact() {
             Đăng ký tập thử miễn phí
           </button>
           <button
-            className="rounded-lg border-2 px-8 py-3 font-semibold transition-all hover:scale-105"
+            className="rounded-lg border-2 px-8 py-3 font-semibold transition-all hover:scale-105 hover:brightness-95"
             style={{
-              backgroundColor: 'transparent',
-              color: 'var(--text-primary)',
-              borderColor: 'var(--border)',
+              backgroundColor: '#f5f5f5',
+              color: '#111111',
+              borderColor: '#e5e5e5',
             }}
           >
             Tư vấn ngay
