@@ -2,7 +2,7 @@ namespace backend.Models;
 
 public class AuditLog
 {
-    public Guid LogId { get; set; }
+    public Guid AuditLogId { get; set; }
 
     public Guid UserId { get; set; }
 

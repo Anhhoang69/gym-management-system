@@ -4,8 +4,8 @@ public class BranchImage
 {
     public Guid BranchImageId { get; set; }
 
-    public Guid Id { get; set; }
-    public Room Branch { get; set; } = null!;
+    public Guid BranchId { get; set; }
+    public Branch Branch { get; set; } = null!;
 
     public string ImageUrl { get; set; } = null!;
 

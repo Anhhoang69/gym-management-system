@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260310182702_Initial2")]
+    partial class Initial2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -189,9 +192,6 @@ namespace backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("BranchId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("CardId")
                         .HasColumnType("uuid");
 
@@ -205,8 +205,6 @@ namespace backend.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("AttendanceId");
-
-                    b.HasIndex("BranchId");
 
                     b.HasIndex("CardId");
 
@@ -282,11 +280,14 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.BranchImage", b =>
                 {
-                    b.Property<Guid>("BranchImageId")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("BranchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BranchImageId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -296,7 +297,7 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("BranchImageId");
+                    b.HasKey("Id");
 
                     b.HasIndex("BranchId");
 
@@ -650,7 +651,12 @@ namespace backend.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("BranchId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("UserId");
+
+                    b.HasIndex("BranchId");
 
                     b.ToTable("Members");
                 });
@@ -994,10 +1000,6 @@ namespace backend.Migrations
                     b.Property<Guid>("BranchId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Position")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.HasKey("UserId");
 
                     b.HasIndex("BranchId");
@@ -1162,14 +1164,8 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.Attendance", b =>
                 {
-                    b.HasOne("backend.Models.Branch", "Branch")
-                        .WithMany("Attendances")
-                        .HasForeignKey("BranchId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("backend.Models.AccessCard", "Card")
-                        .WithMany("Attendances")
+                        .WithMany()
                         .HasForeignKey("CardId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1179,8 +1175,6 @@ namespace backend.Migrations
                         .HasForeignKey("MemberUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Branch");
 
                     b.Navigation("Card");
 
@@ -1399,6 +1393,10 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.Member", b =>
                 {
+                    b.HasOne("backend.Models.Branch", null)
+                        .WithMany("Members")
+                        .HasForeignKey("BranchId");
+
                     b.HasOne("backend.Models.User", "User")
                         .WithOne("Member")
                         .HasForeignKey("backend.Models.Member", "UserId")
@@ -1531,16 +1529,11 @@ namespace backend.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("backend.Models.AccessCard", b =>
-                {
-                    b.Navigation("Attendances");
-                });
-
             modelBuilder.Entity("backend.Models.Branch", b =>
                 {
-                    b.Navigation("Attendances");
-
                     b.Navigation("Images");
+
+                    b.Navigation("Members");
 
                     b.Navigation("Rooms");
 

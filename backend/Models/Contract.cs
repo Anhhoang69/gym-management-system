@@ -6,7 +6,7 @@ public class Contract
 {
     public Guid ContractId { get; set; }
 
-    public Guid MemberId { get; set; }
+    public Guid MemberUserId { get; set; }
 
     public Guid PackageId { get; set; }
 

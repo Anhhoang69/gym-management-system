@@ -20,6 +20,7 @@ public class User : IdentityUser<Guid>
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }
+    public DateTime? LastLoginAt { get; set; }
 
     // navigation
     public Member? Member { get; set; }
@@ -29,4 +30,9 @@ public class User : IdentityUser<Guid>
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
     public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+    // request gửi
+    public ICollection<Request> Requests { get; set; } = new List<Request>();
+
+    // request xử lý
+    public ICollection<Request> HandledRequests { get; set; } = new List<Request>();
 }

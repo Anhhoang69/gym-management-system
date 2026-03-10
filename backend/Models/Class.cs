@@ -20,6 +20,16 @@ public class Class
 
     public int MinCapacity { get; set; }
 
+     // PT dạy lớp
+    public Guid TrainerStaffId { get; set; }
+
+    public Staff Trainer { get; set; } = null!;
+
+    // Room
+    public Guid RoomId { get; set; }
+
+    public Room Room { get; set; } = null!;
+
     // navigation
 
     public ICollection<ClassBooking> Bookings { get; set; } = new List<ClassBooking>();

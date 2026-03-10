@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Models;
+
+namespace backend.Data;
 
 public class ApplicationDbContext
     : IdentityDbContext<User, IdentityRole<Guid>, Guid>
@@ -11,6 +14,184 @@ public class ApplicationDbContext
     {
     }
 
+    // ================= USERS =================
+
     public DbSet<Member> Members => Set<Member>();
     public DbSet<Staff> Staffs => Set<Staff>();
+
+    // ================= CORE =================
+
+    public DbSet<Branch> Branches => Set<Branch>();
+    public DbSet<BranchImage> BranchImages => Set<BranchImage>();
+
+    public DbSet<Room> Rooms => Set<Room>();
+    public DbSet<RoomImage> RoomImages => Set<RoomImage>();
+
+    public DbSet<Class> Classes => Set<Class>();
+    public DbSet<ClassBooking> ClassBookings => Set<ClassBooking>();
+
+    public DbSet<AccessCard> AccessCards => Set<AccessCard>();
+    public DbSet<Attendance> Attendances => Set<Attendance>();
+
+    // ================= SALES =================
+
+    public DbSet<Lead> Leads => Set<Lead>();
+
+    // ================= CONTRACT =================
+
+    public DbSet<Package> Packages => Set<Package>();
+    public DbSet<PackagePolicy> PackagePolicies => Set<PackagePolicy>();
+
+    public DbSet<Contract> Contracts => Set<Contract>();
+    public DbSet<ContractAdjust> ContractAdjusts => Set<ContractAdjust>();
+
+    public DbSet<Promotion> Promotions => Set<Promotion>();
+    public DbSet<ContractPromotion> ContractPromotions => Set<ContractPromotion>();
+
+    // ================= BILLING =================
+
+    public DbSet<Invoice> Invoices => Set<Invoice>();
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<Commission> Commissions => Set<Commission>();
+
+    // ================= SYSTEM =================
+
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Request> Requests => Set<Request>();
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+
+        // ================= USER 1-1 MEMBER =================
+
+        builder.Entity<Member>()
+            .HasKey(m => m.UserId);
+
+        builder.Entity<Member>()
+            .HasOne(m => m.User)
+            .WithOne(u => u.Member)
+            .HasForeignKey<Member>(m => m.UserId);
+
+        // ================= USER 1-1 STAFF =================
+
+        builder.Entity<Staff>()
+            .HasKey(s => s.UserId);
+
+        builder.Entity<Staff>()
+            .HasOne(s => s.User)
+            .WithOne(u => u.Staff)
+            .HasForeignKey<Staff>(s => s.UserId);
+
+        // ================= CLASS BOOKING (N-N) =================
+
+        builder.Entity<ClassBooking>()
+            .HasKey(cb => new { cb.MemberUserId, cb.ClassId });
+
+        builder.Entity<ClassBooking>()
+            .HasOne(cb => cb.Member)
+            .WithMany(m => m.ClassBookings)
+            .HasForeignKey(cb => cb.MemberUserId);
+
+        builder.Entity<ClassBooking>()
+            .HasOne(cb => cb.Class)
+            .WithMany(c => c.Bookings)
+            .HasForeignKey(cb => cb.ClassId);
+
+        // ================= CONTRACT PROMOTION (N-N) =================
+
+        builder.Entity<ContractPromotion>()
+            .HasKey(cp => new { cp.ContractId, cp.PromotionId });
+
+        builder.Entity<ContractPromotion>()
+            .HasOne(cp => cp.Contract)
+            .WithMany(c => c.ContractPromotions)
+            .HasForeignKey(cp => cp.ContractId);
+
+        builder.Entity<ContractPromotion>()
+            .HasOne(cp => cp.Promotion)
+            .WithMany()
+            .HasForeignKey(cp => cp.PromotionId);
+
+        // ================= PACKAGE 1-1 PACKAGE POLICY =================
+
+        builder.Entity<PackagePolicy>()
+            .HasKey(p => p.PackageId);
+
+        builder.Entity<PackagePolicy>()
+            .HasOne(p => p.Package)
+            .WithOne(p => p.PackagePolicy)
+            .HasForeignKey<PackagePolicy>(p => p.PackageId);
+
+        // ================= CONTRACT 1-1 INVOICE =================
+
+        builder.Entity<Contract>()
+            .HasOne(c => c.Invoice)
+            .WithOne(i => i.Contract)
+            .HasForeignKey<Invoice>(i => i.ContractId);
+
+        // ================= INVOICE 1-1 PAYMENT =================
+
+        builder.Entity<Invoice>()
+            .HasOne(i => i.Payment)
+            .WithOne(p => p.Invoice)
+            .HasForeignKey<Payment>(p => p.InvoiceId);
+
+        // ================= LEAD 1-1 MEMBER (Convert) =================
+
+        builder.Entity<Lead>()
+            .HasOne(l => l.ConvertedMember)
+            .WithOne(m => m.Lead)
+            .HasForeignKey<Lead>(l => l.ConvertedMemberUserId)
+            .IsRequired(false);
+
+        // ================= STAFF TEACHES CLASS =================
+
+        builder.Entity<Class>()
+            .HasOne(c => c.Trainer)
+            .WithMany(s => s.TeachingClasses)
+            .HasForeignKey(c => c.TrainerStaffId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // ==== REQUEST =======
+        builder.Entity<Request>()
+            .HasOne(r => r.User)
+            .WithMany(u => u.Requests)
+            .HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Request>()
+            .HasOne(r => r.HandledByUser)
+            .WithMany(u => u.HandledRequests)
+            .HasForeignKey(r => r.HandledByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // convert all enums to string
+        foreach (var entityType in builder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                var clrType = property.ClrType;
+
+                if (clrType.IsEnum)
+                {
+                    var converterType = typeof(EnumToStringConverter<>).MakeGenericType(clrType);
+                    var converter = (ValueConverter)Activator.CreateInstance(converterType)!;
+
+                    property.SetValueConverter(converter);
+                }
+
+                // handle nullable enum
+                if (Nullable.GetUnderlyingType(clrType)?.IsEnum == true)
+                {
+                    var enumType = Nullable.GetUnderlyingType(clrType)!;
+                    var converterType = typeof(EnumToStringConverter<>).MakeGenericType(enumType);
+                    var converter = (ValueConverter)Activator.CreateInstance(converterType)!;
+
+                    property.SetValueConverter(converter);
+                }
+            }
+        }
+    }
 }

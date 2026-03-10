@@ -4,7 +4,7 @@ using backend.Enums;
 
 public class ContractAdjust
 {
-    public Guid AdjustId { get; set; }
+    public Guid ContractAdjustId { get; set; }
 
     public Guid ContractId { get; set; }
 
