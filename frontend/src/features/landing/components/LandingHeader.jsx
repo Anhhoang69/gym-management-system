@@ -76,6 +76,14 @@ export default function LandingHeader() {
               <FaSun size={18} className="rotate-90 transition-transform duration-300" />
             )}
           </button>
+
+          <Link
+            to="/login"
+            className="hidden rounded-md bg-(--brand) px-4 py-2 text-sm font-medium text-(--on-brand) transition-colors hover:bg-(--brand-hover) lg:block"
+          >
+            Đăng nhập
+          </Link>
+
           {/* Mobile menu */}
           <button className="text-(--text-primary) lg:hidden" onClick={() => setIsNavOpen(true)}>
             <FaBars size={26} />
@@ -85,9 +93,8 @@ export default function LandingHeader() {
 
       {/* MOBILE NAV */}
       <div
-        className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-(--bg) text-(--text-primary) transition-transform duration-300 ${
-          isNavOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
+        className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-(--bg) text-(--text-primary) transition-transform duration-300 ${isNavOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
       >
         <ul className="flex flex-col gap-6 text-2xl font-semibold">
           {menuItems.map((item) => {

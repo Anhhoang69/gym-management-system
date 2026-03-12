@@ -18,7 +18,6 @@
   --bg: #efeded;
   --bg-secondary: #f5f5f5;
   --bg-third: #ffffff;
-  --bg-four: #3e3e3e;
   --surface: #efeded;
   --hover: #f3f4f6;
 
@@ -53,7 +52,6 @@
   --bg: #0f0f0f;
   --bg-secondary: #000000;
   --bg-third: #222222;
-  --bg-four: #181818;
   --surface: #181818;
   --hover: #262626;
 
@@ -99,4 +97,9 @@ button {
   transition:
     background-color 0.2s,
     color 0.2s;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
 }
