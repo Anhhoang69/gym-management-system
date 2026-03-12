@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using backend.Helpers;
 using backend.Interfaces;
 using backend.DTOs.Branch;
+using System.Security.Claims;
 
 namespace backend.Controllers;
 
@@ -22,55 +23,91 @@ public class BranchController : ControllerBase
         string? search,
         string? status)
     {
-        try
-        {
-            var result = await _service.GetBranchesAsync(search, status);
+        var result = await _service.GetBranchesAsync(search, status);
 
-            return new ApiResponse<List<BranchListDto>>(result);
-        }
-        catch
-        {
-            return new ApiResponse<List<BranchListDto>>(
-                "Không thể tải danh sách, vui lòng thử lại");
-        }
+        return new ApiResponse<List<BranchListDto>>(result);
     }
 
-    // Create Branch
-    [HttpPost]
-    public async Task<ApiResponse<BranchListDto>> CreateBranch(CreateBranchDto dto)
+    // Get Branch Detail
+    [HttpGet("{id}")]
+    public async Task<ApiResponse<BranchListDto?>> GetBranch(Guid id)
     {
-        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+        var result = await _service.GetBranchAsync(id);
 
-        var result = await _service.CreateBranchAsync(dto, userId);
+        if (result == null)
+            return new ApiResponse<BranchListDto?>("Branch not found");
 
-        return new ApiResponse<BranchListDto>(result);
+        return new ApiResponse<BranchListDto?>(result);
     }
 
-    // Update Branch
+    // UPDATE REQUEST
+
     [HttpPut("{id}")]
     public async Task<ApiResponse<bool>> UpdateBranch(Guid id, UpdateBranchDto dto)
     {
-        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
-
+        //var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
         var result = await _service.UpdateBranchAsync(id, dto, userId);
 
         if (!result)
             return new ApiResponse<bool>("Branch not found");
 
-        return new ApiResponse<bool>(true);
+        return new ApiResponse<bool>(true, "Update request submitted");
     }
 
-    // Deactivate Branch
-    [HttpDelete("{id}")]
-    public async Task<ApiResponse<bool>> DeleteBranch(Guid id)
-    {
-        var userId = Guid.Parse(User.FindFirst("sub")!.Value);
+    // DEACTIVATE REQUEST
 
+    [HttpDelete("{id}")]
+    public async Task<ApiResponse<bool>> DeactivateBranch(Guid id)
+    {
+        //var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
         var result = await _service.DeactivateBranchAsync(id, userId);
 
         if (!result)
             return new ApiResponse<bool>("Branch not found");
 
-        return new ApiResponse<bool>(true);
+        return new ApiResponse<bool>(true, "Deactivate request submitted");
     }
+
+    [HttpPost("requests/{requestId}/approve")]
+    public async Task<ApiResponse<bool>> ApproveRequest(Guid requestId)
+    {
+        var userId = Guid.Parse("4d7accb4-59ea-409c-b9d2-d0231115b15a");
+
+        var result = await _service.ApproveBranchRequestAsync(requestId, userId);
+
+        if (!result)
+            return new ApiResponse<bool>("Request not found");
+
+        return new ApiResponse<bool>(true, "Request approved");
+    }
+
+    [HttpPost("requests/{requestId}/reject")]
+    public async Task<ApiResponse<bool>> RejectRequest(
+    Guid requestId,
+    string? message)
+    {
+        var userId = Guid.Parse("4d7accb4-59ea-409c-b9d2-d0231115b15a");
+
+        var result = await _service.RejectBranchRequestAsync(requestId, userId, message);
+
+        if (!result)
+            return new ApiResponse<bool>("Request not found");
+
+        return new ApiResponse<bool>(true, "Request rejected");
+    }
+
+    // [HttpPost]
+    // public async Task<ApiResponse<bool>> CreateBranch(CreateBranchDto dto)
+    // {
+    //     var userId = Guid.Parse("4d7accb4-59ea-409c-b9d2-d0231115b15a");
+
+    //     var result = await _service.CreateBranchAsync(dto, userId);
+
+    //     if (!result)
+    //         return new ApiResponse<bool>("Cannot create branch request");
+
+    //     return new ApiResponse<bool>(true, "Branch creation request sent");
+    // }
 }

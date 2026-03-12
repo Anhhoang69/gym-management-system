@@ -8,6 +8,7 @@ using AutoMapper;
 using backend.Mappers;
 using backend.Interfaces;
 using backend.Services;
+using backend.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,12 +40,14 @@ builder.Services
 // ================= SERVICES =================
 
 builder.Services.AddScoped<IBranchService, BranchService>();
-
+builder.Services.AddScoped<IPromotionService, PromotionService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // ================= APP =================
 
 var app = builder.Build();
-
+// Global Exception Middleware
+app.UseGlobalException();
 
 if (app.Environment.IsDevelopment())
 {

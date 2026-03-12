@@ -9,4 +9,6 @@ public class UpdateBranchDto
     public string? Email { get; set; }
 
     public string? Hotline { get; set; }
+
+    public List<string>? Images { get; set; }
 }

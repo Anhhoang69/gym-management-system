@@ -21,8 +21,10 @@ public class BranchProfile : Profile
                 o => o.MapFrom(s =>
                     s.Images.Select(i => i.ImageUrl)));
 
-        CreateMap<CreateBranchDto, Branch>();
+        CreateMap<CreateBranchDto, Branch>()
+            .ForMember(dest => dest.Images, opt => opt.Ignore());
 
-        CreateMap<UpdateBranchDto, Branch>();
+        CreateMap<UpdateBranchDto, Branch>()
+            .ForMember(dest => dest.Images, opt => opt.Ignore());
     }
 }

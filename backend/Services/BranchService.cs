@@ -1,3 +1,4 @@
+using System.Text.Json;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
@@ -5,6 +6,7 @@ using backend.Data;
 using backend.DTOs.Branch;
 using backend.Interfaces;
 using backend.Models;
+using backend.Enums;
 
 namespace backend.Services;
 
@@ -53,28 +55,28 @@ public class BranchService : IBranchService
         return _mapper.Map<BranchListDto>(branch);
     }
 
-    public async Task<BranchListDto> CreateBranchAsync(CreateBranchDto dto, Guid userId)
+    // ================= UPDATE REQUEST =================
+
+    public async Task<bool> UpdateBranchAsync(Guid id, UpdateBranchDto dto, Guid userId)
     {
-        var branch = _mapper.Map<Branch>(dto);
+        var branch = await _context.Branches.FindAsync(id);
+        if (branch == null) return false;
 
-        branch.BranchId = Guid.NewGuid();
+        var payload = JsonSerializer.Serialize(dto);
 
-        _context.Branches.Add(branch);
-
-        if (dto.Images != null)
+        var request = new Request
         {
-            foreach (var url in dto.Images)
-            {
-                _context.BranchImages.Add(new BranchImage
-                {
-                    BranchImageId = Guid.NewGuid(),
-                    BranchId = branch.BranchId,
-                    ImageUrl = url
-                });
-            }
-        }
+            RequestId = Guid.NewGuid(),
+            UserId = userId,
+            Type = RequestType.Approval,
+            Category = RequestCategory.BranchUpdate,
+            Description = "Branch update request",
+            RelatedEntityType = "Branch",
+            RelatedEntityId = id,
+            Payload = payload
+        };
 
-        await _context.SaveChangesAsync();
+        _context.Requests.Add(request);
 
         // audit log
         _context.AuditLogs.Add(new AuditLog
@@ -82,44 +84,54 @@ public class BranchService : IBranchService
             AuditLogId = Guid.NewGuid(),
             UserId = userId,
             EntityType = "Branch",
-            EntityId = branch.BranchId,
-            Action = "CreateBranch"
-        });
-
-        await _context.SaveChangesAsync();
-
-        return _mapper.Map<BranchListDto>(branch);
-    }
-
-    public async Task<bool> UpdateBranchAsync(Guid id, UpdateBranchDto dto, Guid userId)
-    {
-        var branch = await _context.Branches.FindAsync(id);
-
-        if (branch == null) return false;
-
-        _mapper.Map(dto, branch);
-
-        _context.AuditLogs.Add(new AuditLog
-        {
-            AuditLogId = Guid.NewGuid(),
-            UserId = userId,
-            EntityType = "Branch",
             EntityId = id,
-            Action = "UpdateBranch"
+            Action = "RequestUpdateBranch"
         });
+
+        // notify gym owner
+        var owners = await _context.Users
+            .Where(u => _context.UserRoles
+                .Any(r => r.UserId == u.Id &&
+                    _context.Roles.Any(role => role.Id == r.RoleId && role.Name == "GymOwner")))
+            .ToListAsync();
+
+        foreach (var owner in owners)
+        {
+            _context.Notifications.Add(new Notification
+            {
+                NotificationId = Guid.NewGuid(),
+                UserId = owner.Id,
+                Title = "Branch Update Request",
+                Message = "A branch update request needs approval"
+            });
+        }
 
         await _context.SaveChangesAsync();
 
         return true;
     }
+
+    // ================= DEACTIVATE REQUEST =================
 
     public async Task<bool> DeactivateBranchAsync(Guid id, Guid userId)
     {
         var branch = await _context.Branches.FindAsync(id);
-
         if (branch == null) return false;
 
-        branch.Status = backend.Enums.BranchStatus.Deactivated;
+        var request = new Request
+        {
+            RequestId = Guid.NewGuid(),
+            UserId = userId,
+            Type = RequestType.Approval,
+            Category = RequestCategory.BranchDeactivate,
+            Description = "Deactivate branch request",
+            RelatedEntityType = "Branch",
+            RelatedEntityId = id
+        };
+
+        _context.Requests.Add(request);
+
+        // ===== AUDIT =====
 
         _context.AuditLogs.Add(new AuditLog
         {
@@ -127,11 +139,159 @@ public class BranchService : IBranchService
             UserId = userId,
             EntityType = "Branch",
             EntityId = id,
-            Action = "DeactivateBranch"
+            Action = "RequestDeactivateBranch"
+        });
+
+        // ===== FIND GYM OWNER =====
+
+        var owners = await _context.Users
+            .Where(u => _context.UserRoles
+                .Any(r => r.UserId == u.Id &&
+                    _context.Roles.Any(role =>
+                        role.Id == r.RoleId &&
+                        role.Name == "GymOwner")))
+            .ToListAsync();
+
+        // ===== NOTIFICATION =====
+
+        foreach (var owner in owners)
+        {
+            _context.Notifications.Add(new Notification
+            {
+                NotificationId = Guid.NewGuid(),
+                UserId = owner.Id,
+                Title = "Branch Deactivation Request",
+                Message = $"Branch '{branch.Name}' requires approval for deactivation"
+            });
+        }
+
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
+    public async Task<bool> ApproveBranchRequestAsync(Guid requestId, Guid approverId)
+    {
+        var request = await _context.Requests
+            .FirstOrDefaultAsync(x => x.RequestId == requestId);
+
+        if (request == null) return false;
+
+        if (request.Status != RequestStatus.Pending)
+            throw new Exception("Request already processed");
+
+        // ===== APPLY CHANGE =====
+
+        if (request.Category == RequestCategory.BranchUpdate)
+        {
+            var branch = await _context.Branches
+                .Include(x => x.Images)
+                .FirstAsync(x => x.BranchId == request.RelatedEntityId);
+
+            var update = JsonSerializer.Deserialize<UpdateBranchDto>(request.Payload!);
+
+            _mapper.Map(update, branch);
+
+            if (update.Images != null)
+            {
+                var oldImages = await _context.BranchImages
+                    .Where(x => x.BranchId == branch.BranchId)
+                    .ToListAsync();
+
+                _context.BranchImages.RemoveRange(oldImages);
+
+                foreach (var url in update.Images)
+                {
+                    _context.BranchImages.Add(new BranchImage
+                    {
+                        BranchImageId = Guid.NewGuid(),
+                        BranchId = branch.BranchId,
+                        ImageUrl = url
+                    });
+                }
+            }
+        }
+
+        if (request.Category == RequestCategory.BranchDeactivate)
+        {
+            var branch = await _context.Branches
+                .FirstAsync(x => x.BranchId == request.RelatedEntityId);
+
+            branch.Status = BranchStatus.Deactivated;
+        }
+
+        request.Status = RequestStatus.Approved;
+        request.HandledByUserId = approverId;
+        request.ResolvedAt = DateTime.UtcNow;
+
+        // ===== AUDIT =====
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            AuditLogId = Guid.NewGuid(),
+            UserId = approverId,
+            EntityType = "Request",
+            EntityId = requestId,
+            Action = "ApproveBranchRequest"
+        });
+
+        // ===== NOTIFICATION =====
+
+        _context.Notifications.Add(new Notification
+        {
+            NotificationId = Guid.NewGuid(),
+            UserId = request.UserId,
+            Title = "Branch Request Approved",
+            Message = "Your branch request has been approved"
         });
 
         await _context.SaveChangesAsync();
 
         return true;
     }
+    public async Task<bool> RejectBranchRequestAsync(
+        Guid requestId,
+        Guid approverId,
+        string? message)
+    {
+        var request = await _context.Requests
+            .FirstOrDefaultAsync(x => x.RequestId == requestId);
+
+        if (request == null) return false;
+
+        if (request.Status != RequestStatus.Pending)
+            throw new Exception("Request already processed");
+
+        request.Status = RequestStatus.Rejected;
+        request.ResponseMessage = message;
+        request.HandledByUserId = approverId;
+        request.ResolvedAt = DateTime.UtcNow;
+
+        // ===== AUDIT =====
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            AuditLogId = Guid.NewGuid(),
+            UserId = approverId,
+            EntityType = "Request",
+            EntityId = requestId,
+            Action = "RejectBranchRequest"
+        });
+
+        // ===== NOTIFICATION =====
+
+        _context.Notifications.Add(new Notification
+        {
+            NotificationId = Guid.NewGuid(),
+            UserId = request.UserId,
+            Title = "Branch Request Rejected",
+            Message = message ?? "Your branch request has been rejected"
+        });
+
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
+
+
 }

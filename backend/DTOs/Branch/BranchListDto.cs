@@ -1,5 +1,6 @@
-namespace backend.DTOs.Branch;
 using backend.Enums;
+namespace backend.DTOs.Branch;
+
 public class BranchListDto
 {
     public Guid BranchId { get; set; }

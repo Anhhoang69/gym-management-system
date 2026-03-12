@@ -1,15 +1,16 @@
-namespace backend.Models;
+namespace backend.DTOs.Promotion;
 
 using backend.Enums;
 
-public class Promotion
+public class PromotionDto
 {
     public Guid PromotionId { get; set; }
 
     public string Name { get; set; } = null!;
+
     public string Code { get; set; } = null!;
 
-    public PromotionStatus Status { get; set; } = PromotionStatus.Active;
+    public PromotionStatus Status { get; set; }
 
     public DiscountType DiscountType { get; set; }
 
@@ -31,14 +32,14 @@ public class Promotion
 
     public Guid CreatedByUserId { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 
-    // Navigation
+    // info thêm cho FE (optional)
+    public string? PackageName { get; set; }
 
-    public User CreatedByUser { get; set; } = null!;
-    public Package? ApplicablePackage { get; set; }
+    public string? BranchName { get; set; }
 
-    public Branch? ApplicableBranch { get; set; }
+    public string? CreatedByName { get; set; }
 }

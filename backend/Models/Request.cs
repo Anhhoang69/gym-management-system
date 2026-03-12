@@ -20,6 +20,7 @@ public class Request
     public string? ResponseMessage { get; set; }
 
     public string? AttachmentUrl { get; set; }
+    public string? Payload { get; set; }
 
     public string? RelatedEntityType { get; set; }
 
