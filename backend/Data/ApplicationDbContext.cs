@@ -41,7 +41,8 @@ public class ApplicationDbContext
 
     public DbSet<Package> Packages => Set<Package>();
     public DbSet<PackagePolicy> PackagePolicies => Set<PackagePolicy>();
-
+    public DbSet<PackageFeature> PackageFeatures => Set<PackageFeature>();
+    public DbSet<PackagePricing> PackagePricings => Set<PackagePricing>();
     public DbSet<Contract> Contracts => Set<Contract>();
     public DbSet<ContractAdjust> ContractAdjusts => Set<ContractAdjust>();
 
@@ -123,6 +124,18 @@ public class ApplicationDbContext
             .HasOne(p => p.Package)
             .WithOne(p => p.PackagePolicy)
             .HasForeignKey<PackagePolicy>(p => p.PackageId);
+
+        builder.Entity<PackageFeature>()
+            .HasOne(f => f.Package)
+            .WithMany(p => p.Features)
+            .HasForeignKey(f => f.PackageId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.Entity<PackagePricing>()
+            .HasOne(p => p.Package)
+            .WithMany(p => p.Pricings)
+            .HasForeignKey(p => p.PackageId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // ================= CONTRACT 1-1 INVOICE =================
 

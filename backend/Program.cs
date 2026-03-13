@@ -9,6 +9,7 @@ using backend.Mappers;
 using backend.Interfaces;
 using backend.Services;
 using backend.Extensions;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,19 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters
             .Add(new JsonStringEnumConverter());
     });
+
+// ================= ADD CORS =================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        });
+});
+// ============================================
 
 builder.Services.AddOpenApi();
 
@@ -42,10 +56,12 @@ builder.Services
 builder.Services.AddScoped<IBranchService, BranchService>();
 builder.Services.AddScoped<IPromotionService, PromotionService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IPackageService, PackageService>();
 
 // ================= APP =================
 
 var app = builder.Build();
+
 // Global Exception Middleware
 app.UseGlobalException();
 
@@ -58,13 +74,23 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// ===== FIX NGROK HTTPS =====
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.All
+});
+// ===========================
+
+//app.UseHttpsRedirection();
+
+// ================= ENABLE CORS =================
+app.UseCors("AllowAll");
+// ===============================================
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
 
 // ================= RUN SEEDER =================
 

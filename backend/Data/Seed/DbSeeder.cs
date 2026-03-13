@@ -137,8 +137,8 @@ public static class DbSeeder
         {
             PackageId = Guid.NewGuid(),
             Name = "Basic 1 Month",
-            Duration = 30,
-            BasePrice = 500000,
+            // Duration = 30,
+            // BasePrice = 500000,
             PrivatePtLimit = 0,
             GroupPtLimit = 5
         };

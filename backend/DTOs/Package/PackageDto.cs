@@ -1,6 +1,8 @@
-namespace backend.Models;
+namespace backend.DTOs.Package;
+
 using backend.Enums;
-public class Package
+
+public class PackageDto
 {
     public Guid PackageId { get; set; }
 
@@ -28,13 +30,11 @@ public class Package
 
     public DateTime CreatedAt { get; set; }
 
-    public DateTime? UpdatedAt { get; set; }
+    public List<PackageFeatureDto> Features { get; set; } = new();
 
-    public PackagePolicy? PackagePolicy { get; set; }
+    public List<PackagePricingDto> Pricings { get; set; } = new();
 
-    public ICollection<PackageFeature> Features { get; set; } = new List<PackageFeature>();
+    public PackagePolicyDto? Policy { get; set; }
 
-    public ICollection<PackagePricing> Pricings { get; set; } = new List<PackagePricing>();
-
-    public ICollection<Contract> Contracts { get; set; } = new List<Contract>();
+    public int TotalSubscribers { get; set; }
 }
