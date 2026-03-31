@@ -2,7 +2,7 @@ namespace backend.DTOs.Package;
 
 public class PackageFeatureDto
 {
-    public Guid FeatureId { get; set; }
+    public Guid PackageFeatureId { get; set; }
 
     public string Content { get; set; } = null!;
 

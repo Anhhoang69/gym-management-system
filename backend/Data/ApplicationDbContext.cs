@@ -18,6 +18,7 @@ public class ApplicationDbContext
 
     public DbSet<Member> Members => Set<Member>();
     public DbSet<Staff> Staffs => Set<Staff>();
+    public DbSet<PTProfile> PTProfiles => Set<PTProfile>();
 
     // ================= CORE =================
 
@@ -36,8 +37,10 @@ public class ApplicationDbContext
     // ================= SALES =================
 
     public DbSet<Lead> Leads => Set<Lead>();
+    public DbSet<LeadSource> LeadSources => Set<LeadSource>();
 
     // ================= CONTRACT =================
+
 
     public DbSet<Package> Packages => Set<Package>();
     public DbSet<PackagePolicy> PackagePolicies => Set<PackagePolicy>();
@@ -85,7 +88,19 @@ public class ApplicationDbContext
             .WithOne(u => u.Staff)
             .HasForeignKey<Staff>(s => s.UserId);
 
+        builder.Entity<PTProfile>()
+            .HasKey(x => x.StaffUserId);
+
+        builder.Entity<PTProfile>()
+            .HasOne(x => x.Staff)
+            .WithOne(x => x.PTProfile)
+            .HasForeignKey<PTProfile>(x => x.StaffUserId);
+
         // ================= CLASS BOOKING (N-N) =================
+
+        builder.Entity<Room>()
+            .HasIndex(r => new { r.BranchId, r.RoomNumber })
+            .IsUnique();
 
         builder.Entity<ClassBooking>()
             .HasKey(cb => new { cb.MemberUserId, cb.ClassId });
@@ -130,7 +145,7 @@ public class ApplicationDbContext
             .WithMany(p => p.Features)
             .HasForeignKey(f => f.PackageId)
             .OnDelete(DeleteBehavior.Cascade);
-        
+
         builder.Entity<PackagePricing>()
             .HasOne(p => p.Package)
             .WithMany(p => p.Pricings)

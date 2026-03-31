@@ -6,6 +6,10 @@ public class Class
 {
     public Guid ClassId { get; set; }
 
+    public string? Title { get; set; }
+
+    public string? Description { get; set; }
+
     public DateOnly Date { get; set; }
 
     public TimeOnly StartTime { get; set; }
@@ -20,7 +24,7 @@ public class Class
 
     public int MinCapacity { get; set; }
 
-     // PT dạy lớp
+    // PT dạy lớp
     public Guid TrainerStaffId { get; set; }
 
     public Staff Trainer { get; set; } = null!;

@@ -19,4 +19,7 @@ public class UpdateUserDto
     public StaffPosition? StaffPosition { get; set; }
 
     public UserStatus Status { get; set; }
+
+    // PT PROFILE
+    public PTProfileDto? TrainerProfile { get; set; }
 }

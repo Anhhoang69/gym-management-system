@@ -30,6 +30,8 @@ public class PackageDto
 
     public DateTime CreatedAt { get; set; }
 
+    public DateTime? UpdatedAt { get; set; }
+
     public List<PackageFeatureDto> Features { get; set; } = new();
 
     public List<PackagePricingDto> Pricings { get; set; } = new();

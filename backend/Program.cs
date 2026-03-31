@@ -11,6 +11,7 @@ using backend.Services;
 using backend.Extensions;
 using Microsoft.AspNetCore.HttpOverrides;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers()
@@ -33,7 +34,7 @@ builder.Services.AddCors(options =>
 });
 // ============================================
 
-builder.Services.AddOpenApi();
+//builder.Services.AddOpenApi();
 
 // AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -57,7 +58,21 @@ builder.Services.AddScoped<IBranchService, BranchService>();
 builder.Services.AddScoped<IPromotionService, PromotionService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPackageService, PackageService>();
-
+builder.Services.AddScoped<IRoomService, RoomService>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<IClassService, ClassService>();
+builder.Services.AddScoped<ILeadService, LeadService>();
+builder.Services.AddScoped<ILeadSourceService, LeadSourceService>();
+// ================= SWAGGER =================
+// ================= SWAGGER =================
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.EnableAnnotations();
+    options.UseInlineDefinitionsForEnums();
+});
+// ==========================================
+// ============================================
 // ================= APP =================
 
 var app = builder.Build();
@@ -67,11 +82,8 @@ app.UseGlobalException();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.UseSwaggerUi(options =>
-    {
-        options.DocumentPath = "/openapi/v1.json";
-    });
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 // ===== FIX NGROK HTTPS =====

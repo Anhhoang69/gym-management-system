@@ -5,5 +5,5 @@ public enum BranchStatus
     Active,
     Pending,
     Rejected,
-    Deactivated
+    Inactive
 }

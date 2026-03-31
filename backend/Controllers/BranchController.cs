@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Mvc;
 using backend.Helpers;
 using backend.Interfaces;
 using backend.DTOs.Branch;
+using backend.Enums;
 using System.Security.Claims;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace backend.Controllers;
 
@@ -17,32 +19,53 @@ public class BranchController : ControllerBase
         _service = service;
     }
 
-    // View Branch List
     [HttpGet]
+    [SwaggerOperation(
+        Summary = "Lấy danh sách chi nhánh",
+        Description = "Trả về danh sách chi nhánh với bộ lọc theo search (Name) và status."
+    )]
     public async Task<ApiResponse<List<BranchListDto>>> GetBranches(
         string? search,
-        string? status)
+        BranchStatus? status)
     {
-        var result = await _service.GetBranchesAsync(search, status);
-
+        var result = await _service.GetBranchListAsync(search, status);
         return new ApiResponse<List<BranchListDto>>(result);
     }
 
-    // Get Branch Detail
     [HttpGet("{id}")]
-    public async Task<ApiResponse<BranchListDto?>> GetBranch(Guid id)
+    [SwaggerOperation(
+        Summary = "Lấy chi tiết chi nhánh",
+        Description = "Trả về thông tin chi tiết của một chi nhánh theo ID."
+    )]
+    public async Task<ApiResponse<BranchDto?>> GetBranch(Guid id)
     {
         var result = await _service.GetBranchAsync(id);
 
         if (result == null)
-            return new ApiResponse<BranchListDto?>("Branch not found");
+            return new ApiResponse<BranchDto?>("Branch not found");
 
-        return new ApiResponse<BranchListDto?>(result);
+        return new ApiResponse<BranchDto?>(result);
+    }
+
+    [HttpGet("stats")]
+    [SwaggerOperation(
+        Summary = "Lấy thống kê chi nhánh",
+        Description = "Trả về số liệu thống kê về các chi nhánh."
+    )]
+    public async Task<ApiResponse<BranchStatsDto>> GetStats()
+    {
+        var result = await _service.GetBranchStatsAsync();
+
+        return new ApiResponse<BranchStatsDto>(result);
     }
 
     // UPDATE REQUEST
 
     [HttpPut("{id}")]
+    [SwaggerOperation(
+        Summary = "Gửi yêu cầu cập nhật chi nhánh",
+        Description = "Gửi yêu cầu cập nhật thông tin chi nhánh. Yêu cầu cần được phê duyệt bởi gymOwner."
+    )]
     public async Task<ApiResponse<bool>> UpdateBranch(Guid id, UpdateBranchDto dto)
     {
         //var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -58,6 +81,10 @@ public class BranchController : ControllerBase
     // DEACTIVATE REQUEST
 
     [HttpDelete("{id}")]
+    [SwaggerOperation(
+        Summary = "Gửi yêu cầu vô hiệu hóa chi nhánh",
+        Description = "Gửi yêu cầu vô hiệu hóa chi nhánh. Yêu cầu cần được phê duyệt bởi gymOwner."
+    )]
     public async Task<ApiResponse<bool>> DeactivateBranch(Guid id)
     {
         //var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -71,6 +98,10 @@ public class BranchController : ControllerBase
     }
 
     [HttpPost("requests/{requestId}/approve")]
+    [SwaggerOperation(
+        Summary = "Phê duyệt yêu cầu chi nhánh",
+        Description = "Phê duyệt yêu cầu cập nhật hoặc vô hiệu hóa chi nhánh. Chỉ dành cho gymOwner."
+    )]
     public async Task<ApiResponse<bool>> ApproveRequest(Guid requestId)
     {
         var userId = Guid.Parse("4d7accb4-59ea-409c-b9d2-d0231115b15a");

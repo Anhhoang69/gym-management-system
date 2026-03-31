@@ -11,5 +11,7 @@ public class Staff
 
     public StaffPosition Position { get; set; }
 
+    public PTProfile? PTProfile { get; set; }
+
     public ICollection<Class> TeachingClasses { get; set; } = new List<Class>();
 }

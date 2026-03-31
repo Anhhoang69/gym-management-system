@@ -13,18 +13,20 @@ public class PackageService : IPackageService
 {
     private readonly ApplicationDbContext _context;
     private readonly IMapper _mapper;
+    private readonly IAuditLogService _auditLogService;
 
-    public PackageService(ApplicationDbContext context, IMapper mapper)
+    public PackageService(ApplicationDbContext context, IMapper mapper, IAuditLogService auditLogService)
     {
         _context = context;
         _mapper = mapper;
+        _auditLogService = auditLogService;
     }
 
     // ================= LIST =================
 
     public async Task<List<PackageDto>> GetPackagesAsync(
         string? search,
-        string? status,
+        PackageStatus? status,
         string? tier)
     {
         var query = _context.Packages
@@ -37,8 +39,8 @@ public class PackageService : IPackageService
         if (!string.IsNullOrEmpty(search))
             query = query.Where(x => x.Name.Contains(search));
 
-        if (!string.IsNullOrEmpty(status))
-            query = query.Where(x => x.Status.ToString() == status);
+        if (status.HasValue)
+            query = query.Where(x => x.Status == status.Value);
 
         if (!string.IsNullOrEmpty(tier))
             query = query.Where(x => x.Tier.ToString() == tier);
@@ -79,41 +81,32 @@ public class PackageService : IPackageService
 
         package.UpdatedAt = DateTime.UtcNow;
 
-        _context.AuditLogs.Add(new AuditLog
-        {
-            AuditLogId = Guid.NewGuid(),
-            UserId = userId,
-            EntityType = "Package",
-            EntityId = id,
-            Action = "UpdatePackage",
-            CreatedAt = DateTime.UtcNow
-        });
+        _auditLogService.Add(_auditLogService.CreateLog(
+            userId,
+            "Package",
+            id,
+            "UpdatePackage"));
 
         await _context.SaveChangesAsync();
 
         return true;
     }
 
-    // ================= DEACTIVATE =================
-
-    public async Task<bool> DeactivatePackageAsync(Guid id, Guid userId)
+    public async Task<bool> UpdatePackageStatusAsync(Guid id, PackageStatus status, Guid userId)
     {
         var package = await _context.Packages.FindAsync(id);
 
         if (package == null)
             return false;
 
-        package.Status = PackageStatus.Inactive;
+        package.Status = status;
+        package.UpdatedAt = DateTime.UtcNow;
 
-        _context.AuditLogs.Add(new AuditLog
-        {
-            AuditLogId = Guid.NewGuid(),
-            UserId = userId,
-            EntityType = "Package",
-            EntityId = id,
-            Action = "DeactivatePackage",
-            CreatedAt = DateTime.UtcNow
-        });
+        _auditLogService.Add(_auditLogService.CreateLog(
+            userId,
+            "Package",
+            id,
+            $"UpdatePackageStatus:{status}"));
 
         await _context.SaveChangesAsync();
 
@@ -137,15 +130,11 @@ public class PackageService : IPackageService
 
         _context.Packages.Remove(package);
 
-        _context.AuditLogs.Add(new AuditLog
-        {
-            AuditLogId = Guid.NewGuid(),
-            UserId = userId,
-            EntityType = "Package",
-            EntityId = id,
-            Action = "DeletePackage",
-            CreatedAt = DateTime.UtcNow
-        });
+        _auditLogService.Add(_auditLogService.CreateLog(
+            userId,
+            "Package",
+            id,
+            "DeletePackage"));
 
         await _context.SaveChangesAsync();
 

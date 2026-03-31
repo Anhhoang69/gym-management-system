@@ -8,28 +8,31 @@ using backend.Models;
 using backend.Interfaces;
 
 namespace backend.Services;
+
 public class PromotionService : IPromotionService
 {
     private readonly ApplicationDbContext _context;
     private readonly IMapper _mapper;
+    private readonly IAuditLogService _auditLogService;
 
-    public PromotionService(ApplicationDbContext context, IMapper mapper)
+    public PromotionService(ApplicationDbContext context, IMapper mapper, IAuditLogService auditLogService)
     {
         _context = context;
         _mapper = mapper;
+        _auditLogService = auditLogService;
     }
 
     // ================= LIST =================
 
-    public async Task<List<PromotionDto>> GetPromotionsAsync(
+
+    public async Task<List<PromotionListDto>> GetPromotionListAsync(
         string? search,
-        string? status,
+        PromotionStatus? status,
         string? type)
     {
         var query = _context.Promotions
-            .Include(x => x.ApplicablePackage)
             .Include(x => x.ApplicableBranch)
-            .Include(x => x.CreatedByUser)
+            .AsNoTracking()
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(search))
@@ -37,14 +40,14 @@ public class PromotionService : IPromotionService
                 x.Name.Contains(search) ||
                 x.Code.Contains(search));
 
-        if (!string.IsNullOrEmpty(status))
-            query = query.Where(x => x.Status.ToString() == status);
+        if (status.HasValue)
+            query = query.Where(x => x.Status == status.Value);
 
         if (!string.IsNullOrEmpty(type))
             query = query.Where(x => x.DiscountType.ToString() == type);
 
         return await query
-            .ProjectTo<PromotionDto>(_mapper.ConfigurationProvider)
+            .ProjectTo<PromotionListDto>(_mapper.ConfigurationProvider)
             .ToListAsync();
     }
 
@@ -74,41 +77,32 @@ public class PromotionService : IPromotionService
 
         promo.UpdatedAt = DateTime.UtcNow;
 
-        _context.AuditLogs.Add(new AuditLog
-        {
-            AuditLogId = Guid.NewGuid(),
-            UserId = userId,
-            EntityType = "Promotion",
-            EntityId = id,
-            Action = "UpdatePromotion",
-            CreatedAt = DateTime.UtcNow
-        });
+        _auditLogService.Add(_auditLogService.CreateLog(
+            userId,
+            "Promotion",
+            id,
+            "UpdatePromotion"));
 
         await _context.SaveChangesAsync();
 
         return true;
     }
 
-    // ================= DEACTIVATE =================
-
-    public async Task<bool> DeactivatePromotionAsync(Guid id, Guid userId)
+    public async Task<bool> UpdatePromotionStatusAsync(Guid id, PromotionStatus status, Guid userId)
     {
         var promo = await _context.Promotions.FindAsync(id);
 
         if (promo == null)
             return false;
 
-        promo.Status = PromotionStatus.Inactive;
+        promo.Status = status;
+        promo.UpdatedAt = DateTime.UtcNow;
 
-        _context.AuditLogs.Add(new AuditLog
-        {
-            AuditLogId = Guid.NewGuid(),
-            UserId = userId,
-            EntityType = "Promotion",
-            EntityId = id,
-            Action = "DeactivatePromotion",
-            CreatedAt = DateTime.UtcNow
-        });
+        _auditLogService.Add(_auditLogService.CreateLog(
+            userId,
+            "Promotion",
+            id,
+            $"UpdatePromotionStatus:{status}"));
 
         await _context.SaveChangesAsync();
 
@@ -132,15 +126,11 @@ public class PromotionService : IPromotionService
 
         _context.Promotions.Remove(promo);
 
-        _context.AuditLogs.Add(new AuditLog
-        {
-            AuditLogId = Guid.NewGuid(),
-            UserId = userId,
-            EntityType = "Promotion",
-            EntityId = id,
-            Action = "DeletePromotion",
-            CreatedAt = DateTime.UtcNow
-        });
+        _auditLogService.Add(_auditLogService.CreateLog(
+            userId,
+            "Promotion",
+            id,
+            "DeletePromotion"));
 
         await _context.SaveChangesAsync();
 

@@ -22,6 +22,22 @@ public static class DbSeeder
         await SeedStaff(context, userManager);
         await SeedMembers(context, userManager);
         await SeedPromotion(context, userManager);
+        await SeedLeadSources(context);
+    }
+
+    // ================= LEAD SOURCES =================
+
+    private static async Task SeedLeadSources(ApplicationDbContext context)
+    {
+        if (context.LeadSources.Any()) return;
+
+        context.LeadSources.AddRange(
+            new LeadSource { Id = Guid.NewGuid(), Name = "Facebook", Score = 20, IsActive = true },
+            new LeadSource { Id = Guid.NewGuid(), Name = "Referral", Score = 30, IsActive = true },
+            new LeadSource { Id = Guid.NewGuid(), Name = "Walk-in", Score = 25, IsActive = true }
+        );
+
+        await context.SaveChangesAsync();
     }
 
     // ================= ROLES =================

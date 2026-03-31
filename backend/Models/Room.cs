@@ -6,6 +6,8 @@ public class Room
     public Guid RoomId { get; set; }
 
     public string Name { get; set; } = null!;
+
+    public string RoomNumber { get; set; } = null!;
     public int Capacity { get; set; }
     public RoomStatus Status { get; set; } = RoomStatus.Active;
 

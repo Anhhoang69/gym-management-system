@@ -14,45 +14,70 @@ public class BranchService : IBranchService
 {
     private readonly ApplicationDbContext _context;
     private readonly IMapper _mapper;
+    private readonly IAuditLogService _auditLogService;
 
-    public BranchService(ApplicationDbContext context, IMapper mapper)
+    public BranchService(ApplicationDbContext context, IMapper mapper, IAuditLogService auditLogService)
     {
         _context = context;
         _mapper = mapper;
+        _auditLogService = auditLogService;
     }
 
-    public async Task<List<BranchListDto>> GetBranchesAsync(string? search, string? status)
+    public async Task<List<BranchListDto>> GetBranchListAsync(string? search, BranchStatus? status)
     {
         var query = _context.Branches
-            .Include(b => b.Images)
-            .Include(b => b.Rooms)
-            .Include(b => b.Staffs)
-            .Include(b => b.Attendances)
+            .Include(x => x.Images)
+            .Include(x => x.Rooms)
+            .Include(x => x.Staffs)
+            .Include(x => x.Attendances)
+            .AsNoTracking()
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(search))
-            query = query.Where(x => x.Name.Contains(search));
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var keyword = $"%{search}%";
+            query = query.Where(x => EF.Functions.ILike(x.Name, keyword));
+        }
 
-        if (!string.IsNullOrEmpty(status))
-            query = query.Where(x => x.Status.ToString() == status);
+        if (status.HasValue)
+            query = query.Where(x => x.Status == status.Value);
 
         return await query
+            .OrderBy(x => x.Name)
             .ProjectTo<BranchListDto>(_mapper.ConfigurationProvider)
             .ToListAsync();
     }
 
-    public async Task<BranchListDto?> GetBranchAsync(Guid id)
+
+    public async Task<BranchDto?> GetBranchAsync(Guid id)
     {
-        var branch = await _context.Branches
-            .Include(b => b.Images)
-            .Include(b => b.Rooms)
-            .Include(b => b.Staffs)
-            .Include(b => b.Attendances)
-            .FirstOrDefaultAsync(x => x.BranchId == id);
+        return await _context.Branches
+            .Include(x => x.Images)
+            .Include(x => x.Rooms)
+            .Include(x => x.Staffs)
+                .ThenInclude(s => s.User)
+            .Include(x => x.Attendances)
+            .AsNoTracking()
+            .Where(x => x.BranchId == id)
+            .ProjectTo<BranchDto>(_mapper.ConfigurationProvider)
+            .FirstOrDefaultAsync();
+    }
 
-        if (branch == null) return null;
+    public async Task<BranchStatsDto> GetBranchStatsAsync()
+    {
+        return new BranchStatsDto
+        {
+            TotalBranches = await _context.Branches.CountAsync(),
 
-        return _mapper.Map<BranchListDto>(branch);
+            ActiveBranches = await _context.Branches
+                .CountAsync(x => x.Status == BranchStatus.Active),
+
+            PendingBranches = await _context.Branches
+                .CountAsync(x => x.Status == BranchStatus.Pending),
+
+            InactiveBranches = await _context.Branches
+                .CountAsync(x => x.Status == BranchStatus.Inactive)
+        };
     }
 
     // ================= UPDATE REQUEST =================
@@ -79,14 +104,11 @@ public class BranchService : IBranchService
         _context.Requests.Add(request);
 
         // audit log
-        _context.AuditLogs.Add(new AuditLog
-        {
-            AuditLogId = Guid.NewGuid(),
-            UserId = userId,
-            EntityType = "Branch",
-            EntityId = id,
-            Action = "RequestUpdateBranch"
-        });
+        _auditLogService.Add(_auditLogService.CreateLog(
+            userId,
+            "Branch",
+            id,
+            "RequestUpdateBranch"));
 
         // notify gym owner
         var owners = await _context.Users
@@ -133,14 +155,11 @@ public class BranchService : IBranchService
 
         // ===== AUDIT =====
 
-        _context.AuditLogs.Add(new AuditLog
-        {
-            AuditLogId = Guid.NewGuid(),
-            UserId = userId,
-            EntityType = "Branch",
-            EntityId = id,
-            Action = "RequestDeactivateBranch"
-        });
+        _auditLogService.Add(_auditLogService.CreateLog(
+            userId,
+            "Branch",
+            id,
+            "RequestDeactivateBranch"));
 
         // ===== FIND GYM OWNER =====
 
@@ -217,7 +236,7 @@ public class BranchService : IBranchService
             var branch = await _context.Branches
                 .FirstAsync(x => x.BranchId == request.RelatedEntityId);
 
-            branch.Status = BranchStatus.Deactivated;
+            branch.Status = BranchStatus.Inactive;
         }
 
         request.Status = RequestStatus.Approved;
@@ -226,14 +245,11 @@ public class BranchService : IBranchService
 
         // ===== AUDIT =====
 
-        _context.AuditLogs.Add(new AuditLog
-        {
-            AuditLogId = Guid.NewGuid(),
-            UserId = approverId,
-            EntityType = "Request",
-            EntityId = requestId,
-            Action = "ApproveBranchRequest"
-        });
+        _auditLogService.Add(_auditLogService.CreateLog(
+            approverId,
+            "Request",
+            requestId,
+            "ApproveBranchRequest"));
 
         // ===== NOTIFICATION =====
 
@@ -269,14 +285,11 @@ public class BranchService : IBranchService
 
         // ===== AUDIT =====
 
-        _context.AuditLogs.Add(new AuditLog
-        {
-            AuditLogId = Guid.NewGuid(),
-            UserId = approverId,
-            EntityType = "Request",
-            EntityId = requestId,
-            Action = "RejectBranchRequest"
-        });
+        _auditLogService.Add(_auditLogService.CreateLog(
+            approverId,
+            "Request",
+            requestId,
+            "RejectBranchRequest"));
 
         // ===== NOTIFICATION =====
 

@@ -1,0 +1,4 @@
+name,phone,email,note,branchId,sourceId,assignedToStaffId
+Nguyen Van A,0901234567,nguyenvana@example.com,Interested in monthly package,017bb03a-cd2c-4c0b-8c94-ddd8066cc7bc,8976ddbb-ecb6-43e3-8870-d8d3808d6b4e,591d5113-45d4-433f-9a2d-9d3b5029d985
+Tran Thi B,0912345678,tranthib@example.com,Requested PT consultation,017bb03a-cd2c-4c0b-8c94-ddd8066cc7bc,8976ddbb-ecb6-43e3-8870-d8d3808d6b4e,591d5113-45d4-433f-9a2d-9d3b5029d985
+Le Van Na,0987654321,,Walk-in lead from event booth,017bb03a-cd2c-4c0b-8c94-ddd8066cc7bc,8976ddbb-ecb6-43e3-8870-d8d3808d6b4e,591d5113-45d4-433f-9a2d-9d3b5029d985

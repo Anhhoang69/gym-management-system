@@ -1,4 +1,5 @@
 using backend.DTOs.Package;
+using backend.Enums;
 
 namespace backend.Interfaces;
 
@@ -6,7 +7,7 @@ public interface IPackageService
 {
     Task<List<PackageDto>> GetPackagesAsync(
         string? search,
-        string? status,
+        PackageStatus? status,
         string? tier);
 
     Task<PackageStatsDto> GetPackageStatsAsync();
@@ -18,9 +19,7 @@ public interface IPackageService
         UpdatePackageDto dto,
         Guid userId);
 
-    Task<bool> DeactivatePackageAsync(
-        Guid id,
-        Guid userId);
+    Task<bool> UpdatePackageStatusAsync(Guid id, PackageStatus status, Guid userId);
 
     Task<bool> DeletePackageAsync(
         Guid id,

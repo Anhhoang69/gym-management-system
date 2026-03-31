@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.DTOs.Promotion;
+using backend.Enums;
 using backend.Helpers;
 using backend.Interfaces;
 using System.Security.Claims;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace backend.Controllers;
 
@@ -18,14 +20,13 @@ public class PromotionController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ApiResponse<List<PromotionDto>>> GetPromotions(
+    public async Task<ApiResponse<List<PromotionListDto>>> GetPromotions(
         string? search,
-        string? status,
+        PromotionStatus? status,
         string? type)
     {
-        var result = await _service.GetPromotionsAsync(search, status, type);
-
-        return new ApiResponse<List<PromotionDto>>(result);
+        var result = await _service.GetPromotionListAsync(search, status, type);
+        return new ApiResponse<List<PromotionListDto>>(result);
     }
 
     [HttpGet("stats")]
@@ -48,6 +49,10 @@ public class PromotionController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [SwaggerOperation(
+        Summary = "Cập nhật thông tin khuyến mãi",
+        Description = "Cập nhật thông tin khuyến mãi theo ID. Ghi audit log. Chỉ dành cho admin/staff."
+    )]
     public async Task<ApiResponse<bool>> UpdatePromotion(Guid id, UpdatePromotionDto dto)
     {
         var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
@@ -60,17 +65,26 @@ public class PromotionController : ControllerBase
         return new ApiResponse<bool>(true, "Promotion updated");
     }
 
-    [HttpPatch("{id}/deactivate")]
-    public async Task<ApiResponse<bool>> DeactivatePromotion(Guid id)
+    [HttpPatch("{id}/status")]
+    [SwaggerOperation(
+        Summary = "Cập nhật trạng thái khuyến mãi",
+        Description = "Thay đổi trạng thái của khuyến mãi (Active, Inactive). Ghi audit log. Chỉ dành cho admin/staff."
+    )]
+    public async Task<ApiResponse<bool>> UpdatePromotionStatus(
+    Guid id,
+    UpdatePromotionStatusDto dto)
     {
         var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
 
-        var result = await _service.DeactivatePromotionAsync(id, userId);
+        var result = await _service.UpdatePromotionStatusAsync(
+            id,
+            dto.Status,
+            userId);
 
         if (!result)
             return new ApiResponse<bool>("Promotion not found");
 
-        return new ApiResponse<bool>(true, "Promotion deactivated");
+        return new ApiResponse<bool>(true, "Promotion status updated");
     }
 
     [HttpDelete("{id}")]

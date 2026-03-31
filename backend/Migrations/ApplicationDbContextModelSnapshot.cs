@@ -261,6 +261,12 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
                     b.Property<string>("Email")
                         .HasColumnType("text");
 
@@ -274,6 +280,9 @@ namespace backend.Migrations
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("BranchId");
 
@@ -319,6 +328,9 @@ namespace backend.Migrations
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
                     b.Property<TimeOnly>("EndTime")
                         .HasColumnType("time without time zone");
 
@@ -333,6 +345,9 @@ namespace backend.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
                         .HasColumnType("text");
 
                     b.Property<Guid>("TrainerStaffId")
@@ -360,6 +375,12 @@ namespace backend.Migrations
 
                     b.Property<string>("CancelReason")
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("CheckedInAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("SessionNote")
                         .HasColumnType("text");
@@ -608,25 +629,46 @@ namespace backend.Migrations
                     b.Property<Guid>("AssignedToStaffId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("BranchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ContactCount")
+                        .HasColumnType("integer");
+
                     b.Property<Guid?>("ConvertedMemberUserId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastContactedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LostReason")
                         .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Note")
+                        .HasColumnType("text");
+
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Source")
-                        .HasColumnType("text");
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SourceId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -642,7 +684,38 @@ namespace backend.Migrations
                     b.HasIndex("ConvertedMemberUserId")
                         .IsUnique();
 
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("Phone")
+                        .IsUnique();
+
+                    b.HasIndex("SourceId");
+
                     b.ToTable("Leads");
+                });
+
+            modelBuilder.Entity("backend.Models.LeadSource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LeadSources");
                 });
 
             modelBuilder.Entity("backend.Models.Member", b =>
@@ -697,6 +770,28 @@ namespace backend.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("backend.Models.PTProfile", b =>
+                {
+                    b.Property<Guid>("StaffUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BioDescription")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Certificate")
+                        .HasColumnType("text");
+
+                    b.Property<int>("ExperienceYears")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Specialization")
+                        .HasColumnType("text");
+
+                    b.HasKey("StaffUserId");
+
+                    b.ToTable("PTProfiles");
                 });
 
             modelBuilder.Entity("backend.Models.Package", b =>
@@ -1017,13 +1112,18 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("RoomNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("RoomId");
 
-                    b.HasIndex("BranchId");
+                    b.HasIndex("BranchId", "RoomNumber")
+                        .IsUnique();
 
                     b.ToTable("Rooms");
                 });
@@ -1457,9 +1557,25 @@ namespace backend.Migrations
                         .WithOne("Lead")
                         .HasForeignKey("backend.Models.Lead", "ConvertedMemberUserId");
 
+                    b.HasOne("backend.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("backend.Models.LeadSource", "Source")
+                        .WithMany("Leads")
+                        .HasForeignKey("SourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("AssignedToStaff");
 
                     b.Navigation("ConvertedMember");
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Source");
                 });
 
             modelBuilder.Entity("backend.Models.Member", b =>
@@ -1482,6 +1598,17 @@ namespace backend.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("backend.Models.PTProfile", b =>
+                {
+                    b.HasOne("backend.Models.Staff", "Staff")
+                        .WithOne("PTProfile")
+                        .HasForeignKey("backend.Models.PTProfile", "StaffUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Staff");
                 });
 
             modelBuilder.Entity("backend.Models.PackageFeature", b =>
@@ -1655,6 +1782,11 @@ namespace backend.Migrations
                     b.Navigation("Payment");
                 });
 
+            modelBuilder.Entity("backend.Models.LeadSource", b =>
+                {
+                    b.Navigation("Leads");
+                });
+
             modelBuilder.Entity("backend.Models.Member", b =>
                 {
                     b.Navigation("AccessCard");
@@ -1688,6 +1820,8 @@ namespace backend.Migrations
 
             modelBuilder.Entity("backend.Models.Staff", b =>
                 {
+                    b.Navigation("PTProfile");
+
                     b.Navigation("TeachingClasses");
                 });
 

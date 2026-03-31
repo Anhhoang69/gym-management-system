@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.DTOs.Package;
+using backend.Enums;
 using backend.Helpers;
 using backend.Interfaces;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace backend.Controllers;
 
@@ -17,9 +19,13 @@ public class PackageController : ControllerBase
     }
 
     [HttpGet]
+    [SwaggerOperation(
+        Summary = "Lấy danh sách gói tập",
+        Description = "Trả về danh sách gói tập với bộ lọc theo search, status và tier."
+    )]
     public async Task<ApiResponse<List<PackageDto>>> GetPackages(
         string? search,
-        string? status,
+        PackageStatus? status,
         string? tier)
     {
         var result = await _service.GetPackagesAsync(search, status, tier);
@@ -28,6 +34,10 @@ public class PackageController : ControllerBase
     }
 
     [HttpGet("stats")]
+    [SwaggerOperation(
+        Summary = "Lấy thống kê gói tập",
+        Description = "Trả về số liệu thống kê về các gói tập."
+    )]
     public async Task<ApiResponse<PackageStatsDto>> GetStats()
     {
         var result = await _service.GetPackageStatsAsync();
@@ -36,6 +46,10 @@ public class PackageController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [SwaggerOperation(
+        Summary = "Lấy chi tiết gói tập",
+        Description = "Trả về thông tin chi tiết của một gói tập theo ID."
+    )]
     public async Task<ApiResponse<PackageDto?>> GetPackage(Guid id)
     {
         var result = await _service.GetPackageAsync(id);
@@ -47,6 +61,10 @@ public class PackageController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [SwaggerOperation(
+        Summary = "Cập nhật thông tin gói tập",
+        Description = "Cập nhật thông tin gói tập theo ID. Ghi audit log. Chỉ dành cho admin/staff."
+    )]
     public async Task<ApiResponse<bool>> UpdatePackage(Guid id, UpdatePackageDto dto)
     {
         var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
@@ -59,20 +77,33 @@ public class PackageController : ControllerBase
         return new ApiResponse<bool>(true, "Package updated");
     }
 
-    [HttpPatch("{id}/deactivate")]
-    public async Task<ApiResponse<bool>> DeactivatePackage(Guid id)
+    [HttpPatch("{id}/status")]
+    [SwaggerOperation(
+        Summary = "Cập nhật trạng thái gói tập",
+        Description = "Thay đổi trạng thái của gói tập (Active, Inactive). Ghi audit log. Chỉ dành cho admin/staff."
+    )]
+    public async Task<ApiResponse<bool>> UpdatePackageStatus(
+    Guid id,
+    UpdatePackageStatusDto dto)
     {
         var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
 
-        var result = await _service.DeactivatePackageAsync(id, userId);
+        var result = await _service.UpdatePackageStatusAsync(
+            id,
+            dto.Status,
+            userId);
 
         if (!result)
             return new ApiResponse<bool>("Package not found");
 
-        return new ApiResponse<bool>(true, "Package deactivated");
+        return new ApiResponse<bool>(true, "Package status updated");
     }
 
     [HttpDelete("{id}")]
+    [SwaggerOperation(
+        Summary = "Xóa gói tập",
+        Description = "Xóa gói tập theo ID. Ghi audit log. Chỉ dành cho admin/staff."
+    )]
     public async Task<ApiResponse<bool>> DeletePackage(Guid id)
     {
         var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");

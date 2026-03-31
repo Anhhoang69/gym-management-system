@@ -11,47 +11,47 @@ using backend.Helpers;
 namespace backend.Services;
 
 public class UserService : IUserService
+
 {
     private readonly ApplicationDbContext _context;
     private readonly IMapper _mapper;
+    private readonly IAuditLogService _auditLogService;
 
-    public UserService(ApplicationDbContext context, IMapper mapper)
+    public UserService(ApplicationDbContext context, IMapper mapper, IAuditLogService auditLogService)
     {
         _context = context;
         _mapper = mapper;
+        _auditLogService = auditLogService;
     }
 
     // ================= LIST =================
 
-    public async Task<PagedResult<UserDto>> GetUsersAsync(
-    int page,
-    int pageSize,
-    string? search,
-    string? status,
-    Guid? branchId,
-    string? role)
+
+    public async Task<PagedResult<UserListDto>> GetUserListAsync(
+            int page,
+            int pageSize,
+            string? search,
+            UserStatus? status,
+            Guid? branchId,
+            string? role)
     {
         var query = _context.Users
+            .Include(x => x.Staff)
+                .ThenInclude(s => s.Branch)
             .AsNoTracking()
             .AsQueryable();
 
-        // ================= SEARCH =================
         if (!string.IsNullOrWhiteSpace(search))
         {
             var keyword = $"%{search}%";
-
             query = query.Where(x =>
                 EF.Functions.ILike(x.FullName ?? "", keyword) ||
                 EF.Functions.ILike(x.Email ?? "", keyword));
         }
 
-        // ================= STATUS =================
-        if (!string.IsNullOrWhiteSpace(status))
-        {
-            query = query.Where(x => x.Status.ToString() == status);
-        }
+        if (status.HasValue)
+            query = query.Where(x => x.Status == status.Value);
 
-        // ================= BRANCH =================
         if (branchId.HasValue)
         {
             query = query.Where(x =>
@@ -59,7 +59,6 @@ public class UserService : IUserService
                 x.Staff.BranchId == branchId.Value);
         }
 
-        // ================= ROLE =================
         if (!string.IsNullOrWhiteSpace(role))
         {
             if (Enum.TryParse<StaffPosition>(role, true, out var position))
@@ -79,48 +78,72 @@ public class UserService : IUserService
             }
         }
 
-        // ================= PAGINATION =================
-
         var total = await query.CountAsync();
-
         var items = await query
             .OrderByDescending(x => x.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .ProjectTo<UserDto>(_mapper.ConfigurationProvider)
+            .ProjectTo<UserListDto>(_mapper.ConfigurationProvider)
             .ToListAsync();
 
-
-        // lấy roles
+        // Gán role cho từng user
+        var userIds = items.Select(x => x.UserId).ToList();
         var roles = await _context.UserRoles
+            .Where(x => userIds.Contains(x.UserId))
             .Join(_context.Roles,
                 ur => ur.RoleId,
                 r => r.Id,
                 (ur, r) => new { ur.UserId, r.Name })
             .ToDictionaryAsync(x => x.UserId, x => x.Name);
-
-
-        // gán role vào DTO
         foreach (var user in items)
         {
             if (roles.TryGetValue(user.UserId, out var roleName))
-            {
                 user.Role = roleName;
-            }
         }
 
-        return new PagedResult<UserDto>(items, total, page, pageSize);
+        return new PagedResult<UserListDto>(items, total, page, pageSize);
     }
 
     // ================= DETAIL =================
 
     public async Task<UserDto?> GetUserAsync(Guid id)
     {
-        return await _context.Users
+        var user = await _context.Users
+            .Include(x => x.Member)
+            .Include(x => x.Staff)
+                .ThenInclude(s => s.Branch)
+            .Include(x => x.Staff)
+                .ThenInclude(s => s.PTProfile)
             .AsNoTracking()
-            .Where(x => x.Id == id)
-            .ProjectTo<UserDto>(_mapper.ConfigurationProvider)
+            .FirstOrDefaultAsync(x => x.Id == id);
+
+        if (user == null)
+            return null;
+
+        var dto = _mapper.Map<UserDto>(user);
+
+        // lấy role
+        var role = await _context.UserRoles
+            .Where(x => x.UserId == user.Id)
+            .Join(_context.Roles,
+                ur => ur.RoleId,
+                r => r.Id,
+                (ur, r) => r.Name)
             .FirstOrDefaultAsync();
+
+        dto.Role = role;
+
+        // trainer profile
+        if (dto.StaffPosition == StaffPosition.PT ||
+            dto.StaffPosition == StaffPosition.HeadPT)
+        {
+            if (user.Staff?.PTProfile != null)
+            {
+                dto.TrainerProfile = _mapper.Map<PTProfileDto>(user.Staff.PTProfile);
+            }
+        }
+
+        return dto;
     }
 
     // ================= UPDATE =================
@@ -129,60 +152,78 @@ public class UserService : IUserService
     {
         var user = await _context.Users
             .Include(x => x.Staff)
+                .ThenInclude(s => s.PTProfile)
             .FirstOrDefaultAsync(x => x.Id == id);
 
         if (user == null)
             return false;
 
+        // ===== UPDATE BASIC INFO =====
+
         _mapper.Map(dto, user);
 
-        // update staff info
-        if (user.Staff != null && dto.BranchId.HasValue)
+        // ===== UPDATE STAFF INFO =====
+
+        if (user.Staff != null)
         {
-            user.Staff.BranchId = dto.BranchId.Value;
+            if (dto.BranchId.HasValue)
+                user.Staff.BranchId = dto.BranchId.Value;
 
             if (dto.StaffPosition.HasValue)
                 user.Staff.Position = dto.StaffPosition.Value;
         }
 
+        // ===== UPDATE PT PROFILE =====
+
+        if ((user.Staff?.Position == StaffPosition.PT ||
+             user.Staff?.Position == StaffPosition.HeadPT)
+            && dto.TrainerProfile != null)
+        {
+            var profile = user.Staff.PTProfile;
+
+            if (profile == null)
+            {
+                profile = new PTProfile
+                {
+                    StaffUserId = user.Id
+                };
+
+                user.Staff.PTProfile = profile;
+            }
+
+            _mapper.Map(dto.TrainerProfile, profile);
+        }
+
         user.UpdatedAt = DateTime.UtcNow;
 
-        _context.AuditLogs.Add(new AuditLog
-        {
-            AuditLogId = Guid.NewGuid(),
-            UserId = adminId,
-            EntityType = "User",
-            EntityId = id,
-            Action = "UpdateUser",
-            CreatedAt = DateTime.UtcNow
-        });
+        // ===== AUDIT LOG =====
+
+        _auditLogService.Add(_auditLogService.CreateLog(
+            adminId,
+            "User",
+            id,
+            "UpdateUser"));
 
         await _context.SaveChangesAsync();
 
         return true;
     }
 
-    // ================= DEACTIVATE =================
-
-    public async Task<bool> DeactivateUserAsync(Guid id, Guid adminId)
+    public async Task<bool> UpdateUserStatusAsync(Guid id, UserStatus status, Guid adminId)
     {
         var user = await _context.Users.FindAsync(id);
 
         if (user == null)
             return false;
 
-        user.Status = UserStatus.Inactive;
+        user.Status = status;
         user.UpdatedAt = DateTime.UtcNow;
 
-        _context.AuditLogs.Add(new AuditLog
-        {
-            AuditLogId = Guid.NewGuid(),
-            UserId = adminId,
-            EntityType = "User",
-            EntityId = id,
-            Action = "DeactivateUser",
-            CreatedAt = DateTime.UtcNow
-        });
+        _auditLogService.Add(_auditLogService.CreateLog(
+            adminId,
+            "User",
+            id,
+            $"UpdateUserStatus:{status}"));
 
         await _context.SaveChangesAsync();
 

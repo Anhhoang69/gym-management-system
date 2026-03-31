@@ -4,5 +4,5 @@ public enum RoomStatus
 {
     Active,
     Maintenance,
-    Closed
+    Inactive
 }

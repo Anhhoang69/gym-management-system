@@ -1,15 +1,16 @@
 using backend.DTOs.User;
 using backend.Helpers;
-
+using backend.Enums;
 namespace backend.Interfaces;
 
 public interface IUserService
 {
-    Task<PagedResult<UserDto>> GetUsersAsync(
+
+    Task<PagedResult<UserListDto>> GetUserListAsync(
         int page,
         int pageSize,
         string? search,
-        string? status,
+        UserStatus? status,
         Guid? branchId,
         string? role);
 
@@ -17,7 +18,7 @@ public interface IUserService
 
     Task<bool> UpdateUserAsync(Guid id, UpdateUserDto dto, Guid adminId);
 
-    Task<bool> DeactivateUserAsync(Guid id, Guid adminId);
+    Task<bool> UpdateUserStatusAsync(Guid id, UserStatus status, Guid adminId);
 
     Task<UserStatsDto> GetUserStatsAsync();
 }

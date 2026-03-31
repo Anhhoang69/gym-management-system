@@ -16,6 +16,10 @@ public class ClassBooking
 
     public string? CancelReason { get; set; }
 
+    public DateTime? CancelledAt { get; set; }
+
+    public DateTime? CheckedInAt { get; set; }
+
     // navigation
 
     public Member Member { get; set; } = null!;

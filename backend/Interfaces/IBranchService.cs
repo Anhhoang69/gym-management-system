@@ -1,14 +1,16 @@
 using backend.DTOs.Branch;
+using backend.Enums;
 
 namespace backend.Interfaces;
 
 public interface IBranchService
 {
-    Task<List<BranchListDto>> GetBranchesAsync(string? search, string? status);
 
-    Task<BranchListDto?> GetBranchAsync(Guid id);
+    Task<List<BranchListDto>> GetBranchListAsync(string? search, BranchStatus? status);
 
-    //Task<BranchListDto> CreateBranchAsync(CreateBranchDto dto, Guid userId);
+    Task<BranchDto?> GetBranchAsync(Guid id);
+
+    Task<BranchStatsDto> GetBranchStatsAsync();
 
     // Admin gửi request update
     Task<bool> UpdateBranchAsync(Guid id, UpdateBranchDto dto, Guid userId);
@@ -20,7 +22,4 @@ public interface IBranchService
 
     Task<bool> RejectBranchRequestAsync(Guid requestId, Guid approverId, string? message);
 
-    // Task<bool> CreateBranchAsync(CreateBranchDto dto, Guid userId);
-
-    // Task<bool> ApproveCreateBranchAsync(Guid requestId, Guid approverId);
 }
