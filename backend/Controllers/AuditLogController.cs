@@ -1,11 +1,13 @@
 using backend.DTOs.AuditLog;
 using backend.Helpers;
 using backend.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
 [ApiController]
 [Route("api/audit-logs")]
+[Authorize(Roles = AuthorizationRoles.AuditLogRoles)]
 public class AuditLogController : ControllerBase
 {
     private readonly IAuditLogService _service;

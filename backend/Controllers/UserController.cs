@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
 using backend.DTOs.User;
 using backend.Enums;
+using backend.Extensions;
 using backend.Helpers;
 using backend.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.AspNetCore.Annotations;
 
 [ApiController]
 [Route("api/users")]
+[Authorize(Roles = AuthorizationRoles.AdminRoles)]
 public class UserController : ControllerBase
 {
     private readonly IUserService _service;
@@ -14,6 +17,19 @@ public class UserController : ControllerBase
     public UserController(IUserService service)
     {
         _service = service;
+    }
+
+    [HttpPost]
+    [SwaggerOperation(
+        Summary = "Tạo tài khoản người dùng",
+        Description = "Actors: Super Admin, Branch Admin. Tạo mới tài khoản người dùng với phân quyền và chi nhánh theo chính sách hệ thống. Ghi audit log."
+    )]
+    public async Task<ApiResponse<UserDto>> CreateUser([FromBody] CreateUserDto dto)
+    {
+        var currentUserId = User.GetRequiredUserId();
+        var result = await _service.CreateUserAsync(dto, currentUserId);
+
+        return new ApiResponse<UserDto>(result, "User created successfully");
     }
 
     [HttpGet]
@@ -67,7 +83,7 @@ public class UserController : ControllerBase
     )]
     public async Task<ApiResponse<bool>> UpdateUser(Guid id, UpdateUserDto dto)
     {
-        var adminId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var adminId = User.GetRequiredUserId();
 
         var result = await _service.UpdateUserAsync(id, dto, adminId);
 
@@ -84,7 +100,7 @@ public class UserController : ControllerBase
     )]
     public async Task<ApiResponse<bool>> UpdateUserStatus(Guid id, UpdateUserStatusDto dto)
     {
-        var adminId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var adminId = User.GetRequiredUserId();
 
         var result = await _service.UpdateUserStatusAsync(id, dto.Status, adminId);
 

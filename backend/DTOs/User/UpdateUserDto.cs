@@ -1,11 +1,13 @@
 namespace backend.DTOs.User;
 
 using backend.Enums;
+using System.ComponentModel.DataAnnotations;
 
 public class UpdateUserDto
 {
     public string? FullName { get; set; }
 
+    [Phone(ErrorMessage = "Phone number is invalid")]
     public string? PhoneNumber { get; set; }
 
     public Gender? Gender { get; set; }

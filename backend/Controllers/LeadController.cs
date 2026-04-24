@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using backend.DTOs.Lead;
+using backend.Extensions;
 using backend.Helpers;
 using backend.Interfaces;
 using Swashbuckle.AspNetCore.Annotations;
@@ -8,6 +10,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/leads")]
+[Authorize(Roles = AuthorizationRoles.LeadManagementRoles)]
 public class LeadController : ControllerBase
 {
     private readonly ILeadService _service;
@@ -28,6 +31,17 @@ public class LeadController : ControllerBase
         return new ApiResponse<PagedResult<LeadListDto>>(result);
     }
 
+    [HttpGet("stats")]
+    [SwaggerOperation(
+        Summary = "Lấy thống kê dashboard lead",
+        Description = "Trả về số liệu tổng quan cho dashboard lead, bao gồm tổng số lead, breakdown theo trạng thái, KPI theo thời gian và top nguồn lead."
+    )]
+    public async Task<ApiResponse<LeadStatsDto>> GetStats()
+    {
+        var result = await _service.GetLeadStatsAsync();
+        return new ApiResponse<LeadStatsDto>(result);
+    }
+
     [HttpGet("{id}")]
     [SwaggerOperation(Summary = "Lấy chi tiết lead", Description = "Lấy chi tiết lead theo id")]
     public async Task<ApiResponse<LeadDto?>> GetLead(Guid id)
@@ -44,8 +58,7 @@ public class LeadController : ControllerBase
     )]
     public async Task<ApiResponse<LeadDto>> CreateLead(CreateLeadDto dto)
     {
-        // TODO: Sử dụng user id từ JWT/ClaimsPrincipal
-        var currentUserId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var currentUserId = User.GetRequiredUserId();
 
         var result = await _service.CreateLeadAsync(dto, currentUserId);
         return new ApiResponse<LeadDto>(result, "Lead created successfully");
@@ -58,7 +71,7 @@ public class LeadController : ControllerBase
     )]
     public async Task<ApiResponse<LeadDto>> UpdateLead(Guid id, UpdateLeadDto dto)
     {
-        var currentUserId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var currentUserId = User.GetRequiredUserId();
 
         var result = await _service.UpdateLeadAsync(id, dto, currentUserId);
         return new ApiResponse<LeadDto>(result, "Lead updated successfully");
@@ -71,7 +84,7 @@ public class LeadController : ControllerBase
     )]
     public async Task<ApiResponse<LeadDto>> UpdateLeadStatus(Guid id, UpdateLeadStatusDto dto)
     {
-        var currentUserId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var currentUserId = User.GetRequiredUserId();
 
         var result = await _service.UpdateLeadStatusAsync(id, dto, currentUserId);
         return new ApiResponse<LeadDto>(result, "Lead status updated successfully");
@@ -84,7 +97,7 @@ public class LeadController : ControllerBase
     )]
     public async Task<ApiResponse<LeadDto>> ContactLead(Guid id)
     {
-        var currentUserId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var currentUserId = User.GetRequiredUserId();
 
         var result = await _service.ContactLeadAsync(id, currentUserId);
         return new ApiResponse<LeadDto>(result, "Lead marked as contacted successfully");
@@ -97,8 +110,7 @@ public class LeadController : ControllerBase
     )]
     public async Task<ApiResponse<ImportLeadsResultDto>> ImportLeads([FromForm] ImportLeadsRequestDto request)
     {
-        // TODO: Sử dụng user id từ JWT/ClaimsPrincipal
-        var currentUserId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var currentUserId = User.GetRequiredUserId();
 
         var result = await _service.ImportLeadsAsync(request, currentUserId);
         return new ApiResponse<ImportLeadsResultDto>(result, "Leads imported successfully");
@@ -111,8 +123,7 @@ public class LeadController : ControllerBase
     )]
     public async Task<ApiResponse<LeadDto>> MergeLead(Guid id, MergeLeadDto request)
     {
-        // TODO: Sử dụng user id từ JWT/ClaimsPrincipal
-        var currentUserId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var currentUserId = User.GetRequiredUserId();
 
         var result = await _service.MergeLeadAsync(id, request, currentUserId);
         return new ApiResponse<LeadDto>(result, "Leads merged successfully");

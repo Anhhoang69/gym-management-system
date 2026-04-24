@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Identity;
 using backend.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace backend.Models;
 
+[Index(nameof(Email), IsUnique = true)]
+[Index(nameof(PhoneNumber), IsUnique = true)]
 public class User : IdentityUser<Guid>
 {
     public string? FullName { get; set; }
@@ -22,6 +25,10 @@ public class User : IdentityUser<Guid>
     public DateTime? UpdatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
 
+    public Guid? InitialBranchId { get; set; }
+
+    public Branch? InitialBranch { get; set; }
+
     // navigation
     public Member? Member { get; set; }
 
@@ -30,6 +37,9 @@ public class User : IdentityUser<Guid>
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
     public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+    public ICollection<OtpCode> OtpCodes { get; set; } = new List<OtpCode>();
+    public ICollection<LoginHistory> LoginHistories { get; set; } = new List<LoginHistory>();
+
     // request gửi
     public ICollection<Request> Requests { get; set; } = new List<Request>();
 

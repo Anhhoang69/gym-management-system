@@ -5,6 +5,7 @@ namespace backend.Interfaces;
 
 public interface IUserService
 {
+    Task<UserDto> CreateUserAsync(CreateUserDto dto, Guid currentUserId);
 
     Task<PagedResult<UserListDto>> GetUserListAsync(
         int page,

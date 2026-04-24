@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using backend.DTOs.Package;
 using backend.Enums;
+using backend.Extensions;
 using backend.Helpers;
 using backend.Interfaces;
 using Swashbuckle.AspNetCore.Annotations;
@@ -9,6 +11,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/packages")]
+[Authorize]
 public class PackageController : ControllerBase
 {
     private readonly IPackageService _service;
@@ -61,13 +64,14 @@ public class PackageController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = AuthorizationRoles.SuperAdminOnly)]
     [SwaggerOperation(
         Summary = "Cập nhật thông tin gói tập",
-        Description = "Cập nhật thông tin gói tập theo ID. Ghi audit log. Chỉ dành cho admin/staff."
+        Description = "Cập nhật thông tin gói tập theo ID. Ghi audit log. Chỉ dành cho SuperAdmin."
     )]
     public async Task<ApiResponse<bool>> UpdatePackage(Guid id, UpdatePackageDto dto)
     {
-        var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var userId = User.GetRequiredUserId();
 
         var result = await _service.UpdatePackageAsync(id, dto, userId);
 
@@ -78,15 +82,16 @@ public class PackageController : ControllerBase
     }
 
     [HttpPatch("{id}/status")]
+    [Authorize(Roles = AuthorizationRoles.SuperAdminOnly)]
     [SwaggerOperation(
         Summary = "Cập nhật trạng thái gói tập",
-        Description = "Thay đổi trạng thái của gói tập (Active, Inactive). Ghi audit log. Chỉ dành cho admin/staff."
+        Description = "Thay đổi trạng thái của gói tập (Active, Inactive). Ghi audit log. Chỉ dành cho SuperAdmin."
     )]
     public async Task<ApiResponse<bool>> UpdatePackageStatus(
     Guid id,
     UpdatePackageStatusDto dto)
     {
-        var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var userId = User.GetRequiredUserId();
 
         var result = await _service.UpdatePackageStatusAsync(
             id,
@@ -100,13 +105,14 @@ public class PackageController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = AuthorizationRoles.SuperAdminOnly)]
     [SwaggerOperation(
         Summary = "Xóa gói tập",
-        Description = "Xóa gói tập theo ID. Ghi audit log. Chỉ dành cho admin/staff."
+        Description = "Xóa gói tập theo ID. Ghi audit log. Chỉ dành cho SuperAdmin."
     )]
     public async Task<ApiResponse<bool>> DeletePackage(Guid id)
     {
-        var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var userId = User.GetRequiredUserId();
 
         try
         {

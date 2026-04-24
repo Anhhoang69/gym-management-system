@@ -15,8 +15,8 @@ public static class DbSeeder
         await context.Database.MigrateAsync();
 
         await SeedRoles(roleManager);
-        await SeedAdmin(userManager);
         await SeedBranch(context);
+        await SeedSystemUsers(userManager);
         await SeedRooms(context);
         await SeedPackages(context);
         await SeedStaff(context, userManager);
@@ -64,27 +64,70 @@ public static class DbSeeder
         }
     }
 
-    // ================= SUPER ADMIN =================
+    // ================= SYSTEM USERS =================
 
-    private static async Task SeedAdmin(UserManager<User> userManager)
+    private static async Task SeedSystemUsers(UserManager<User> userManager)
     {
-        var email = "admin@gym.com";
+        await EnsureUserAsync(
+            userManager,
+            email: "superadmin@gym.com",
+            fullName: "System Super Admin",
+            phoneNumber: "0900000000",
+            password: "Admin@123",
+            roleName: "SuperAdmin");
 
-        var admin = await userManager.FindByEmailAsync(email);
+        await EnsureUserAsync(
+            userManager,
+            email: "gymowner@gym.com",
+            fullName: "System Gym Owner",
+            phoneNumber: "0900000009",
+            password: "Owner@123",
+            roleName: "GymOwner");
+    }
 
-        if (admin != null) return;
+    private static async Task<User> EnsureUserAsync(
+        UserManager<User> userManager,
+        string email,
+        string fullName,
+        string phoneNumber,
+        string password,
+        string roleName)
+    {
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var normalizedPhone = new string(phoneNumber.Where(char.IsDigit).ToArray());
 
-        admin = new User
+        var user = await userManager.FindByEmailAsync(normalizedEmail);
+        if (user == null)
         {
-            Id = Guid.NewGuid(),
-            Email = email,
-            UserName = email,
-            FullName = "Super Admin"
-        };
+            user = new User
+            {
+                Id = Guid.NewGuid(),
+                Email = normalizedEmail,
+                UserName = normalizedEmail,
+                FullName = fullName,
+                PhoneNumber = normalizedPhone,
+                TwoFactorEnabled = false,
+                CreatedAt = DateTime.UtcNow
+            };
 
-        await userManager.CreateAsync(admin, "Admin@123");
+            var createResult = await userManager.CreateAsync(user, password);
+            if (!createResult.Succeeded)
+                throw new InvalidOperationException(string.Join("; ", createResult.Errors.Select(x => x.Description)));
+        }
+        else
+        {
+            user.FullName = fullName;
+            user.PhoneNumber = normalizedPhone;
+            user.UserName = normalizedEmail;
+            user.TwoFactorEnabled = false;
+            user.UpdatedAt = DateTime.UtcNow;
+            await userManager.UpdateAsync(user);
+        }
 
-        await userManager.AddToRoleAsync(admin, "SuperAdmin");
+        if (!await userManager.IsInRoleAsync(user, roleName))
+            await userManager.AddToRoleAsync(user, roleName);
+
+        return user;
     }
 
     // ================= BRANCH =================
@@ -191,7 +234,8 @@ public static class DbSeeder
             Id = Guid.NewGuid(),
             Email = "sales@gym.com",
             UserName = "sales@gym.com",
-            FullName = "Sales Staff"
+            FullName = "Sales Staff",
+            PhoneNumber = "0900000011"
         };
 
         await userManager.CreateAsync(salesUser, "User@123");
@@ -210,7 +254,8 @@ public static class DbSeeder
             Id = Guid.NewGuid(),
             Email = "pt@gym.com",
             UserName = "pt@gym.com",
-            FullName = "Trainer PT"
+            FullName = "Trainer PT",
+            PhoneNumber = "0900000012"
         };
 
         await userManager.CreateAsync(ptUser, "User@123");
@@ -239,7 +284,8 @@ public static class DbSeeder
             Id = Guid.NewGuid(),
             Email = "member@gym.com",
             UserName = "member@gym.com",
-            FullName = "Demo Member"
+            FullName = "Demo Member",
+            PhoneNumber = "0900000013"
         };
 
         await userManager.CreateAsync(memberUser, "User@123");

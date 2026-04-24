@@ -1,15 +1,17 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using backend.DTOs.Promotion;
 using backend.Enums;
+using backend.Extensions;
 using backend.Helpers;
 using backend.Interfaces;
-using System.Security.Claims;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/promotions")]
+[Authorize]
 public class PromotionController : ControllerBase
 {
     private readonly IPromotionService _service;
@@ -49,13 +51,14 @@ public class PromotionController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     [SwaggerOperation(
         Summary = "Cập nhật thông tin khuyến mãi",
         Description = "Cập nhật thông tin khuyến mãi theo ID. Ghi audit log. Chỉ dành cho admin/staff."
     )]
     public async Task<ApiResponse<bool>> UpdatePromotion(Guid id, UpdatePromotionDto dto)
     {
-        var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var userId = User.GetRequiredUserId();
 
         var result = await _service.UpdatePromotionAsync(id, dto, userId);
 
@@ -66,6 +69,7 @@ public class PromotionController : ControllerBase
     }
 
     [HttpPatch("{id}/status")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     [SwaggerOperation(
         Summary = "Cập nhật trạng thái khuyến mãi",
         Description = "Thay đổi trạng thái của khuyến mãi (Active, Inactive). Ghi audit log. Chỉ dành cho admin/staff."
@@ -74,7 +78,7 @@ public class PromotionController : ControllerBase
     Guid id,
     UpdatePromotionStatusDto dto)
     {
-        var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var userId = User.GetRequiredUserId();
 
         var result = await _service.UpdatePromotionStatusAsync(
             id,
@@ -88,9 +92,10 @@ public class PromotionController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<bool>> DeletePromotion(Guid id)
     {
-        var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var userId = User.GetRequiredUserId();
 
         try
         {

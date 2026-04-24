@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using backend.DTOs.Class;
+using backend.Extensions;
 using backend.Helpers;
 using backend.Interfaces;
 using Swashbuckle.AspNetCore.Annotations;
@@ -8,6 +10,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/classes")]
+[Authorize]
 public class ClassController : ControllerBase
 {
     private readonly IClassService _service;
@@ -51,13 +54,14 @@ public class ClassController : ControllerBase
     // ================= CREATE =================
 
     [HttpPost]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     [SwaggerOperation(
         Summary = "Tạo mới một lớp học",
         Description = "Tạo lớp học mới với thông tin từ DTO. Kiểm tra xung đột trainer và room. Chỉ dành cho admin/staff."
     )]
     public async Task<ApiResponse<Guid>> CreateClass(CreateClassDto dto)
     {
-        var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c"); // TODO: lấy từ JWT
+        var userId = User.GetRequiredUserId();
 
         var result = await _service.CreateClassAsync(dto, userId);
 
@@ -67,13 +71,14 @@ public class ClassController : ControllerBase
     // ================= UPDATE =================
 
     [HttpPut("{id}")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     [SwaggerOperation(
         Summary = "Cập nhật thông tin lớp học",
         Description = "Cập nhật thông tin lớp học theo ID. Không cho phép cập nhật lớp đã hoàn thành. Chỉ dành cho admin/staff."
     )]
     public async Task<ApiResponse<bool>> UpdateClass(Guid id, UpdateClassDto dto)
     {
-        var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var userId = User.GetRequiredUserId();
 
         var result = await _service.UpdateClassAsync(id, dto, userId);
 
@@ -83,13 +88,14 @@ public class ClassController : ControllerBase
     // ================= UPDATE STATUS =================
 
     [HttpPatch("{id}/status")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     [SwaggerOperation(
         Summary = "Cập nhật trạng thái lớp học",
         Description = "Thay đổi trạng thái của lớp học (Scheduled, InProgress, Completed, Cancelled). Ghi audit log. Chỉ dành cho admin/staff."
     )]
     public async Task<ApiResponse<bool>> UpdateClassStatus(Guid id, UpdateClassStatusDto dto)
     {
-        var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var userId = User.GetRequiredUserId();
 
         var result = await _service.UpdateClassStatusAsync(id, dto.Status, userId);
 
@@ -102,13 +108,14 @@ public class ClassController : ControllerBase
     // ================= DELETE =================
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     [SwaggerOperation(
         Summary = "Xóa lớp học",
         Description = "Xóa lớp học theo ID. Không cho phép xóa lớp đã hoàn thành hoặc có bookings. Ghi audit log. Chỉ dành cho admin/staff."
     )]
     public async Task<ApiResponse<bool>> DeleteClass(Guid id)
     {
-        var userId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c");
+        var userId = User.GetRequiredUserId();
 
         var result = await _service.DeleteClassAsync(id, userId);
 
@@ -118,13 +125,14 @@ public class ClassController : ControllerBase
     // ================= BOOKING =================
 
     [HttpPost("{id}/book")]
+    [Authorize(Roles = AuthorizationRoles.MemberOnly)]
     [SwaggerOperation(
         Summary = "Đặt chỗ lớp học",
         Description = "Member đặt chỗ cho một lớp học. Kiểm tra class available, không xung đột lịch, chưa book, và còn chỗ trống. Cho phép rebook nếu đã cancel trước đó."
     )]
     public async Task<ApiResponse<bool>> BookClass(Guid id)
     {
-        var memberUserId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c"); // TODO: lấy từ JWT
+        var memberUserId = User.GetRequiredUserId();
 
         var result = await _service.BookClassAsync(id, memberUserId);
 
@@ -132,13 +140,14 @@ public class ClassController : ControllerBase
     }
 
     [HttpPatch("{id}/cancel-booking")]
+    [Authorize(Roles = AuthorizationRoles.MemberOnly)]
     [SwaggerOperation(
         Summary = "Hủy đặt chỗ lớp học",
         Description = "Member hủy đặt chỗ cho lớp học đã book. Cập nhật status thành Cancelled và ghi lý do hủy."
     )]
     public async Task<ApiResponse<bool>> CancelBooking(Guid id, CancelBookingDto dto)
     {
-        var memberUserId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c"); // TODO: lấy từ JWT
+        var memberUserId = User.GetRequiredUserId();
 
         var result = await _service.CancelBookingAsync(id, memberUserId, dto.CancelReason);
 
@@ -146,13 +155,14 @@ public class ClassController : ControllerBase
     }
 
     [HttpGet("my-bookings")]
+    [Authorize(Roles = AuthorizationRoles.MemberOnly)]
     [SwaggerOperation(
         Summary = "Lấy danh sách đặt chỗ của member",
         Description = "Trả về danh sách các lớp học mà member đã đặt chỗ, bao gồm thông tin class, trainer, room và trạng thái booking."
     )]
     public async Task<ApiResponse<List<ClassBookingDto>>> GetMyBookings()
     {
-        var memberUserId = Guid.Parse("daafff73-5a97-449e-9779-3e179d0db93c"); // TODO: lấy từ JWT
+        var memberUserId = User.GetRequiredUserId();
 
         var result = await _service.GetMyBookingsAsync(memberUserId);
 

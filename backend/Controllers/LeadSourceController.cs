@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using backend.DTOs.Lead;
 using backend.Helpers;
@@ -8,6 +9,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/lead-sources")]
+[Authorize(Roles = AuthorizationRoles.LeadManagementRoles)]
 public class LeadSourceController : ControllerBase
 {
     private readonly ILeadSourceService _service;

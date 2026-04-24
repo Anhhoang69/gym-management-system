@@ -33,6 +33,8 @@ public class UserDto
 
     public string? BranchName { get; set; }
 
+    public Guid? InitialBranchId { get; set; }
+
     public StaffPosition? StaffPosition { get; set; }
 
     // role

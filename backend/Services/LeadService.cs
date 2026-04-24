@@ -252,13 +252,13 @@ public class LeadService : ILeadService
 
         if (request.CreatedFrom.HasValue)
         {
-            var createdFrom = request.CreatedFrom.Value.Date;
+            var createdFrom = GetUtcDayStart(request.CreatedFrom.Value);
             query = query.Where(l => l.CreatedAt >= createdFrom);
         }
 
         if (request.CreatedTo.HasValue)
         {
-            var createdToExclusive = request.CreatedTo.Value.Date.AddDays(1);
+            var createdToExclusive = GetUtcDayStart(request.CreatedTo.Value).AddDays(1);
             query = query.Where(l => l.CreatedAt < createdToExclusive);
         }
 
@@ -271,6 +271,72 @@ public class LeadService : ILeadService
             .ToListAsync();
 
         return new PagedResult<LeadListDto>(items, total, page, pageSize);
+    }
+
+    public async Task<LeadStatsDto> GetLeadStatsAsync()
+    {
+        var now = DateTime.UtcNow;
+        var today = GetUtcDayStart(now);
+        var weekStart = today.AddDays(-((int)today.DayOfWeek + 6) % 7);
+        var monthStart = GetUtcMonthStart(today);
+
+        var totalLeads = await _context.Leads.CountAsync();
+
+        var statusCounts = await _context.Leads
+            .GroupBy(l => l.Status)
+            .Select(g => new
+            {
+                Status = g.Key,
+                Count = g.Count()
+            })
+            .ToListAsync();
+
+        var leadsCreatedToday = await _context.Leads
+            .CountAsync(l => l.CreatedAt >= today);
+
+        var leadsCreatedThisWeek = await _context.Leads
+            .CountAsync(l => l.CreatedAt >= weekStart);
+
+        var leadsCreatedThisMonth = await _context.Leads
+            .CountAsync(l => l.CreatedAt >= monthStart);
+
+        var averageScore = await _context.Leads
+            .Select(l => (double?)l.Score)
+            .AverageAsync() ?? 0d;
+
+        var topSources = await _context.Leads
+            .Where(l => l.Source != null)
+            .GroupBy(l => new { l.SourceId, l.Source!.Name })
+            .Select(g => new LeadSourceStatsDto
+            {
+                SourceId = g.Key.SourceId,
+                SourceName = g.Key.Name,
+                LeadCount = g.Count()
+            })
+            .OrderByDescending(x => x.LeadCount)
+            .ThenBy(x => x.SourceName)
+            .Take(5)
+            .ToListAsync();
+
+        var contactedLeads = GetStatusCount(statusCounts, LeadStatus.Contacted);
+        var convertedLeads = GetStatusCount(statusCounts, LeadStatus.Converted);
+
+        return new LeadStatsDto
+        {
+            TotalLeads = totalLeads,
+            NewLeads = GetStatusCount(statusCounts, LeadStatus.New),
+            ContactedLeads = contactedLeads,
+            QualifiedLeads = GetStatusCount(statusCounts, LeadStatus.Qualified),
+            ConvertedLeads = convertedLeads,
+            LostLeads = GetStatusCount(statusCounts, LeadStatus.Lost),
+            LeadsCreatedToday = leadsCreatedToday,
+            LeadsCreatedThisWeek = leadsCreatedThisWeek,
+            LeadsCreatedThisMonth = leadsCreatedThisMonth,
+            AverageScore = decimal.Round((decimal)averageScore, 2),
+            ContactRate = totalLeads == 0 ? 0 : decimal.Round(contactedLeads * 100m / totalLeads, 2),
+            ConversionRate = totalLeads == 0 ? 0 : decimal.Round(convertedLeads * 100m / totalLeads, 2),
+            TopSources = topSources
+        };
     }
 
     public async Task<LeadDto> UpdateLeadAsync(Guid id, UpdateLeadDto dto, Guid currentUserId)
@@ -812,6 +878,16 @@ public class LeadService : ILeadService
         return value?.Trim() ?? string.Empty;
     }
 
+    private static DateTime GetUtcDayStart(DateTime value)
+    {
+        return new DateTime(value.Year, value.Month, value.Day, 0, 0, 0, DateTimeKind.Utc);
+    }
+
+    private static DateTime GetUtcMonthStart(DateTime value)
+    {
+        return new DateTime(value.Year, value.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+    }
+
     private static string NormalizeEmail(string? value)
     {
         return value?.Trim().ToLowerInvariant() ?? string.Empty;
@@ -829,6 +905,16 @@ public class LeadService : ILeadService
         score += contactCount * 10;
 
         return score;
+    }
+    private static int GetStatusCount(IEnumerable<dynamic> statusCounts, LeadStatus status)
+    {
+        foreach (var item in statusCounts)
+        {
+            if (item.Status == status)
+                return item.Count;
+        }
+
+        return 0;
     }
 
     private sealed class ImportLeadCsvRow

@@ -62,6 +62,8 @@ public class ApplicationDbContext
 
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<OtpCode> OtpCodes => Set<OtpCode>();
+    public DbSet<LoginHistory> LoginHistories => Set<LoginHistory>();
     public DbSet<Request> Requests => Set<Request>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -87,6 +89,24 @@ public class ApplicationDbContext
             .HasOne(s => s.User)
             .WithOne(u => u.Staff)
             .HasForeignKey<Staff>(s => s.UserId);
+
+        builder.Entity<User>()
+            .HasOne(u => u.InitialBranch)
+            .WithMany()
+            .HasForeignKey(u => u.InitialBranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<OtpCode>()
+            .HasOne(x => x.User)
+            .WithMany(x => x.OtpCodes)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<LoginHistory>()
+            .HasOne(x => x.User)
+            .WithMany(x => x.LoginHistories)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<PTProfile>()
             .HasKey(x => x.StaffUserId);
