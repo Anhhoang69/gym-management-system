@@ -99,7 +99,29 @@ button {
     color 0.2s;
 }
 
+.user-row {
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.05s ease;
+}
+
+.user-row:hover {
+  background: #f9fafb;
+}
+
+.user-row:active {
+  background: #eef2ff;
+  transform: scale(0.998);
+}
+
+.selected-row {
+  background: #eef2ff;
+}
+
+.selected-row:hover {
+  background: #e0e7ff;
+}
+
 a {
-  text-decoration: none;
-  color: inherit;
+  text-decoration: none !important;
+  color: inherit !important;
 }

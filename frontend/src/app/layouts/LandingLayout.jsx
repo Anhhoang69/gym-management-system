@@ -9,7 +9,8 @@ export default function LandingLayout() {
       <LandingHeader />
 
       {/* Nội dung trang */}
-      <main className="flex-1">
+      {/* 👇 QUAN TRỌNG */}
+      <main className="flex-1 pt-[80px] overflow-hidden">
         <Outlet />
       </main>
 

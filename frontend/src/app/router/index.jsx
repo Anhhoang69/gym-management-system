@@ -11,6 +11,7 @@ import PackagePage from '../../features/landing/pages/PackagePage.jsx';
 import ContactPage from '../../features/landing/pages/ContactPage.jsx';
 import NotFoundPage from '../../shared/components/NotFoundPage.jsx';
 import FAQPage from '../../features/landing/pages/FAQPage.jsx';
+import AIChatPage from '../../features/landing/pages/AIChatPage.jsx';
 
 import LoginPage from "../../features/auth/pages/LoginPage"
 
@@ -39,6 +40,7 @@ export default function AppRouter() {
           <Route path="branches" element={<BranchesPage />} />
           <Route path="branches/:city" element={<BranchCityPage />} />
           <Route path="branches/:city/:slug" element={<BranchDetailPage />} />
+          <Route path="ai" element={<AIChatPage />} />
           <Route path="faqs" element={<FAQPage />} />
           <Route path="packages" element={<PackagePage />} />
           <Route path="pt" element={<PtPage />} />

@@ -1,10 +1,20 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 import StatsCards from "../components/StatsCards"
 import PackageFilters from "../components/PackageFilters"
 import PackageGrid from "../components/PackageGrid"
 import PackageForm from "../components/PackageForm"
 import Pagination from "../components/Pagination"
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal"
+
+import {
+  getPackages,
+  getPackageStats,
+  getPackageById,
+  updatePackage,
+  deletePackage,
+  updatePackageStatus
+} from "../services/packageService"
 
 import {
   CModal,
@@ -22,98 +32,294 @@ import {
 
 function PackageManagementPage() {
 
+  const [packages, setPackages] = useState([])
+
+  const [statsData, setStatsData] = useState({
+    totalPackages: 0,
+    activePackages: 0,
+    inactivePackages: 0,
+    totalSubscribers: 0
+  })
+
   const [showForm, setShowForm] = useState(false)
   const [editingPackage, setEditingPackage] = useState(null)
 
-  const stats = [
-    {
-      title: "Tổng Số Gói",
-      value: "4",
-      change: "+8% so với tháng trước",
-      icon: cilLayers,
-      bg: "#FFF3CD",
-      color: "#F59E0B",
-      positive: true
-    },
-    {
-      title: "Đăng Ký Hoạt Động",
-      value: "2,173",
-      change: "+12% so với tháng trước",
-      icon: cilCheckCircle,
-      bg: "#DCFCE7",
-      color: "#22C55E",
-      positive: true
-    },
-    {
-      title: "Giá Trị Gói TB",
-      value: "$477",
-      change: "+5% so với tháng trước",
-      icon: cilDollar,
-      bg: "#F3E8FF",
-      color: "#A855F7",
-      positive: true
-    },
-    {
-      title: "Doanh Thu Tháng Này",
-      value: "$1036.6K",
-      change: "+15% so với tháng trước",
-      icon: cilChartLine,
-      bg: "#FFEAD5",
-      color: "#FB923C",
-      positive: true
-    }
-  ]
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletingPackage, setDeletingPackage] = useState(null)
 
-  // MOCK DATA
-  const packages = Array.from({ length: 12 }, (_, i) => ({
-    id: i + 1,
-    name: `Gói ${i + 1}`,
-    duration: `${3 + i} tháng`,
-    price: 199 + i * 50,
-    popularity: 60 + i,
-    members: 120 + i * 10,
-    features: [
-      "Sử dụng thiết bị gym",
-      "Locker miễn phí",
-      "Ứng dụng mobile"
-    ]
-  }))
-
-  // PAGINATION
-  const pageSize = 4
   const [page, setPage] = useState(1)
+  const pageSize = 4
+
+  const loadPackages = async () => {
+
+
+    try {
+
+      const data = await getPackages()
+
+      const mapped = data.map(p => ({
+
+        id: p.packageId,
+
+        name: p.name,
+        description: p.description,
+
+        tier: p.tier,
+        status: p.status?.toLowerCase(),
+
+        maxCheckinsPerWeek: p.maxCheckinsPerWeek,
+        isPtIncluded: p.isPtIncluded,
+
+        features: p.features || [],
+        pricings: p.pricings || [],
+
+        totalSubscribers: p.totalSubscribers,
+
+        thumbnail: p.thumbnailUrl
+
+      }))
+
+      setPackages(mapped)
+
+    } catch (err) {
+
+      console.error("Load packages failed:", err)
+
+    }
+
+
+  }
+
+  const loadStats = async () => {
+
+
+    try {
+
+      const data = await getPackageStats()
+
+      setStatsData(data)
+
+    } catch (err) {
+
+      console.error("Load package stats failed:", err)
+
+    }
+
+
+  }
+
+  useEffect(() => {
+
+
+    loadPackages()
+    loadStats()
+
+
+  }, [])
 
   const totalPages = Math.ceil(packages.length / pageSize)
 
   const start = (page - 1) * pageSize
-  const currentPackages = packages.slice(start, start + pageSize)
+
+  const currentPackages =
+    packages.slice(start, start + pageSize)
 
   const handleCreate = () => {
+
+
     setEditingPackage(null)
     setShowForm(true)
+
+
   }
 
-  const handleEdit = (pkg) => {
-    setEditingPackage(pkg)
-    setShowForm(true)
+  const handleEdit = async (pkg) => {
+
+    try {
+
+      const data = await getPackageById(pkg.id)
+
+      const mapped = {
+
+        id: data.packageId,
+
+        name: data.name,
+        description: data.description,
+
+        tier: data.tier,
+        status: data.status?.toLowerCase(),
+
+        maxCheckinsPerWeek: data.maxCheckinsPerWeek,
+        isPtIncluded: data.isPtIncluded,
+
+        privatePtLimit: data.privatePtLimit,
+        groupPtLimit: data.groupPtLimit,
+
+        features: data.features || [],
+        pricings: data.pricings || [],
+
+        policy: data.policy || {},
+
+        totalSubscribers: data.totalSubscribers
+
+      }
+
+      setEditingPackage(mapped)
+
+      setShowForm(true)
+
+    } catch (err) {
+
+      console.error("Load package detail failed:", err)
+
+    }
+
+  }
+  const handleSubmit = async (data) => {
+
+    try {
+
+      const payload = {
+
+        name: data.name,
+        description: data.description,
+
+        thumbnailUrl: data.thumbnailUrl || "",
+
+        tier: data.tier,
+        isPtIncluded: data.isPtIncluded,
+
+        privatePtLimit: data.privatePtLimit || 0,
+        groupPtLimit: data.groupPtLimit || 0,
+
+        maxCheckinsPerWeek: data.maxCheckinsPerWeek,
+
+        badgeLabel: data.badgeLabel || "",
+
+        displayOrder: data.displayOrder || 0,
+
+        features: data.features || [],
+
+        pricings: data.pricings || [],
+
+        policy: data.policy
+
+      }
+
+      await updatePackage(editingPackage.id, payload)
+
+      setShowForm(false)
+
+      await loadPackages()
+
+    } catch (err) {
+
+      console.error("Update package failed:", err)
+
+    }
+
   }
 
-  const handleSubmit = (data) => {
-    console.log("SAVE PACKAGE", data)
-    setShowForm(false)
+  const stats = [
+
+
+    {
+      title: "Tổng Số Gói",
+      value: statsData.totalPackages,
+      icon: cilLayers,
+      bg: "#FFF3CD",
+      color: "#F59E0B"
+    },
+
+    {
+      title: "Gói Đang Hoạt Động",
+      value: statsData.activePackages,
+      icon: cilCheckCircle,
+      bg: "#DCFCE7",
+      color: "#22C55E"
+    },
+
+    {
+      title: "Gói Ngừng Bán",
+      value: statsData.inactivePackages,
+      icon: cilDollar,
+      bg: "#F3E8FF",
+      color: "#A855F7"
+    },
+
+    {
+      title: "Tổng Hội Viên",
+      value: statsData.totalSubscribers,
+      icon: cilChartLine,
+      bg: "#FFEAD5",
+      color: "#FB923C"
+    }
+
+
+  ]
+
+  const handleDeleteClick = (pkg) => {
+
+    setDeletingPackage(pkg)
+
+    setShowDeleteModal(true)
+
+  }
+
+  const handleDelete = async () => {
+
+    if (!deletingPackage) return
+
+    try {
+
+      await deletePackage(deletingPackage.id)
+
+      setPackages(prev =>
+        prev.filter(p => p.id !== deletingPackage.id)
+      )
+
+      setShowDeleteModal(false)
+      setDeletingPackage(null)
+
+      await loadStats()
+
+    } catch (err) {
+
+      console.error("Delete package failed:", err)
+
+    }
+
+  }
+
+  const handleToggleStatus = async (id, currentStatus) => {
+    try {
+      const newStatus =
+        currentStatus === "active" ? "Inactive" : "Active"
+
+      await updatePackageStatus(id, newStatus)
+
+      await loadPackages()
+      await loadStats()
+    } catch (err) {
+      console.error("Update status failed:", err)
+    }
   }
 
   return (
+
+
     <div>
 
       {/* HEADER */}
+
       <div className="d-flex justify-content-between align-items-center mb-4">
 
         <div>
-          <h3 className="fw-bold mb-1">Quản Lý Gói Tập</h3>
-          <p className="text-muted mb-0">
-            Quản lý các gói tập và giá
-          </p>
+
+          <h3 className="fw-bold mb-1">
+            Quản Lý Gói Tập
+          </h3>
+
         </div>
 
         <button
@@ -126,22 +332,29 @@ function PackageManagementPage() {
       </div>
 
       {/* STATS */}
+
       <StatsCards stats={stats} />
 
       {/* FILTERS */}
+
       <div className="mt-4">
         <PackageFilters />
       </div>
 
       {/* PACKAGE GRID */}
+
       <div className="mt-4">
+
         <PackageGrid
           packages={currentPackages}
           onEdit={handleEdit}
+          onDelete={handleDeleteClick}
         />
+
       </div>
 
       {/* PAGINATION */}
+
       <div className="mt-4 d-flex justify-content-end">
 
         <Pagination
@@ -152,17 +365,26 @@ function PackageManagementPage() {
 
       </div>
 
-      {/* CREATE / UPDATE FORM MODAL */}
+      {/* FORM MODAL */}
+
       <CModal
         visible={showForm}
         onClose={() => setShowForm(false)}
+        backdrop="static"
+        keyboard={false}
         size="xl"
       >
 
         <CModalHeader>
+
           <CModalTitle>
-            {editingPackage ? "Chỉnh Sửa Gói Tập" : "Tạo Gói Mới"}
+
+            {editingPackage
+              ? "Chỉnh Sửa Gói Tập"
+              : "Tạo Gói Mới"}
+
           </CModalTitle>
+
         </CModalHeader>
 
         <CModalBody>
@@ -170,14 +392,27 @@ function PackageManagementPage() {
           <PackageForm
             initialData={editingPackage || {}}
             onSubmit={handleSubmit}
+            onClose={() => setShowForm(false)}
           />
 
         </CModalBody>
 
       </CModal>
-
+      <ConfirmDeleteModal
+        visible={showDeleteModal}
+        setVisible={(v) => {
+          setShowDeleteModal(v)
+          if (!v) setDeletingPackage(null)
+        }}
+        onConfirm={handleDelete}
+        itemName={deletingPackage?.name}
+      />
     </div>
+
+
+
   )
+
 }
 
 export default PackageManagementPage

@@ -2,18 +2,19 @@ import { CPagination, CPaginationItem } from "@coreui/react"
 
 function Pagination({ currentPage, totalPages, onChange }) {
 
-  const pages = []
+  if (totalPages <= 1) return null
 
-  for (let i = 1; i <= totalPages; i++) {
-    pages.push(
-      <CPaginationItem
-        key={i}
-        active={i === currentPage}
-        onClick={() => onChange(i)}
-      >
-        {i}
-      </CPaginationItem>
-    )
+  const getPages = () => {
+    const pages = []
+
+    const start = Math.max(1, currentPage - 2)
+    const end = Math.min(totalPages, currentPage + 2)
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+
+    return pages
   }
 
   return (
@@ -26,7 +27,15 @@ function Pagination({ currentPage, totalPages, onChange }) {
         ‹
       </CPaginationItem>
 
-      {pages}
+      {getPages().map((p) => (
+        <CPaginationItem
+          key={p}
+          active={p === currentPage}
+          onClick={() => onChange(p)}
+        >
+          {p}
+        </CPaginationItem>
+      ))}
 
       <CPaginationItem
         disabled={currentPage === totalPages}

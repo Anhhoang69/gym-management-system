@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState, useEffect } from "react"
 
 import StatsCards from "../components/StatsCards"
 import UserFilters from "../components/UserFilters"
@@ -7,64 +7,31 @@ import CreateUserModal from "../components/CreateUserModal"
 import EditUserModal from "../components/EditUserModal"
 import Pagination from "../components/Pagination"
 
+import { getBranches } from "../services/branchService"
+
+import {
+  getUsers,
+  getUserStats,
+  getUserById,
+  updateUser,
+  updateUserStatus
+} from "../services/userService"
+
 import {
   cilPeople,
   cilCheckCircle,
-  cilClock,
-  cilBan
+  cilUserFollow,
+  cilUserPlus
 } from "@coreui/icons"
-
-const MOCK_USERS = [
-  {
-    id: 1,
-    name: "Sarah Johnson",
-    avatar: "https://i.pravatar.cc/40?img=1",
-    email: "sarah@gympro.com",
-    role: "Admin",
-    branch: "Downtown",
-    status: "active",
-    lastLogin: "2 giờ trước",
-  },
-  {
-    id: 2,
-    name: "Mike Chen",
-    avatar: "https://i.pravatar.cc/40?img=2",
-    email: "mike.chen@gympro.com",
-    role: "Trainer",
-    branch: "Westside",
-    status: "active",
-    lastLogin: "5 giờ trước",
-  },
-  {
-    id: 3,
-    name: "Emily Davis",
-    avatar: "https://i.pravatar.cc/40?img=3",
-    email: "emily.d@gympro.com",
-    role: "Staff",
-    branch: "Downtown",
-    status: "pending",
-    lastLogin: "1 ngày trước",
-  },
-  {
-    id: 4,
-    name: "David Martinez",
-    avatar: "https://i.pravatar.cc/40?img=4",
-    email: "david.m@gympro.com",
-    role: "Member",
-    branch: "Eastside",
-    status: "active",
-    lastLogin: "3 giờ trước",
-  },
-]
 
 function UserManagementPage() {
 
-  const [users, setUsers] = useState(MOCK_USERS)
+  // ================= STATE =================
+  const [users, setUsers] = useState([])
+  const [branches, setBranches] = useState([])
 
   const [showCreateModal, setShowCreateModal] = useState(false)
-
   const [showEditModal, setShowEditModal] = useState(false)
-
   const [editingUser, setEditingUser] = useState(null)
 
   const [search, setSearch] = useState("")
@@ -74,171 +41,173 @@ function UserManagementPage() {
   const [selectedIds, setSelectedIds] = useState([])
 
   const [page, setPage] = useState(1)
+  const pageSize = 10
 
-  const pageSize = 5
+  const [totalItems, setTotalItems] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
 
+  const [statsData, setStatsData] = useState({
+    totalUsers: 0,
+    activeUsers: 0,
+    staffAccounts: 0,
+    memberAccounts: 0,
+  })
+
+  // ================= STATS =================
   const stats = [
     {
       title: "Tổng Người Dùng",
-      value: "2,847",
-      change: "+12% so với tháng trước",
+      value: statsData.totalUsers,
       icon: cilPeople,
       bg: "#FFF3CD",
       color: "#F59E0B",
-      positive: true,
     },
     {
       title: "Người Dùng Hoạt Động",
-      value: "2,634",
-      change: "+6% so với tháng trước",
+      value: statsData.activeUsers,
       icon: cilCheckCircle,
       bg: "#DCFCE7",
       color: "#22C55E",
-      positive: true,
     },
     {
-      title: "Chờ Xác Minh",
-      value: "142",
-      change: "Đang chờ xác minh",
-      icon: cilClock,
-      bg: "#FFEAD5",
-      color: "#FB923C",
-      positive: null,
+      title: "Tài Khoản Staff",
+      value: statsData.staffAccounts,
+      icon: cilUserFollow,
+      bg: "#E0F2FE",
+      color: "#0284C7",
     },
     {
-      title: "Bị Tạm Ngưng",
-      value: "71",
-      change: "-3% so với tháng trước",
-      icon: cilBan,
+      title: "Thành Viên",
+      value: statsData.memberAccounts,
+      icon: cilUserPlus,
       bg: "#FEE2E2",
       color: "#EF4444",
-      positive: false,
     },
   ]
 
-  const filtered = useMemo(() => {
-    return users.filter((u) => {
+  // ================= LOAD USERS =================
+  const loadUsers = async () => {
+    try {
+      const data = await getUsers(
+        page,
+        pageSize,
+        search,
+        role,
+        branch
+      )
 
-      const s = search.toLowerCase()
+      setUsers(data?.items || [])
+      setTotalItems(data?.totalItems || 0)
+      setTotalPages(data?.totalPages || 1)
 
-      const matchSearch =
-        !s ||
-        u.name.toLowerCase().includes(s) ||
-        u.email.toLowerCase().includes(s) ||
-        u.role.toLowerCase().includes(s)
+    } catch (err) {
+      console.error("Load users failed:", err)
+    }
+  }
 
-      const matchRole = !role || u.role === role
+  // ================= LOAD STATS =================
+  const loadStats = async () => {
+    try {
+      const data = await getUserStats()
+      setStatsData(data)
+    } catch (err) {
+      console.error("Load stats failed:", err)
+    }
+  }
 
-      const matchBranch = !branch || u.branch === branch
+  // ================= LOAD BRANCH =================
+  const loadBranches = async () => {
+    try {
+      const res = await getBranches("", "")
+      setBranches(res.items || res)
+    } catch (e) {
+      console.error("Load branches failed:", e)
+    }
+  }
 
-      return matchSearch && matchRole && matchBranch
+  // ================= EFFECT =================
 
-    })
-  }, [users, search, role, branch])
+  useEffect(() => {
+    loadUsers()
+  }, [page])
 
-  const total = filtered.length
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setPage(1)
+      loadUsers()
+    }, 300)
 
-  const totalPages = Math.ceil(total / pageSize)
+    return () => clearTimeout(timeout)
+  }, [search, role, branch])
 
-  const start = (page - 1) * pageSize
+  useEffect(() => {
+    loadStats()
+    loadBranches()
+  }, [])
 
-  const current = filtered.slice(start, start + pageSize)
+  // ================= ACTION =================
 
   const toggleSelect = (id) => {
-    setSelectedIds((prev) =>
+    setSelectedIds(prev =>
       prev.includes(id)
-        ? prev.filter((x) => x !== id)
+        ? prev.filter(x => x !== id)
         : [...prev, id]
     )
   }
 
   const toggleSelectAll = (checked) => {
-    if (checked) {
-      setSelectedIds(current.map((u) => u.id))
-    } else {
-      setSelectedIds([])
-    }
+    setSelectedIds(checked ? users.map(u => u.userId) : [])
   }
 
   const clearSelection = () => setSelectedIds([])
 
-  const handleEditUser = (user) => {
-    setEditingUser(user)
+  const handleEditUser = async (userId) => {
+    const data = await getUserById(userId)
+    setEditingUser(data)
     setShowEditModal(true)
   }
 
-  const handleUpdateUser = (updatedUser) => {
+  const handleUpdateUser = async (updatedData) => {
+    await updateUser(editingUser.userId, updatedData)
 
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === updatedUser.id ? updatedUser : u
-      )
-    )
+    setShowEditModal(false)
+    setEditingUser(null)
 
+    await loadUsers()
+    await loadStats()
   }
 
   const handleDeleteUser = (user) => {
-
-    setUsers((prev) =>
-      prev.filter((u) => u.id !== user.id)
-    )
-
+    setUsers(prev => prev.filter(u => u.userId !== user.userId))
   }
 
-  const handleSuspendUser = (user) => {
-
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === user.id
-          ? { ...u, status: "suspended" }
-          : u
-      )
-    )
-
+  const handleSuspendUser = async (userId) => {
+    await updateUserStatus(userId, "Suspended")
+    await loadUsers()
   }
 
-  const onBulkEmail = () => {
-
-    console.log("Send email to:", selectedIds)
-
-  }
-
-  const onBulkSuspend = () => {
-
-    setUsers((prev) =>
-      prev.map((u) =>
-        selectedIds.includes(u.id)
-          ? { ...u, status: "suspended" }
-          : u
+  const onBulkSuspend = async () => {
+    await Promise.all(
+      selectedIds.map(id =>
+        updateUserStatus(id, "Suspended")
       )
     )
 
     clearSelection()
-
+    await loadUsers()
   }
+
+  const onBulkEmail = () => {
+    alert("Chưa implement gửi email")
+  }
+
+  // ================= UI =================
 
   return (
     <div>
 
-      {/* Header */}
-
-      <div className="d-flex justify-content-between align-items-center mb-4">
-
-        <div>
-
-          <h3 className="fw-bold mb-1">
-
-            Quản Lý Người Dùng
-
-          </h3>
-
-          <p className="text-muted mb-0">
-
-            Quản lý quản trị viên, nhân viên, huấn luyện viên và thành viên.
-
-          </p>
-
-        </div>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h3 className="fw-bold mb-0">Quản Lý Người Dùng</h3>
 
         <button
           className="btn btn-warning px-4 fw-semibold"
@@ -246,17 +215,11 @@ function UserManagementPage() {
         >
           + Tạo Người Dùng Mới
         </button>
-
       </div>
-
-      {/* Stats */}
 
       <StatsCards stats={stats} />
 
-      {/* Filters */}
-
-      <div className="mt-4">
-
+      <div className="mt-3">
         <UserFilters
           search={search}
           setSearch={setSearch}
@@ -264,38 +227,35 @@ function UserManagementPage() {
           setRole={setRole}
           branch={branch}
           setBranch={setBranch}
+          branches={branches} // 🔥 FIX QUAN TRỌNG
           selectedCount={selectedIds.length}
           onBulkEmail={onBulkEmail}
           onBulkSuspend={onBulkSuspend}
           onClearSelection={clearSelection}
         />
-
       </div>
 
-      {/* Table */}
-
-      <div className="mt-3">
-
+      <div className="mt-3" style={{
+        maxHeight: "42vh",
+        overflowY: "auto",
+        border: "1px solid #eee",
+        borderRadius: "8px"
+      }}>
         <UsersTable
-          users={current}
+          users={users}
           selectedIds={selectedIds}
           onToggleSelect={toggleSelect}
           onToggleSelectAll={toggleSelectAll}
-          onEdit={handleEditUser}
+          onEdit={(u) => handleEditUser(u.userId)}
           onSuspend={handleSuspendUser}
           onDelete={handleDeleteUser}
         />
-
       </div>
 
-      {/* Pagination */}
-
       <div className="d-flex justify-content-between align-items-center mt-3">
-
         <small className="text-muted">
-
-          Hiển thị {start + 1}–{Math.min(start + pageSize, total)} của {total} kết quả
-
+          Hiển thị {(page - 1) * pageSize + 1}–
+          {Math.min(page * pageSize, totalItems)} của {totalItems}
         </small>
 
         <Pagination
@@ -303,17 +263,14 @@ function UserManagementPage() {
           totalPages={totalPages}
           onChange={setPage}
         />
-
       </div>
-
-      {/* Create */}
 
       <CreateUserModal
         visible={showCreateModal}
         setVisible={setShowCreateModal}
+        onCreated={loadUsers}
+        branches={branches} 
       />
-
-      {/* Edit */}
 
       <EditUserModal
         visible={showEditModal}

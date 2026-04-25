@@ -44,37 +44,37 @@ function Sidebar() {
 
                 <CNavItem>
                     <NavLink to="/admin/packages" className="nav-link">
-                        Gói & Giá
+                        Quán Lý Gói Tập
                     </NavLink>
                 </CNavItem>
 
                 <CNavItem>
                     <NavLink to="/admin/promo" className="nav-link">
-                        Khuyến Mãi
+                        Quản Lý Khuyến Mãi
                     </NavLink>
                 </CNavItem>
 
                 <CNavItem>
                     <NavLink to="/admin/sales" className="nav-link">
-                        Doanh Thu & Bán Hàng
+                        Quản Lý Bán Hàng
                     </NavLink>
                 </CNavItem>
 
                 <CNavItem>
                     <NavLink to="/admin/contracts" className="nav-link">
-                        Hợp Đồng & Hóa Đơn
+                        Quản Lý Hợp Đồng
                     </NavLink>
                 </CNavItem>
 
                 <CNavItem>
                     <NavLink to="/admin/trainers" className="nav-link">
-                        Huấn Luyện Viên
+                        Quản Lý Huấn Luyện Viên
                     </NavLink>
                 </CNavItem>
 
                 <CNavItem>
                     <NavLink to="/admin/attendance" className="nav-link">
-                        Điểm Danh
+                        Quản Lý Điểm Danh
                     </NavLink>
                 </CNavItem>
 

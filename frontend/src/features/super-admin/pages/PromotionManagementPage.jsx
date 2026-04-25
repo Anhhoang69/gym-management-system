@@ -1,10 +1,25 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 import StatsCards from "../components/StatsCards"
 import PromotionTable from "../components/PromotionTable"
 import Pagination from "../components/Pagination"
 import EditPromotionModal from "../components/EditPromotionModal"
 import CreatePromotionModal from "../components/CreatePromotionModal"
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal"
+
+import {
+  CToast,
+  CToastBody,
+  CToaster
+} from "@coreui/react"
+
+import {
+  getPromotions,
+  getPromotionStats,
+  getPromotionById,
+  updatePromotion,
+  deletePromotion
+} from "../services/promotionService"
 
 import {
   cilTag,
@@ -13,23 +28,9 @@ import {
   cilBan
 } from "@coreui/icons"
 
-const MOCK_PROMOTIONS = [
-  { id: 1, name: "Summer Blast", code: "SUMMER25", type: "Percentage", value: "25%", validity: "Jun 1 - Aug 31", status: "active" },
-  { id: 2, name: "New Member Special", code: "NEWBIE50", type: "Flat Discount", value: "$50", validity: "Jul 15 - Dec 31", status: "scheduled" },
-  { id: 3, name: "Spring Training", code: "SPRING20", type: "Percentage", value: "20%", validity: "Mar 1 - May 31", status: "expired" },
-  { id: 4, name: "Black Friday Mega", code: "BF40", type: "Percentage", value: "40%", validity: "Nov 20 - Nov 30", status: "scheduled" },
-  { id: 5, name: "Holiday Fitness", code: "HOLIDAY30", type: "Percentage", value: "30%", validity: "Dec 1 - Dec 31", status: "scheduled" },
-  { id: 6, name: "Early Bird Promo", code: "EARLY15", type: "Percentage", value: "15%", validity: "Jan 1 - Jan 31", status: "expired" },
-  { id: 7, name: "Student Discount", code: "STUDENT10", type: "Percentage", value: "10%", validity: "All Year", status: "active" },
-  { id: 8, name: "Weekend Workout", code: "WEEKEND20", type: "Flat Discount", value: "$20", validity: "All Weekends", status: "active" },
-  { id: 9, name: "Anniversary Deal", code: "ANNIV35", type: "Percentage", value: "35%", validity: "Apr 10 - Apr 30", status: "expired" },
-  { id: 10, name: "Flash Sale", code: "FLASH50", type: "Flat Discount", value: "$50", validity: "One Day Only", status: "scheduled" },
-  { id: 11, name: "VIP Member Bonus", code: "VIP25", type: "Percentage", value: "25%", validity: "All Year", status: "active" }
-]
-
 function PromotionManagementPage() {
 
-  const [promotions, setPromotions] = useState(MOCK_PROMOTIONS)
+  const [promotions, setPromotions] = useState([])
   const [selectedIds, setSelectedIds] = useState([])
 
   const [showEditModal, setShowEditModal] = useState(false)
@@ -37,41 +38,154 @@ function PromotionManagementPage() {
 
   const [showCreateModal, setShowCreateModal] = useState(false)
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletingPromo, setDeletingPromo] = useState(null)
+
+  const [toast, setToast] = useState(null)
+
   const pageSize = 10
   const [page, setPage] = useState(1)
 
+  const [statsData, setStatsData] = useState({
+    total: 0,
+    active: 0,
+    scheduled: 0,
+    expired: 0
+  })
+
+  const loadStats = async () => {
+
+    try {
+
+      const data = await getPromotionStats()
+
+      setStatsData(data)
+
+    } catch (err) {
+
+      console.error("Load promotion stats failed:", err)
+
+    }
+
+  }
+
+  const loadPromotions = async () => {
+
+    try {
+
+      const data = await getPromotions()
+
+      const mapped = data.map((p) => {
+
+        const discount =
+          p.discountType === "Percentage"
+            ? `${p.discountValue}%`
+            : `$${p.discountValue}`
+
+        const start =
+          p.startDate && p.startDate !== "0001-01-01T00:00:00"
+            ? new Date(p.startDate).toLocaleDateString()
+            : "-"
+
+        const end =
+          p.endDate && p.endDate !== "0001-01-01T00:00:00"
+            ? new Date(p.endDate).toLocaleDateString()
+            : "-"
+
+        return {
+
+          id: p.promotionId,
+
+          name: p.name,
+          code: p.code,
+
+          discountType: p.discountType,
+          discountValue: p.discountValue ?? "",
+
+          type: p.discountType,
+          value: discount,
+
+          startDate: p.startDate,
+          endDate: p.endDate,
+
+          start,
+          end,
+
+          branch: p.branchName || "All Branches",
+
+          applicableBranchId: p.applicableBranchId || "",
+
+          contractType: p.contractType,
+
+          usage: p.currentUsage ?? 0,
+          maxUsage: p.maxUsage ?? "",
+
+          status: p.status?.toLowerCase()
+
+        }
+
+      })
+
+      setPromotions(mapped)
+
+      // tránh pagination vượt giới hạn
+      const newTotalPages = Math.ceil(mapped.length / pageSize)
+      if (page > newTotalPages) setPage(1)
+
+    } catch (err) {
+
+      console.error("Load promotions failed:", err)
+
+    }
+
+  }
+
+  useEffect(() => {
+
+    loadPromotions()
+
+  }, [])
+
+  useEffect(() => {
+
+    loadStats()
+
+  }, [])
+
   const stats = [
+
     {
       title: "Tổng Mã Khuyến Mãi",
-      value: "24",
+      value: statsData.total,
       icon: cilTag,
       bg: "#FFF3CD",
       color: "#F59E0B"
     },
+
     {
       title: "Đang Hoạt Động",
-      value: "18",
-      change: "+3 so với tháng trước",
+      value: statsData.active,
       icon: cilCheckCircle,
       bg: "#DCFCE7",
-      color: "#22C55E",
-      positive: true
+      color: "#22C55E"
     },
+
     {
       title: "Sắp Hết Hạn",
-      value: "4",
+      value: statsData.scheduled,
       icon: cilClock,
       bg: "#FFEAD5",
       color: "#FB923C"
     },
+
     {
       title: "Đã Hết Hạn",
-      value: "2",
+      value: statsData.expired,
       icon: cilBan,
       bg: "#FEE2E2",
-      color: "#EF4444",
-      positive: false
+      color: "#EF4444"
     }
+
   ]
 
   const totalPages = Math.ceil(promotions.length / pageSize)
@@ -101,41 +215,117 @@ function PromotionManagementPage() {
 
   }
 
-  const handleEdit = (promo) => {
+  const handleEdit = async (promo) => {
 
-    setEditingPromo(promo)
-    setShowEditModal(true)
+    try {
+
+      const p = await getPromotionById(promo.id)
+
+      const mapped = {
+
+        id: p.promotionId,
+        name: p.name,
+        code: p.code,
+
+        discountType: p.discountType,
+        discountValue: p.discountValue,
+
+        applicableBranchId: p.applicableBranchId,
+        contractType: p.contractType,
+
+        startDate: p.startDate,
+        endDate: p.endDate,
+
+        maxUsage: p.maxUsage,
+
+        currentUsage: p.currentUsage,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+        createdByName: p.createdByName,
+
+        status: p.status
+
+      }
+
+      setEditingPromo(mapped)
+
+      setShowEditModal(true)
+
+    } catch (err) {
+
+      console.error("Load promotion detail failed:", err)
+
+    }
 
   }
 
-  const handleUpdatePromo = (updatedPromo) => {
+  const handleUpdate = async (id, payload) => {
 
-    setPromotions(prev =>
-      prev.map(p =>
-        p.id === updatedPromo.id ? updatedPromo : p
+    try {
+
+      await updatePromotion(id, payload)
+
+      setShowEditModal(false)
+
+      setToast(
+        <CToast autohide delay={3000} color="success">
+          <CToastBody>
+            Cập nhật khuyến mãi thành công
+          </CToastBody>
+        </CToast>
       )
-    )
 
-  }
+      await loadPromotions()
+      await loadStats()
 
-  const handleCreatePromo = (newPromo) => {
+    } catch (err) {
 
-    setPromotions(prev => [newPromo, ...prev])
+      console.error("Update promotion failed:", err)
+
+    }
 
   }
 
   const handleDelete = (promo) => {
 
-    setPromotions(prev =>
-      prev.filter(p => p.id !== promo.id)
-    )
+    setDeletingPromo(promo)
+    setShowDeleteModal(true)
+
+  }
+
+  const confirmDelete = async () => {
+
+    if (!deletingPromo) return
+
+    try {
+
+      await deletePromotion(deletingPromo.id)
+
+      setShowDeleteModal(false)
+      setDeletingPromo(null)
+
+      setToast(
+        <CToast autohide delay={3000} color="success">
+          <CToastBody>
+            Đã xoá khuyến mãi thành công
+          </CToastBody>
+        </CToast>
+      )
+
+      await loadPromotions()
+      await loadStats()
+
+    } catch (err) {
+
+      console.error("Delete promotion failed:", err)
+
+    }
 
   }
 
   return (
-    <div>
 
-      {/* Header */}
+    <div>
 
       <div className="d-flex justify-content-between align-items-center mb-4">
 
@@ -155,11 +345,7 @@ function PromotionManagementPage() {
 
       </div>
 
-      {/* Stats */}
-
       <StatsCards stats={stats} />
-
-      {/* Table */}
 
       <div className="mt-4">
 
@@ -174,8 +360,6 @@ function PromotionManagementPage() {
 
       </div>
 
-      {/* Pagination */}
-
       <div className="mt-4 d-flex justify-content-end">
 
         <Pagination
@@ -186,25 +370,34 @@ function PromotionManagementPage() {
 
       </div>
 
-      {/* Create Modal */}
-
       <CreatePromotionModal
         visible={showCreateModal}
         setVisible={setShowCreateModal}
-        onCreate={handleCreatePromo}
       />
-
-      {/* Edit Modal */}
 
       <EditPromotionModal
         visible={showEditModal}
         setVisible={setShowEditModal}
         promotion={editingPromo}
-        onUpdate={handleUpdatePromo}
+        onUpdate={handleUpdate}
       />
 
+      <ConfirmDeleteModal
+        visible={showDeleteModal}
+        setVisible={setShowDeleteModal}
+        onConfirm={confirmDelete}
+        itemName={deletingPromo?.name}
+      />
+
+      <CToaster placement="top-end">
+        {toast}
+      </CToaster>
+
     </div>
+
   )
+
 }
 
 export default PromotionManagementPage
+ 

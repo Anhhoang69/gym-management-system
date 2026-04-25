@@ -7,6 +7,7 @@ function UserFilters({
   setRole,
   branch,
   setBranch,
+  branches = [],
   selectedCount,
   onBulkEmail,
   onBulkSuspend,
@@ -16,13 +17,15 @@ function UserFilters({
     <>
       {/* Filters */}
       <div className="d-flex gap-3 flex-wrap">
+
         <CFormInput
-          placeholder="Tìm theo tên, email hoặc vai trò..."
+          placeholder="Tìm theo tên, email..."
           style={{ maxWidth: 320 }}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
 
+        {/* ROLE */}
         <select
           className="form-select"
           style={{ width: 180 }}
@@ -30,12 +33,13 @@ function UserFilters({
           onChange={(e) => setRole(e.target.value)}
         >
           <option value="">Tất cả vai trò</option>
-          <option value="Admin">Admin</option>
-          <option value="Trainer">Trainer</option>
+          <option value="SuperAdmin">Super Admin</option>
+          <option value="GymOwner">Gym Owner</option>
           <option value="Staff">Staff</option>
           <option value="Member">Member</option>
         </select>
 
+        {/* BRANCH */}
         <select
           className="form-select"
           style={{ width: 180 }}
@@ -43,30 +47,57 @@ function UserFilters({
           onChange={(e) => setBranch(e.target.value)}
         >
           <option value="">Tất cả chi nhánh</option>
-          <option>Downtown</option>
-          <option>Westside</option>
-          <option>Eastside</option>
+          {branches.map((b) => (
+            <option key={b.branchId} value={b.branchId}>
+              {b.name}
+            </option>
+          ))}
         </select>
 
-        <CButton color="secondary" onClick={onBulkEmail} disabled={!selectedCount}>
-          Gửi Email
+        {/* RESET */}
+        <CButton
+          color="light"
+          size="sm"
+          onClick={() => {
+            setSearch("")
+            setRole("")
+            setBranch("")
+          }}
+        >
+          Reset
         </CButton>
 
-        <CButton color="danger" onClick={onBulkSuspend} disabled={!selectedCount}>
-          Tạm Ngưng
-        </CButton>
       </div>
 
       {/* Selection bar */}
       {selectedCount > 0 && (
-        <div className="mt-2 small text-muted">
-          Đã chọn {selectedCount} người dùng •{" "}
-          <button
-            className="btn btn-link btn-sm p-0 align-baseline"
-            onClick={onClearSelection}
-          >
-            Bỏ chọn
-          </button>
+        <div
+          className="d-flex justify-content-between align-items-center mt-2 px-3 py-2"
+          style={{
+            background: "#f9fafb",
+            border: "1px solid #e5e7eb",
+            borderRadius: 8
+          }}
+        >
+          <div className="small">
+            <strong>Đã chọn {selectedCount}</strong> người dùng
+            <button
+              className="btn btn-link btn-sm ms-2 p-0"
+              onClick={onClearSelection}
+            >
+              Bỏ chọn
+            </button>
+          </div>
+
+          <div className="d-flex gap-2">
+            <CButton color="secondary" size="sm" onClick={onBulkEmail}>
+              Gửi Email
+            </CButton>
+
+            <CButton color="danger" size="sm" onClick={onBulkSuspend}>
+              Tạm Ngưng
+            </CButton>
+          </div>
         </div>
       )}
     </>

@@ -12,38 +12,30 @@ import {
 
 import { useState, useEffect } from "react"
 
-function BranchDetailModal({ visible, setVisible, branch }) {
+function BranchDetailModal({
+    visible,
+    setVisible,
+    branch,
+    onUpdate,
+    onDelete
+}) {
 
     const [editMode, setEditMode] = useState(false)
-
     const [form, setForm] = useState({})
-
     const [rooms, setRooms] = useState([])
+    const [staffs, setStaffs] = useState([])
 
     useEffect(() => {
 
+
         if (branch) {
 
-            setForm(branch)
-
-            setRooms([
-                {
-                    id: 1,
-                    name: "Cardio Room",
-                    room_number: "R1",
-                    capacity: 40,
-                    status: "active"
-                },
-                {
-                    id: 2,
-                    name: "Weight Room",
-                    room_number: "R2",
-                    capacity: 30,
-                    status: "active"
-                }
-            ])
+            setForm({ ...branch })
+            setRooms(branch.rooms || [])
+            setStaffs(branch.staffs || [])
 
         }
+
 
     }, [branch])
 
@@ -51,14 +43,17 @@ function BranchDetailModal({ visible, setVisible, branch }) {
 
     const handleChange = (e) => {
 
+
         setForm({
             ...form,
             [e.target.name]: e.target.value
         })
 
+
     }
 
     const handleRoomChange = (index, e) => {
+
 
         const newRooms = [...rooms]
 
@@ -66,53 +61,71 @@ function BranchDetailModal({ visible, setVisible, branch }) {
 
         setRooms(newRooms)
 
+
     }
 
     const addRoom = () => {
+
 
         setRooms([
             ...rooms,
             {
                 name: "",
-                room_number: "",
                 capacity: "",
-                status: "active"
+                status: "Active"
             }
         ])
+
 
     }
 
     const deleteRoom = (index) => {
 
+
         setRooms(rooms.filter((_, i) => i !== index))
+
 
     }
 
     const handleSave = () => {
 
-        console.log({
-            branch: form,
-            rooms
-        })
+
+        const payload = {
+            name: form.name,
+            address: form.address,
+            email: form.email,
+            hotline: form.hotline,
+            images: form.images || []
+        }
+
+        console.log("UPDATE BRANCH ID:", form.id)
+        console.log("PAYLOAD:", payload)
+
+        onUpdate(form.id, payload)
 
         setEditMode(false)
+
 
     }
 
     return (
 
+
         <CModal
             visible={visible}
             size="xl"
-            onClose={() => setVisible(false)}
+            backdrop="static"
+            keyboard={false}
+            onClose={() => {
+                setVisible(false)
+                setEditMode(false)
+            }}
         >
 
-            <CModalHeader>
+            <CModalHeader closeButton>
 
                 <CModalTitle>
-
                     Chi tiết chi nhánh
-
                 </CModalTitle>
 
             </CModalHeader>
@@ -149,10 +162,8 @@ function BranchDetailModal({ visible, setVisible, branch }) {
 
                         <CFormSelect
                             label="Trạng thái"
-                            name="status"
                             value={form.status || "active"}
-                            disabled={!editMode}
-                            onChange={handleChange}
+                            disabled
                         >
 
                             <option value="active">Hoạt động</option>
@@ -174,6 +185,48 @@ function BranchDetailModal({ visible, setVisible, branch }) {
 
                     </div>
 
+                    <div className="col-md-6 mt-3">
+
+                        <CFormInput
+                            label="Email"
+                            name="email"
+                            value={form.email || ""}
+                            disabled={!editMode}
+                            onChange={handleChange}
+                        />
+
+                    </div>
+
+                    <div className="col-md-6 mt-3">
+
+                        <CFormInput
+                            label="Hotline"
+                            name="hotline"
+                            value={form.hotline || ""}
+                            disabled={!editMode}
+                            onChange={handleChange}
+                        />
+
+                    </div>
+
+                </div>
+
+                {/* Stats */}
+
+                <div className="row mt-4">
+
+                    <div className="col-md-4">
+                        <p><b>Tổng phòng:</b> {branch.totalRooms}</p>
+                    </div>
+
+                    <div className="col-md-4">
+                        <p><b>Nhân viên:</b> {branch.totalStaff}</p>
+                    </div>
+
+                    <div className="col-md-4">
+                        <p><b>Checkin hôm nay:</b> {branch.totalCheckinsToday}</p>
+                    </div>
+
                 </div>
 
                 {/* Rooms */}
@@ -183,9 +236,7 @@ function BranchDetailModal({ visible, setVisible, branch }) {
                     <div className="d-flex justify-content-between align-items-center mb-3">
 
                         <h6 className="fw-bold">
-
                             Phòng thuộc chi nhánh
-
                         </h6>
 
                         {editMode && (
@@ -211,7 +262,6 @@ function BranchDetailModal({ visible, setVisible, branch }) {
                             <tr>
 
                                 <th>Tên phòng</th>
-                                <th>Số phòng</th>
                                 <th>Sức chứa</th>
                                 <th>Trạng thái</th>
 
@@ -225,17 +275,19 @@ function BranchDetailModal({ visible, setVisible, branch }) {
 
                             {rooms.map((room, index) => (
 
-                                <tr key={index}>
+                                <tr key={room.roomId || index}>
 
                                     <td>
 
                                         {editMode ? (
+
                                             <input
                                                 className="form-control"
                                                 name="name"
                                                 value={room.name}
                                                 onChange={(e) => handleRoomChange(index, e)}
                                             />
+
                                         ) : room.name}
 
                                     </td>
@@ -243,50 +295,29 @@ function BranchDetailModal({ visible, setVisible, branch }) {
                                     <td>
 
                                         {editMode ? (
-                                            <input
-                                                className="form-control"
-                                                name="room_number"
-                                                value={room.room_number}
-                                                onChange={(e) => handleRoomChange(index, e)}
-                                            />
-                                        ) : room.room_number}
 
-                                    </td>
-
-                                    <td>
-
-                                        {editMode ? (
                                             <input
                                                 className="form-control"
                                                 name="capacity"
                                                 value={room.capacity}
                                                 onChange={(e) => handleRoomChange(index, e)}
                                             />
+
                                         ) : room.capacity}
 
                                     </td>
 
                                     <td>
 
-                                        {editMode ? (
-                                            <select
-                                                className="form-select"
-                                                name="status"
-                                                value={room.status}
-                                                onChange={(e) => handleRoomChange(index, e)}
-                                            >
-                                                <option value="active">Hoạt động</option>
-                                                <option value="inactive">Tạm ngưng</option>
-                                            </select>
-                                        ) : (
-
-                                            <CBadge color="success">
-
-                                                Hoạt động
-
-                                            </CBadge>
-
-                                        )}
+                                        <CBadge
+                                            color={
+                                                room.status === "Active"
+                                                    ? "success"
+                                                    : "warning"
+                                            }
+                                        >
+                                            {room.status}
+                                        </CBadge>
 
                                     </td>
 
@@ -317,6 +348,78 @@ function BranchDetailModal({ visible, setVisible, branch }) {
 
                 </div>
 
+                {/* Staff */}
+
+                <div className="mt-5">
+
+                    <h6 className="fw-bold mb-3">
+                        Nhân viên
+                    </h6>
+
+                    {staffs.length === 0 ? (
+
+                        <p className="text-muted">
+                            Không có nhân viên
+                        </p>
+
+                    ) : (
+
+                        <table className="table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>Tên</th>
+                                    <th>Email</th>
+                                    <th>Vị trí</th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                {staffs.map(s => (
+
+                                    <tr key={s.userId}>
+
+                                        <td>{s.fullName}</td>
+                                        <td>{s.email}</td>
+                                        <td>{s.position}</td>
+
+                                    </tr>
+
+                                ))}
+
+                            </tbody>
+
+                        </table>
+
+                    )}
+
+                </div>
+
+                {/* System info */}
+
+                <div className="mt-5">
+
+                    <h6 className="fw-bold mb-3">
+                        Thông tin hệ thống
+                    </h6>
+
+                    <p>
+
+                        <b>Ngày tạo:</b>{" "}
+                        {branch.createdAt &&
+                            branch.createdAt !== "0001-01-01T00:00:00"
+                            ? new Date(branch.createdAt).toLocaleString()
+                            : "Chưa có"}
+
+                    </p>
+
+                </div>
+
             </CModalBody>
 
             <CModalFooter>
@@ -327,9 +430,7 @@ function BranchDetailModal({ visible, setVisible, branch }) {
                         color="warning"
                         onClick={() => setEditMode(true)}
                     >
-
                         Chỉnh sửa
-
                     </CButton>
 
                 )}
@@ -340,25 +441,36 @@ function BranchDetailModal({ visible, setVisible, branch }) {
                         color="success"
                         onClick={handleSave}
                     >
-
                         Lưu thay đổi
+                    </CButton>
 
+                )}
+
+                {!editMode && (
+
+                    <CButton
+                        color="danger"
+                        onClick={() => onDelete(branch)}
+                    >
+                        Xóa chi nhánh
                     </CButton>
 
                 )}
 
                 <CButton
                     color="secondary"
-                    onClick={() => setVisible(false)}
+                    onClick={() => {
+                        setVisible(false)
+                        setEditMode(false)
+                    }}
                 >
-
                     Đóng
-
                 </CButton>
 
             </CModalFooter>
 
         </CModal>
+
 
     )
 

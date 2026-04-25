@@ -12,246 +12,352 @@ import {
   CButton
 } from "@coreui/react"
 
-function PackageForm({ initialData = {}, onSubmit }) {
+function PackageForm({ initialData = {}, onSubmit, onClose }) {
 
   const [form, setForm] = useState({
-    name: initialData.name || "",
-    duration: initialData.duration || "",
-    sessions: initialData.sessions || "",
-    base_price: initialData.base_price || "",
-    status: initialData.status || "active",
-    is_PT_included: initialData.is_PT_included || false,
 
-    freeze_allowed: initialData.freeze_allowed || false,
-    max_freeze_days: initialData.max_freeze_days || "",
-    freeze_fee: initialData.freeze_fee || "",
-    upgrade_allowed: initialData.upgrade_allowed || false,
-    downgrade_allowed: initialData.downgrade_allowed || false,
-    change_fee_default: initialData.change_fee_default || "",
-    proration_rule: initialData.proration_rule || ""
+    name: initialData.name || "",
+    description: initialData.description || "",
+
+    tier: initialData.tier || "Basic",
+
+    thumbnailUrl: initialData.thumbnailUrl || "",
+    badgeLabel: initialData.badgeLabel || "",
+    displayOrder: initialData.displayOrder || 0,
+
+    maxCheckinsPerWeek: initialData.maxCheckinsPerWeek || 7,
+
+    isPtIncluded: initialData.isPtIncluded || false,
+    privatePtLimit: initialData.privatePtLimit || 0,
+    groupPtLimit: initialData.groupPtLimit || 0,
+
+    features: initialData.features || [],
+    pricings: initialData.pricings || [],
+
+    changeFeeDefault: initialData.policy?.changeFeeDefault || "",
+    prorationRule: initialData.policy?.prorationRule || "Standard",
+    upgradeAllowed: initialData.policy?.upgradeAllowed || false,
+    downgradeAllowed: initialData.policy?.downgradeAllowed || false,
+    freezeAllowed: initialData.policy?.freezeAllowed || false,
+    maxFreezeDays: initialData.policy?.maxFreezeDays || "",
+    freezeFee: initialData.policy?.freezeFee || ""
+
   })
 
   const handleChange = (e) => {
+
     const { name, value, type, checked } = e.target
 
     setForm({
       ...form,
       [name]: type === "checkbox" ? checked : value
     })
+
+  }
+
+  /* FEATURES */
+
+  const addFeature = () => {
+
+    setForm({
+      ...form,
+      features: [
+        ...form.features,
+        {
+          packageFeatureId: null,
+          content: "",
+          displayOrder: form.features.length + 1
+        }
+      ]
+    })
+
+  }
+
+  const updateFeature = (index, value) => {
+
+    const updated = [...form.features]
+    updated[index].content = value
+
+    setForm({
+      ...form,
+      features: updated
+    })
+
+  }
+
+  const removeFeature = (index) => {
+
+    const updated = form.features.filter((_, i) => i !== index)
+
+    setForm({
+      ...form,
+      features: updated
+    })
+
+  }
+
+  /* PRICING */
+
+  const addPricing = () => {
+
+    setForm({
+      ...form,
+      pricings: [
+        ...form.pricings,
+        {
+          packagePricingId: null,
+          durationMonths: 1,
+          price: 0,
+          originalPrice: 0
+        }
+      ]
+    })
+
+  }
+
+  const updatePricing = (index, field, value) => {
+
+    const updated = [...form.pricings]
+
+    updated[index][field] = value
+
+    setForm({
+      ...form,
+      pricings: updated
+    })
+
+  }
+
+  const removePricing = (index) => {
+
+    const updated = form.pricings.filter((_, i) => i !== index)
+
+    setForm({
+      ...form,
+      pricings: updated
+    })
+
   }
 
   const handleSubmit = (e) => {
+
     e.preventDefault()
 
-    const packageData = {
+    const tierMap = {
+      Basic: 0,
+      Premium: 1,
+      Elite: 2
+    }
+
+    const prorationMap = {
+      Standard: 0,
+      Prorated: 1
+    }
+
+    const payload = {
+
       name: form.name,
-      duration: form.duration,
-      sessions: form.sessions,
-      base_price: form.base_price,
-      status: form.status,
-      is_PT_included: form.is_PT_included
+      description: form.description,
+      thumbnailUrl: form.thumbnailUrl,
+
+      tier: tierMap[form.tier],
+
+      isPtIncluded: form.isPtIncluded,
+
+      privatePtLimit: Number(form.privatePtLimit),
+      groupPtLimit: Number(form.groupPtLimit),
+
+      maxCheckinsPerWeek: Number(form.maxCheckinsPerWeek),
+
+      badgeLabel: form.badgeLabel,
+      displayOrder: Number(form.displayOrder),
+
+      features: form.features,
+
+      pricings: form.pricings.map(p => ({
+        ...p,
+        durationMonths: Number(p.durationMonths),
+        price: Number(p.price),
+        originalPrice: Number(p.originalPrice)
+      })),
+
+      policy: {
+        changeFeeDefault: Number(form.changeFeeDefault),
+        prorationRule: prorationMap[form.prorationRule],
+        upgradeAllowed: form.upgradeAllowed,
+        downgradeAllowed: form.downgradeAllowed,
+        freezeAllowed: form.freezeAllowed,
+        maxFreezeDays: Number(form.maxFreezeDays),
+        freezeFee: Number(form.freezeFee)
+      }
+
     }
 
-    const policyData = {
-      freeze_allowed: form.freeze_allowed,
-      max_freeze_days: form.max_freeze_days,
-      freeze_fee: form.freeze_fee,
-      upgrade_allowed: form.upgrade_allowed,
-      downgrade_allowed: form.downgrade_allowed,
-      change_fee_default: form.change_fee_default,
-      proration_rule: form.proration_rule
-    }
+    onSubmit(payload)
 
-    onSubmit({
-      package: packageData,
-      policy: policyData
-    })
   }
 
   return (
+
     <CCard className="border-0 shadow-sm">
+
       <CCardBody>
 
         <CForm onSubmit={handleSubmit}>
 
-          {/* ===== THÔNG TIN GÓI ===== */}
-
-          <h5 className="fw-bold mb-3">
-            Thông Tin Gói Tập
-          </h5>
+          <h5 className="fw-bold mb-3">Thông tin gói</h5>
 
           <CRow className="mb-3">
 
             <CCol md={6}>
               <CFormLabel>Tên gói</CFormLabel>
-              <CFormInput
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                placeholder="Ví dụ: Gói Premium 12 tháng"
-                required
-              />
+              <CFormInput name="name" value={form.name} onChange={handleChange}/>
             </CCol>
 
             <CCol md={6}>
-              <CFormLabel>Thời hạn (tháng)</CFormLabel>
-              <CFormInput
-                type="number"
-                name="duration"
-                value={form.duration}
-                onChange={handleChange}
-              />
-            </CCol>
-
-          </CRow>
-
-          <CRow className="mb-3">
-
-            <CCol md={6}>
-              <CFormLabel>Số buổi tập</CFormLabel>
-              <CFormInput
-                type="number"
-                name="sessions"
-                value={form.sessions}
-                onChange={handleChange}
-              />
-            </CCol>
-
-            <CCol md={6}>
-              <CFormLabel>Giá cơ bản ($)</CFormLabel>
-              <CFormInput
-                type="number"
-                name="base_price"
-                value={form.base_price}
-                onChange={handleChange}
-              />
-            </CCol>
-
-          </CRow>
-
-          <CRow className="mb-4">
-
-            <CCol md={6}>
-              <CFormLabel>Trạng thái</CFormLabel>
-              <CFormSelect
-                name="status"
-                value={form.status}
-                onChange={handleChange}
-              >
-                <option value="active">Hoạt động</option>
-                <option value="inactive">Ngừng bán</option>
+              <CFormLabel>Tier</CFormLabel>
+              <CFormSelect name="tier" value={form.tier} onChange={handleChange}>
+                <option>Basic</option>
+                <option>Premium</option>
+                <option>Elite</option>
               </CFormSelect>
             </CCol>
 
-            <CCol md={6} className="d-flex align-items-end">
-              <CFormCheck
-                label="Bao gồm PT cá nhân"
-                name="is_PT_included"
-                checked={form.is_PT_included}
-                onChange={handleChange}
-              />
-            </CCol>
-
-          </CRow>
-
-
-          {/* ===== CHÍNH SÁCH GÓI ===== */}
-
-          <h5 className="fw-bold mb-3">
-            Chính Sách Gói
-          </h5>
-
-          <CRow className="mb-3">
-
-            <CCol md={6}>
-              <CFormCheck
-                label="Cho phép đóng băng gói"
-                name="freeze_allowed"
-                checked={form.freeze_allowed}
-                onChange={handleChange}
-              />
-            </CCol>
-
           </CRow>
 
           <CRow className="mb-3">
 
+            <CCol md={12}>
+              <CFormLabel>Mô tả</CFormLabel>
+              <CFormInput name="description" value={form.description} onChange={handleChange}/>
+            </CCol>
+
+          </CRow>
+
+          <h5 className="fw-bold mt-4 mb-3">Features</h5>
+
+          {form.features.map((f, i) => (
+
+            <div key={i} className="d-flex gap-2 mb-2">
+
+              <input
+                className="form-control"
+                value={f.content}
+                onChange={(e)=>updateFeature(i,e.target.value)}
+              />
+
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={()=>removeFeature(i)}
+              >
+                X
+              </button>
+
+            </div>
+
+          ))}
+
+          <CButton
+            type="button"
+            color="warning"
+            size="sm"
+            onClick={addFeature}
+            className="mb-4"
+          >
+            + Thêm Feature
+          </CButton>
+
+          <h5 className="fw-bold mb-3">Pricing</h5>
+
+          {form.pricings.map((p,i)=>(
+            <CRow key={i} className="mb-2">
+
+              <CCol md={3}>
+                <CFormInput
+                  type="number"
+                  label="Months"
+                  value={p.durationMonths}
+                  onChange={(e)=>updatePricing(i,"durationMonths",e.target.value)}
+                />
+              </CCol>
+
+              <CCol md={4}>
+                <CFormInput
+                  type="number"
+                  label="Price"
+                  value={p.price}
+                  onChange={(e)=>updatePricing(i,"price",e.target.value)}
+                />
+              </CCol>
+
+              <CCol md={4}>
+                <CFormInput
+                  type="number"
+                  label="Original"
+                  value={p.originalPrice}
+                  onChange={(e)=>updatePricing(i,"originalPrice",e.target.value)}
+                />
+              </CCol>
+
+              <CCol md={1} className="d-flex align-items-end">
+
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={()=>removePricing(i)}
+                >
+                  X
+                </button>
+
+              </CCol>
+
+            </CRow>
+          ))}
+
+          <CButton
+            type="button"
+            color="warning"
+            size="sm"
+            onClick={addPricing}
+            className="mb-4"
+          >
+            + Thêm Pricing
+          </CButton>
+
+          <h5 className="fw-bold mb-3">Policy</h5>
+
+          <CRow className="mb-3">
+
             <CCol md={6}>
-              <CFormLabel>Số ngày đóng băng tối đa</CFormLabel>
               <CFormInput
+                label="Freeze fee"
                 type="number"
-                name="max_freeze_days"
-                value={form.max_freeze_days}
+                name="freezeFee"
+                value={form.freezeFee}
                 onChange={handleChange}
               />
             </CCol>
 
             <CCol md={6}>
-              <CFormLabel>Phí đóng băng ($)</CFormLabel>
               <CFormInput
+                label="Change fee"
                 type="number"
-                name="freeze_fee"
-                value={form.freeze_fee}
+                name="changeFeeDefault"
+                value={form.changeFeeDefault}
                 onChange={handleChange}
               />
             </CCol>
 
           </CRow>
-
-          <CRow className="mb-3">
-
-            <CCol md={6}>
-              <CFormCheck
-                label="Cho phép nâng cấp gói"
-                name="upgrade_allowed"
-                checked={form.upgrade_allowed}
-                onChange={handleChange}
-              />
-            </CCol>
-
-            <CCol md={6}>
-              <CFormCheck
-                label="Cho phép hạ cấp gói"
-                name="downgrade_allowed"
-                checked={form.downgrade_allowed}
-                onChange={handleChange}
-              />
-            </CCol>
-
-          </CRow>
-
-          <CRow className="mb-3">
-
-            <CCol md={6}>
-              <CFormLabel>Phí đổi gói mặc định ($)</CFormLabel>
-              <CFormInput
-                type="number"
-                name="change_fee_default"
-                value={form.change_fee_default}
-                onChange={handleChange}
-              />
-            </CCol>
-            <CCol md={6}>
-              <CFormLabel>Quy tắc tính phí (Proration)</CFormLabel>
-              <CFormInput
-                name="proration_rule"
-                value={form.proration_rule}
-                onChange={handleChange}
-                placeholder="Ví dụ: prorated / full charge"
-              />
-            </CCol>
-          </CRow>
-
-
-          {/* ACTIONS */}
 
           <div className="d-flex gap-2">
 
             <CButton type="submit" color="warning">
-              Lưu gói tập
+              Lưu gói
             </CButton>
 
-            <CButton color="secondary">
+            <CButton color="secondary" onClick={onClose}>
               Hủy
             </CButton>
 
@@ -260,8 +366,11 @@ function PackageForm({ initialData = {}, onSubmit }) {
         </CForm>
 
       </CCardBody>
+
     </CCard>
+
   )
+
 }
 
 export default PackageForm

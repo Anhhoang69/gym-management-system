@@ -1,290 +1,305 @@
 import {
-    CModal,
-    CModalHeader,
-    CModalTitle,
-    CModalBody,
-    CModalFooter,
-    CForm,
-    CRow,
-    CCol,
-    CFormInput,
-    CFormSelect,
-    CButton,
-    CInputGroup,
-    CInputGroupText,
-    CToast,
-    CToastBody,
-    CToaster
+  CButton,
+  CFormInput,
+  CFormSelect,
+  CRow,
+  CCol
 } from "@coreui/react"
 
-import CIcon from "@coreui/icons-react"
-import * as icons from "@coreui/icons"
+import { useState, useEffect } from "react"
+import { createUser } from "../services/userService"
+import { getBranches } from "../services/branchService"
 
-import { useState } from "react"
+function CreateUserModal({ visible, setVisible, onCreated }) {
 
-function CreateUserModal({ visible, setVisible }) {
+  const [form, setForm] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    phoneNumber: "",
+    role: "",
+    staffPosition: "",
+    branchId: "",
+    gender: "",
+    birthday: "",
+    address: "",
 
-    const [showPassword, setShowPassword] = useState(false)
+    trainerProfile: {
+      experienceYears: "",
+      specialization: "",
+      certificate: "",
+      bioDescription: ""
+    }
+  })
 
-    const [toast, setToast] = useState(false)
+  const [errors, setErrors] = useState({})
+  const [branches, setBranches] = useState([])
 
-    const [form, setForm] = useState({
-        name: "",
-        email: "",
-        password: "",
-        phone: "",
-        role: "",
-        gender: "",
-        birthday: "",
-        address: "",
-        status: "active",
-        avatar: null
-    })
-
-    const [errors, setErrors] = useState({})
-
-    const handleChange = (e) => {
-
-        const { name, value, files } = e.target
-
-        setForm({
-            ...form,
-            [name]: files ? files[0] : value
-        })
+  // ================= FETCH BRANCH =================
+  useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const res = await getBranches("", "")
+        setBranches(res.items || res)
+      } catch (e) {
+        console.error("Fetch branches error:", e)
+      }
     }
 
-    const validate = () => {
+    fetchBranches()
+  }, [])
 
-        const newErrors = {}
+  // ================= HANDLE CHANGE =================
+  const handleChange = (e) => {
+    const { name, value } = e.target
 
-        if (!form.name) newErrors.name = "Name is required"
+    setForm(prev => ({
+      ...prev,
+      [name]: value,
 
-        if (!form.email) {
-            newErrors.email = "Email is required"
-        } else if (!/\S+@\S+\.\S+/.test(form.email)) {
-            newErrors.email = "Invalid email format"
-        }
+      // chỉ reset staffPosition khi KHÔNG phải staff
+      ...(name === "role" && value !== "Staff"
+        ? { staffPosition: "" }
+        : {})
+    }))
+  }
 
-        if (!form.password) {
-            newErrors.password = "Password is required"
-        } else if (form.password.length < 6) {
-            newErrors.password = "Password must be at least 6 characters"
-        }
+  const handleTrainerChange = (e) => {
+    setForm(prev => ({
+      ...prev,
+      trainerProfile: {
+        ...prev.trainerProfile,
+        [e.target.name]: e.target.value
+      }
+    }))
+  }
 
-        if (!form.role) newErrors.role = "Role is required"
+  const isStaff = form.role && form.role !== "Member"
+  const isTrainer = ["PT", "HeadPT"].includes(form.staffPosition)
 
-        setErrors(newErrors)
+  // ================= VALIDATION =================
+  const validate = () => {
+    const err = {}
 
-        return Object.keys(newErrors).length === 0
+    if (!form.fullName) err.fullName = "Required"
+    if (!form.email) err.email = "Required"
+    if (!form.password) err.password = "Required"
+    if (!form.role) err.role = "Required"
+
+    // 🔥 branch luôn required
+    if (!form.branchId) err.branchId = "Required"
+
+    if (isStaff && !form.staffPosition) {
+      err.staffPosition = "Required"
     }
 
-    const handleSubmit = (e) => {
+    setErrors(err)
+    return Object.keys(err).length === 0
+  }
 
-        e.preventDefault()
+  // ================= SUBMIT =================
+  const handleSubmit = async () => {
+    if (!validate()) return
 
-        if (!validate()) return
+    try {
+      const payload = {
+        fullName: form.fullName,
+        email: form.email,
+        phoneNumber: form.phoneNumber,
+        password: form.password,
+        role: form.role === "Member" ? "Member" : form.staffPosition,
+        branchId: form.branchId, // 🔥 không cho null nữa
+        gender: form.gender || null,
+        birthday: form.birthday || null,
+        address: form.address || null
+      }
 
-        console.log("Create user payload:", form)
+      console.log("CREATE USER PAYLOAD:", payload)
 
-        // TODO: call API here
+      const user = await createUser(payload)
 
-        setToast(true)
+      onCreated?.(user)
+      setVisible(false)
 
-        setVisible(false)
+    } catch (e) {
+      console.error(e)
     }
+  }
 
-    return (
-        <>
-            <CModal visible={visible} onClose={() => setVisible(false)} size="lg">
+  return (
+    <>
+      {visible && (
+        <div
+          onClick={() => setVisible(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.4)",
+            zIndex: 1040
+          }}
+        />
+      )}
 
-                <CModalHeader>
-                    <CModalTitle>Tạo Người Dùng Mới</CModalTitle>
-                </CModalHeader>
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          right: 0,
+          width: "40vw",
+          minWidth: "420px",
+          height: "100vh",
+          background: "#fff",
+          zIndex: 1050,
+          transform: visible ? "translateX(0)" : "translateX(100%)",
+          transition: "0.3s",
+          display: "flex",
+          flexDirection: "column"
+        }}
+      >
 
-                <CForm onSubmit={handleSubmit}>
-                    <CModalBody>
+        {/* HEADER */}
+        <div className="p-3 border-bottom d-flex justify-content-between">
+          <div className="fw-bold">Tạo người dùng</div>
+          <button onClick={() => setVisible(false)}>×</button>
+        </div>
 
-                        <CRow className="g-3">
+        {/* BODY */}
+        <div style={{ padding: 16, overflowY: "auto", flex: 1 }}>
 
-                            {/* Name */}
-                            <CCol md={6}>
-                                <CFormInput
-                                    label={
-                                        <>
-                                            Họ và tên <span className="text-danger">*</span>
-                                        </>
-                                    }
-                                    name="name"
-                                    value={form.name}
-                                    onChange={handleChange}
-                                    invalid={!!errors.name}
-                                    feedback={errors.name}
-                                />
-                            </CCol>
+          {/* GENERAL */}
+          <h6 className="fw-bold mb-2">Thông tin cá nhân</h6>
+          <CRow className="g-2">
 
-                            {/* Email */}
-                            <CCol md={6}>
-                                <CFormInput
-                                    label={
-                                        <>
-                                            Email <span className="text-danger">*</span>
-                                        </>
-                                    }
-                                    type="email"
-                                    name="email"
-                                    value={form.email}
-                                    onChange={handleChange}
-                                    invalid={!!errors.email}
-                                    feedback={errors.email}
-                                />
-                            </CCol>
+            <CCol md={12}>
+              <CFormInput label="Họ tên" name="fullName"
+                value={form.fullName}
+                onChange={handleChange}
+                invalid={!!errors.fullName}
+              />
+            </CCol>
 
-                            {/* Password */}
-                            <CCol md={6}>
-                                <label className="form-label">
-                                    Mật khẩu <span className="text-danger">*</span>
-                                </label>
+            <CCol md={12}>
+              <CFormInput label="Email" name="email"
+                value={form.email}
+                onChange={handleChange}
+                invalid={!!errors.email}
+              />
+            </CCol>
 
-                                <CInputGroup>
-                                    <CFormInput
-                                        type={showPassword ? "text" : "password"}
-                                        name="password"
-                                        value={form.password}
-                                        onChange={handleChange}
-                                        invalid={!!errors.password}
-                                    />
+            <CCol md={12}>
+              <CFormInput type="password" label="Mật khẩu"
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                invalid={!!errors.password}
+              />
+            </CCol>
 
-                                    <CInputGroupText
-                                        style={{ cursor: "pointer" }}
-                                        onClick={() => setShowPassword(!showPassword)}
-                                    >
-                                        <CIcon icon={showPassword ? icons.cilViewOff : icons.cilView} />
-                                    </CInputGroupText>
-                                </CInputGroup>
+            <CCol md={12}>
+              <CFormInput label="SĐT" name="phoneNumber"
+                value={form.phoneNumber}
+                onChange={handleChange}
+              />
+            </CCol>
 
-                                {errors.password && (
-                                    <div className="text-danger small mt-1">
-                                        {errors.password}
-                                    </div>
-                                )}
-                            </CCol>
+            <CCol md={12}>
+              <CFormSelect label="Giới tính" name="gender"
+                value={form.gender}
+                onChange={handleChange}
+              >
+                <option value="">Chọn</option>
+                <option value="Male">Nam</option>
+                <option value="Female">Nữ</option>
+                <option value="Other">Khác</option>
+              </CFormSelect>
+            </CCol>
 
-                            {/* Phone */}
-                            <CCol md={6}>
-                                <CFormInput
-                                    label="Số điện thoại"
-                                    name="phone"
-                                    value={form.phone}
-                                    onChange={handleChange}
-                                />
-                            </CCol>
+            <CCol md={12}>
+              <CFormInput type="date" label="Ngày sinh"
+                name="birthday"
+                value={form.birthday}
+                onChange={handleChange}
+              />
+            </CCol>
 
-                            {/* Role */}
-                            <CCol md={6}>
-                                <CFormSelect
-                                    label={
-                                        <>
-                                            Vai trò <span className="text-danger">*</span>
-                                        </>
-                                    }
-                                    name="role"
-                                    value={form.role}
-                                    onChange={handleChange}
-                                    invalid={!!errors.role}
-                                    feedback={errors.role}
-                                >
-                                    <option value="">Chọn vai trò</option>
-                                    <option value="gym_owner">Gym Owner</option>
-                                    <option value="branch_admin">Branch Admin</option>
-                                    <option value="sales">Sales</option>
-                                    <option value="pt">PT</option>
-                                    <option value="head_pt">Head PT</option>
-                                    <option value="receptionist">Receptionist</option>
-                                    <option value="member">Member</option>
-                                </CFormSelect>
-                            </CCol>
+            <CCol md={12}>
+              <CFormInput label="Địa chỉ"
+                name="address"
+                value={form.address}
+                onChange={handleChange}
+              />
+            </CCol>
 
-                            {/* Gender */}
-                            <CCol md={6}>
-                                <CFormSelect
-                                    label="Giới tính"
-                                    name="gender"
-                                    value={form.gender}
-                                    onChange={handleChange}
-                                >
-                                    <option value="">Chọn giới tính</option>
-                                    <option value="male">Nam</option>
-                                    <option value="female">Nữ</option>
-                                </CFormSelect>
-                            </CCol>
+          </CRow>
 
-                            {/* Birthday */}
-                            <CCol md={6}>
-                                <CFormInput
-                                    label="Ngày sinh"
-                                    type="date"
-                                    name="birthday"
-                                    value={form.birthday}
-                                    onChange={handleChange}
-                                />
-                            </CCol>
+          {/* ROLE */}
+          <h6 className="fw-bold mt-4 mb-2">Phân quyền</h6>
+          <CRow className="g-2">
 
-                            {/* Avatar Upload */}
-                            <CCol md={6}>
-                                <CFormInput
-                                    label="Avatar"
-                                    type="file"
-                                    name="avatar"
-                                    onChange={handleChange}
-                                />
-                            </CCol>
+            <CCol md={12}>
+              <CFormSelect label="Role"
+                name="role"
+                value={form.role}
+                onChange={handleChange}
+                invalid={!!errors.role}
+              >
+                <option value="">Chọn</option>
+                <option value="SuperAdmin">Super Admin</option>
+                <option value="BranchAdmin">Branch Admin</option>
+                <option value="Member">Member</option>
+                <option value="Staff">Staff</option>
+              </CFormSelect>
+            </CCol>
 
-                            {/* Address */}
-                            <CCol md={12}>
-                                <CFormInput
-                                    label="Địa chỉ"
-                                    name="address"
-                                    value={form.address}
-                                    onChange={handleChange}
-                                />
-                            </CCol>
+            {/* 🔥 LUÔN HIỂN THỊ BRANCH */}
+            <CCol md={12}>
+              <CFormSelect
+                label="Chi nhánh"
+                name="branchId"
+                value={form.branchId}
+                onChange={handleChange}
+                invalid={!!errors.branchId}
+              >
+                <option value="">Chọn chi nhánh</option>
+                {branches.map((b) => (
+                  <option key={b.branchId} value={b.branchId}>
+                    {b.name}
+                  </option>
+                ))}
+              </CFormSelect>
+            </CCol>
 
-                        </CRow>
+            {isStaff && (
+              <CCol md={12}>
+                <CFormSelect label="Chức vụ"
+                  name="staffPosition"
+                  value={form.staffPosition}
+                  onChange={handleChange}
+                  invalid={!!errors.staffPosition}
+                >
+                  <option value="">Chọn</option>
+                  <option value="BranchAdmin">Branch Admin</option>
+                  <option value="PT">PT</option>
+                  <option value="HeadPT">Head PT</option>
+                  <option value="Sales">Sales</option>
+                  <option value="Receptionist">Receptionist</option>
+                </CFormSelect>
+              </CCol>
+            )}
 
-                    </CModalBody>
+          </CRow>
 
-                    <CModalFooter>
+        </div>
 
-                        <CButton
-                            color="secondary"
-                            variant="outline"
-                            onClick={() => setVisible(false)}
-                        >
-                            Hủy
-                        </CButton>
+        {/* FOOTER */}
+        <div className="p-3 border-top d-flex justify-content-end gap-2">
+          <CButton color="secondary" onClick={() => setVisible(false)}>Hủy</CButton>
+          <CButton color="warning" onClick={handleSubmit}>Tạo</CButton>
+        </div>
 
-                        <CButton type="submit" color="warning">
-                            Tạo Người Dùng
-                        </CButton>
-
-                    </CModalFooter>
-
-                </CForm>
-
-            </CModal>
-
-            {/* Toast */}
-            <CToaster placement="top-end">
-                {toast && (
-                    <CToast visible autohide={true} delay={2000}>
-                        <CToastBody>
-                            ✅ User created successfully
-                        </CToastBody>
-                    </CToast>
-                )}
-            </CToaster>
-        </>
-    )
+      </div>
+    </>
+  )
 }
 
 export default CreateUserModal

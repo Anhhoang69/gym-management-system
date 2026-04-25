@@ -3,7 +3,6 @@ import {
   CContainer,
   CFormInput,
   CHeaderNav,
-  CNavItem,
   CDropdown,
   CDropdownToggle,
   CDropdownMenu,
@@ -11,41 +10,67 @@ import {
   CAvatar
 } from "@coreui/react"
 
-import { cilMoon, cilSun, cilBell, cilSearch } from "@coreui/icons"
+import { cilBell, cilSearch } from "@coreui/icons"
 import CIcon from "@coreui/icons-react"
+
 import logo from "../../../assets/LogoBlackText.svg"
 
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { FaBars, FaTimes, FaSun, FaMoon } from 'react-icons/fa';
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+
+import { FaSun, FaMoon } from "react-icons/fa"
 
 function AdminHeader() {
-  const [isNavOpen, setIsNavOpen] = useState(false);
-  const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
 
-  const location = useLocation();
+  const navigate = useNavigate()
+
+  const [isDark, setIsDark] = useState(
+    document.documentElement.classList.contains("dark")
+  )
 
   const toggleTheme = () => {
-    document.documentElement.classList.toggle('dark');
-    setIsDark(!isDark);
-  };
+
+    document.documentElement.classList.toggle("dark")
+
+    setIsDark(!isDark)
+
+  }
+
+  const handleLogout = () => {
+
+    localStorage.clear()
+
+    navigate("/login")
+
+  }
+
+  const goHome = () => {
+
+    navigate("/admin")
+
+  }
+
   return (
+
     <CHeader className="border-bottom bg-white">
 
       <CContainer fluid className="d-flex align-items-center justify-content-between">
 
         {/* LOGO */}
+
         <img
           src={logo}
           alt="EnerGym"
-          style={{ height: 50 }}
+          style={{ height: 50, cursor: "pointer" }}
+          onClick={goHome}
         />
 
-
         {/* RIGHT MENU */}
+
         <CHeaderNav className="d-flex align-items-center gap-3">
 
           {/* SEARCH */}
+
           <div style={{ width: 260, position: "relative" }}>
 
             <CFormInput
@@ -68,53 +93,70 @@ function AdminHeader() {
 
           </div>
 
-          {/* Theme toggle */}
+          {/* THEME TOGGLE */}
+
           <button
             onClick={toggleTheme}
             aria-label="Toggle theme"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-(--text-primary) transition-all hover:bg-(--brand) hover:text-(--on-brand)"
+            className="d-flex align-items-center justify-content-center rounded-circle"
+            style={{
+              width: 40,
+              height: 40,
+              border: "none",
+              background: "transparent"
+            }}
           >
+
             {isDark ? (
-              <FaMoon size={18} className="rotate-0 transition-transform duration-300" />
+              <FaMoon size={18} />
             ) : (
-              <FaSun size={18} className="rotate-90 transition-transform duration-300" />
+              <FaSun size={18} />
             )}
+
           </button>
 
-
           {/* NOTIFICATIONS */}
+
           <CDropdown alignment="end">
 
             <CDropdownToggle caret={false}>
+
               <CIcon icon={cilBell} size="lg" />
+
             </CDropdownToggle>
 
             <CDropdownMenu style={{ width: 300 }}>
 
               <CDropdownItem>
+
                 Thành viên mới đăng ký
                 <br />
                 <small>2 phút trước</small>
+
               </CDropdownItem>
 
               <CDropdownItem>
+
                 Thanh toán đã nhận
                 <br />
                 <small>15 phút trước</small>
+
               </CDropdownItem>
 
               <CDropdownItem>
+
                 PT session đã đặt
                 <br />
                 <small>32 phút trước</small>
+
               </CDropdownItem>
 
             </CDropdownMenu>
 
           </CDropdown>
 
-
           {/* AVATAR */}
+
           <CDropdown alignment="end">
 
             <CDropdownToggle caret={false}>
@@ -128,6 +170,7 @@ function AdminHeader() {
                 />
 
                 <div style={{ textAlign: "left" }}>
+
                   <div style={{ fontWeight: 500 }}>
                     Quản Trị Viên
                   </div>
@@ -135,6 +178,7 @@ function AdminHeader() {
                   <small style={{ color: "#888" }}>
                     Administrator
                   </small>
+
                 </div>
 
               </div>
@@ -143,15 +187,15 @@ function AdminHeader() {
 
             <CDropdownMenu>
 
-              <CDropdownItem>
+              <CDropdownItem onClick={() => navigate("/admin/profile")}>
                 Hồ sơ
               </CDropdownItem>
 
-              <CDropdownItem>
+              <CDropdownItem onClick={() => navigate("/admin/settings")}>
                 Cài đặt
               </CDropdownItem>
 
-              <CDropdownItem>
+              <CDropdownItem onClick={handleLogout}>
                 Đăng xuất
               </CDropdownItem>
 
@@ -164,7 +208,9 @@ function AdminHeader() {
       </CContainer>
 
     </CHeader>
+
   )
+
 }
 
 export default AdminHeader

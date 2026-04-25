@@ -7,14 +7,18 @@ import {
   CDropdownToggle,
   CDropdownMenu,
   CDropdownItem,
-  CPagination,
-  CPaginationItem,
+  CProgress
 } from "@coreui/react"
 
 const statusColor = {
   active: "success",
-  scheduled: "warning",
+  inactive: "secondary",
   expired: "danger",
+}
+
+const discountColor = {
+  Percentage: "info",
+  FixedAmount: "warning"
 }
 
 function PromotionTable({
@@ -31,12 +35,14 @@ function PromotionTable({
     promotions.every((p) => selectedIds.includes(p.id))
 
   return (
+
     <CCard className="mt-4">
       <CCardBody>
 
         <table className="table align-middle">
 
           <thead>
+
             <tr>
 
               <th style={{ width: 36 }}>
@@ -49,100 +55,177 @@ function PromotionTable({
               </th>
 
               <th>Promotion</th>
-              <th>Code</th>
-              <th>Type</th>
-              <th>Value</th>
+              <th>Discount</th>
+              <th>Branch</th>
+              <th>Contract</th>
+              <th>Usage</th>
               <th>Validity</th>
               <th>Status</th>
               <th style={{ width: 50 }}></th>
 
             </tr>
+
           </thead>
 
           <tbody>
 
-            {promotions.map((promo) => (
+            {promotions.map((promo) => {
 
-              <tr key={promo.id}>
+              const percent =
+                promo.maxUsage > 0
+                  ? Math.round(
+                      (promo.usage / promo.maxUsage) * 100
+                    )
+                  : 0
 
-                {/* Checkbox */}
-                <td>
-                  <CFormCheck
-                    checked={selectedIds.includes(promo.id)}
-                    onChange={() => onToggleSelect(promo.id)}
-                  />
-                </td>
+              return (
 
-                {/* Promotion name */}
-                <td className="fw-semibold">
-                  {promo.name}
-                </td>
+                <tr key={promo.id}>
 
-                {/* Code */}
-                <td>
-                  <span className="badge bg-light text-dark">
-                    {promo.code}
-                  </span>
-                </td>
+                  {/* Checkbox */}
 
-                {/* Type */}
-                <td>{promo.type}</td>
+                  <td>
+                    <CFormCheck
+                      checked={selectedIds.includes(promo.id)}
+                      onChange={() =>
+                        onToggleSelect(promo.id)
+                      }
+                    />
+                  </td>
 
-                {/* Value */}
-                <td>{promo.value}</td>
+                  {/* Promotion */}
 
-                {/* Validity */}
-                <td>{promo.validity}</td>
+                  <td>
 
-                {/* Status */}
-                <td>
+                    <div className="fw-semibold">
+                      {promo.name}
+                    </div>
 
-                  <CBadge color={statusColor[promo.status]}>
-                    {promo.status === "active"
-                      ? "Active"
-                      : promo.status === "scheduled"
-                      ? "Scheduled"
-                      : "Expired"}
-                  </CBadge>
+                    <small className="text-muted">
+                      Code: {promo.code}
+                    </small>
 
-                </td>
+                  </td>
 
-                {/* Actions */}
-                <td>
+                  {/* Discount */}
 
-                  <CDropdown alignment="end">
+                  <td>
 
-                    <CDropdownToggle
-                      color="light"
-                      size="sm"
+                    <CBadge
+                      color={discountColor[promo.type]}
                     >
-                      ⋮
-                    </CDropdownToggle>
+                      {promo.value}
+                    </CBadge>
 
-                    <CDropdownMenu>
+                  </td>
 
-                      <CDropdownItem
-                        onClick={() => onEdit(promo)}
+                  {/* Branch */}
+
+                  <td>
+
+                    <span className="badge bg-light text-dark">
+                      {promo.branch}
+                    </span>
+
+                  </td>
+
+                  {/* Contract */}
+
+                  <td>
+
+                    <small className="text-muted">
+                      {promo.contractType}
+                    </small>
+
+                  </td>
+
+                  {/* Usage */}
+
+                  <td style={{ minWidth: 160 }}>
+
+                    <div className="small mb-1">
+                      {promo.usage} / {promo.maxUsage}
+                    </div>
+
+                    <CProgress
+                      value={percent}
+                      size="sm"
+                      color="info"
+                    />
+
+                  </td>
+
+                  {/* Validity */}
+
+                  <td>
+
+                    <small>
+
+                      {promo.start}
+                      <br />
+                      {promo.end}
+
+                    </small>
+
+                  </td>
+
+                  {/* Status */}
+
+                  <td>
+
+                    <CBadge
+                      color={statusColor[promo.status]}
+                    >
+
+                      {promo.status === "active"
+                        ? "Active"
+                        : promo.status === "inactive"
+                        ? "Inactive"
+                        : "Expired"}
+
+                    </CBadge>
+
+                  </td>
+
+                  {/* Actions */}
+
+                  <td>
+
+                    <CDropdown alignment="end">
+
+                      <CDropdownToggle
+                        color="light"
+                        size="sm"
                       >
-                        Chỉnh sửa
-                      </CDropdownItem>
+                        ⋮
+                      </CDropdownToggle>
 
-                      <CDropdownItem
-                        className="text-danger"
-                        onClick={() => onDelete(promo)}
-                      >
-                        Xóa
-                      </CDropdownItem>
+                      <CDropdownMenu>
 
-                    </CDropdownMenu>
+                        <CDropdownItem
+                          onClick={() => onEdit(promo)}
+                        >
+                          Chỉnh sửa
+                        </CDropdownItem>
 
-                  </CDropdown>
+                        <CDropdownItem
+                          className="text-danger"
+                          onClick={() => onDelete(promo)}
+                        >
+                          Xóa
+                        </CDropdownItem>
 
-                </td>
+                      </CDropdownMenu>
 
-              </tr>
+                    </CDropdown>
 
-            ))}
+                  </td>
+
+                </tr>
+
+              )
+
+            })}
 
           </tbody>
 
@@ -150,7 +233,9 @@ function PromotionTable({
 
       </CCardBody>
     </CCard>
+
   )
+
 }
 
 export default PromotionTable

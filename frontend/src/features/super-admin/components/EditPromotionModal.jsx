@@ -6,11 +6,11 @@ import {
   CModalFooter,
   CButton,
   CFormInput,
-  CFormSelect,
-  CFormCheck
+  CFormSelect
 } from "@coreui/react"
 
 import { useState, useEffect } from "react"
+import { getBranches } from "../services/branchService"
 
 function EditPromotionModal({
   visible,
@@ -19,32 +19,112 @@ function EditPromotionModal({
   onUpdate
 }) {
 
-  const [form,setForm] = useState({})
+  const [form, setForm] = useState({})
+  const [branches, setBranches] = useState([])
 
-  useEffect(()=>{
+  const formatDateInput = (date) => {
+    if (!date) return ""
+    return date.split("T")[0]
+  }
 
-    if(promotion){
-      setForm(promotion)
+  // load branches
+  useEffect(() => {
+
+    const loadBranches = async () => {
+
+      try {
+
+        const data = await getBranches()
+
+        setBranches(data)
+
+      } catch (err) {
+
+        console.error("Load branches failed:", err)
+
+      }
+
     }
 
-  },[promotion])
+    loadBranches()
 
-  if(!promotion) return null
+  }, [])
+
+  // load promotion into form
+  useEffect(() => {
+
+    if (promotion) {
+
+      setForm({
+
+        id: promotion.id,
+
+        name: promotion.name || "",
+        code: promotion.code || "",
+
+        discountType: promotion.discountType || "Percentage",
+        discountValue: promotion.discountValue || "",
+
+        contractType: promotion.contractType || "NewContract",
+
+        applicableBranchId:
+          promotion.applicableBranchId || "",
+
+        startDate: formatDateInput(promotion.startDate),
+        endDate: formatDateInput(promotion.endDate),
+
+        maxUsage: promotion.maxUsage || ""
+
+      })
+
+    }
+
+  }, [promotion])
+
+  if (!promotion) return null
 
   const handleChange = (e) => {
 
-    const {name,value,type,checked} = e.target
+    const { name, value } = e.target
 
-    setForm({
-      ...form,
-      [name]: type === "checkbox" ? checked : value
-    })
+    setForm(prev => ({
+      ...prev,
+      [name]: value
+    }))
 
   }
 
   const handleSave = () => {
 
-    onUpdate(form)
+    const payload = {
+
+      name: form.name,
+      code: form.code,
+
+      discountType: form.discountType === "Percentage" ? 0 : 1,
+
+      discountValue: Number(form.discountValue),
+
+      applicablePackageId: null,
+
+      applicableBranchId:
+        form.applicableBranchId || null,
+
+      contractType:
+        form.contractType === "NewContract"
+          ? 0
+          : form.contractType === "Renewal"
+          ? 1
+          : 2,
+
+      startDate: form.startDate,
+      endDate: form.endDate,
+
+      maxUsage: Number(form.maxUsage)
+
+    }
+
+    onUpdate(form.id, payload)
 
     setVisible(false)
 
@@ -52,178 +132,255 @@ function EditPromotionModal({
 
   return (
 
-  <CModal
-    visible={visible}
-    onClose={()=>setVisible(false)}
-  >
+    <CModal
+      visible={visible}
+      onClose={() => setVisible(false)}
+      size="lg"
+      backdrop="static"
+    >
 
-    <CModalHeader>
+      <CModalHeader closeButton>
+        <CModalTitle>
+          Chỉnh sửa khuyến mãi
+        </CModalTitle>
+      </CModalHeader>
 
-      <CModalTitle>
+      <CModalBody>
 
-        Chỉnh sửa khuyến mãi
+        {/* PROMOTION INFO */}
 
-      </CModalTitle>
+        <h6 className="fw-bold mb-3">
+          Thông tin khuyến mãi
+        </h6>
 
-    </CModalHeader>
+        <div className="row">
 
-    <CModalBody>
+          {/* LEFT */}
 
-      {/* Name */}
+          <div className="col-md-6">
 
-      <div className="mb-3">
+            <CFormInput
+              label="Tên khuyến mãi"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              className="mb-3"
+            />
 
-        <CFormInput
-          label="Tên khuyến mãi"
-          name="name"
-          value={form.name || ""}
-          onChange={handleChange}
-        />
+            <CFormInput
+              label="Mã khuyến mãi"
+              name="code"
+              value={form.code}
+              onChange={handleChange}
+              className="mb-3"
+            />
 
-      </div>
+            <CFormSelect
+              label="Loại giảm giá"
+              name="discountType"
+              value={form.discountType}
+              onChange={handleChange}
+              className="mb-3"
+            >
+              <option value="Percentage">
+                Percentage (%)
+              </option>
 
-      {/* Code */}
+              <option value="FixedAmount">
+                Fixed Amount ($)
+              </option>
+            </CFormSelect>
 
-      <div className="mb-3">
+            <CFormInput
+              label="Giá trị giảm"
+              type="number"
+              name="discountValue"
+              value={form.discountValue}
+              onChange={handleChange}
+              className="mb-3"
+            />
 
-        <CFormInput
-          label="Mã khuyến mãi"
-          name="code"
-          value={form.code || ""}
-          onChange={handleChange}
-        />
+          </div>
 
-      </div>
+          {/* RIGHT */}
 
-      {/* Type */}
+          <div className="col-md-6">
 
-      <div className="mb-3">
+            <CFormSelect
+              label="Áp dụng cho hợp đồng"
+              name="contractType"
+              value={form.contractType}
+              onChange={handleChange}
+              className="mb-3"
+            >
 
-        <CFormSelect
-          label="Loại giảm giá"
-          name="type"
-          value={form.type || ""}
-          onChange={handleChange}
-        >
+              <option value="NewContract">
+                New Contract
+              </option>
 
-          <option value="Percentage">
-            Percentage
-          </option>
+              <option value="Renewal">
+                Renewal
+              </option>
 
-          <option value="Flat Discount">
-            Flat Discount
-          </option>
+              <option value="Upgrade">
+                Upgrade
+              </option>
 
-        </CFormSelect>
+            </CFormSelect>
 
-      </div>
+            <CFormSelect
+              label="Chi nhánh áp dụng"
+              name="applicableBranchId"
+              value={form.applicableBranchId}
+              onChange={handleChange}
+              className="mb-3"
+            >
 
-      {/* Value */}
+              <option value="">
+                Tất cả chi nhánh
+              </option>
 
-      <div className="mb-3">
+              {branches.map(b => (
 
-        <CFormInput
-          label="Giá trị"
-          name="value"
-          value={form.value || ""}
-          onChange={handleChange}
-        />
+                <option
+                  key={b.branchId}
+                  value={b.branchId}
+                >
+                  {b.name}
+                </option>
 
-      </div>
+              ))}
 
-      {/* Dates */}
+            </CFormSelect>
 
-      <div className="row">
+            <div className="row">
 
-        <div className="col-md-6">
+              <div className="col-md-6">
 
-          <CFormInput
-            type="date"
-            label="Ngày bắt đầu"
-            name="start_date"
-            value={form.start_date || ""}
-            onChange={handleChange}
-          />
+                <CFormInput
+                  type="date"
+                  label="Ngày bắt đầu"
+                  name="startDate"
+                  value={form.startDate}
+                  onChange={handleChange}
+                  className="mb-3"
+                />
+
+              </div>
+
+              <div className="col-md-6">
+
+                <CFormInput
+                  type="date"
+                  label="Ngày kết thúc"
+                  name="endDate"
+                  value={form.endDate}
+                  onChange={handleChange}
+                  className="mb-3"
+                />
+
+              </div>
+
+            </div>
+
+            <CFormInput
+              type="number"
+              label="Số lượt sử dụng tối đa"
+              name="maxUsage"
+              value={form.maxUsage}
+              onChange={handleChange}
+            />
+
+          </div>
 
         </div>
 
-        <div className="col-md-6">
+        {/* SYSTEM INFO */}
 
-          <CFormInput
-            type="date"
-            label="Ngày kết thúc"
-            name="end_date"
-            value={form.end_date || ""}
-            onChange={handleChange}
-          />
+        <hr className="my-4" />
+
+        <h6 className="fw-bold mb-3">
+          Thông tin hệ thống
+        </h6>
+
+        <div className="row">
+
+          <div className="col-md-6">
+
+            <CFormInput
+              label="Trạng thái"
+              value={promotion.status}
+              disabled
+              className="mb-3"
+            />
+
+            <CFormInput
+              label="Đã sử dụng"
+              value={`${promotion.currentUsage || 0} / ${promotion.maxUsage || 0}`}
+              disabled
+              className="mb-3"
+            />
+
+          </div>
+
+          <div className="col-md-6">
+
+            <CFormInput
+              label="Tạo bởi"
+              value={promotion.createdByName || ""}
+              disabled
+              className="mb-3"
+            />
+
+            <CFormInput
+              label="Ngày tạo"
+              value={
+                promotion.createdAt
+                  ? new Date(promotion.createdAt).toLocaleString()
+                  : ""
+              }
+              disabled
+              className="mb-3"
+            />
+
+            <CFormInput
+              label="Cập nhật lần cuối"
+              value={
+                promotion.updatedAt
+                  ? new Date(promotion.updatedAt).toLocaleString()
+                  : "Chưa cập nhật"
+              }
+              disabled
+            />
+
+          </div>
 
         </div>
 
-      </div>
+      </CModalBody>
 
-      {/* Status */}
+      <CModalFooter>
 
-      <div className="mt-3">
-
-        <CFormSelect
-          label="Trạng thái"
-          name="status"
-          value={form.status || ""}
-          onChange={handleChange}
+        <CButton
+          color="secondary"
+          onClick={() => setVisible(false)}
         >
+          Hủy
+        </CButton>
 
-          <option value="active">
-            Active
-          </option>
+        <CButton
+          color="warning"
+          onClick={handleSave}
+        >
+          Lưu thay đổi
+        </CButton>
 
-          <option value="scheduled">
-            Scheduled
-          </option>
+      </CModalFooter>
 
-          <option value="expired">
-            Expired
-          </option>
-
-        </CFormSelect>
-
-      </div>
-
-      {/* Stackable */}
-
-      <div className="mt-3">
-
-        <CFormCheck
-          label="Cho phép cộng dồn khuyến mãi"
-          name="is_stackable"
-          checked={form.is_stackable || false}
-          onChange={handleChange}
-        />
-
-      </div>
-
-    </CModalBody>
-
-    <CModalFooter>
-
-      <CButton
-        color="secondary"
-        onClick={()=>setVisible(false)}
-      >
-        Hủy
-      </CButton>
-
-      <CButton
-        color="warning"
-        onClick={handleSave}
-      >
-        Lưu thay đổi
-      </CButton>
-
-    </CModalFooter>
-
-  </CModal>
+    </CModal>
 
   )
+
 }
 
 export default EditPromotionModal
