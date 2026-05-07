@@ -14,4 +14,12 @@ public class LoginHistory
     public DateTime LoginAt { get; set; } = DateTime.UtcNow;
 
     public string? IpAddress { get; set; }
-}
+
+    public string? UserAgent { get; set; }
+
+    public string? DeviceName { get; set; }
+
+    public bool IsRevoked { get; set; } = false;
+
+    public DateTime? RevokedAt { get; set; }
+}

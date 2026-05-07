@@ -66,6 +66,12 @@ public class ApplicationDbContext
     public DbSet<LoginHistory> LoginHistories => Set<LoginHistory>();
     public DbSet<Request> Requests => Set<Request>();
 
+    // ================= AI =================
+
+    public DbSet<ChatHistory> ChatHistories => Set<ChatHistory>();
+    public DbSet<AIRecommendation> AIRecommendations => Set<AIRecommendation>();
+    public DbSet<AIContextCache> AIContextCaches => Set<AIContextCache>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -214,6 +220,29 @@ public class ApplicationDbContext
             .WithMany(u => u.HandledRequests)
             .HasForeignKey(r => r.HandledByUserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // ================= AI CHAT =================
+
+        builder.Entity<ChatHistory>()
+            .HasOne(ch => ch.Member)
+            .WithMany(m => m.ChatHistories)
+            .HasForeignKey(ch => ch.MemberId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<AIRecommendation>()
+            .HasOne(r => r.Member)
+            .WithMany(m => m.AIRecommendations)
+            .HasForeignKey(r => r.MemberId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<AIContextCache>()
+            .HasKey(c => c.MemberId);
+
+        builder.Entity<AIContextCache>()
+            .HasOne(c => c.Member)
+            .WithOne(m => m.AIContextCache)
+            .HasForeignKey<AIContextCache>(c => c.MemberId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // convert all enums to string
         foreach (var entityType in builder.Model.GetEntityTypes())

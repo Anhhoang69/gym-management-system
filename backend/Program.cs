@@ -97,7 +97,23 @@ builder.Services.AddScoped<IClassService, ClassService>();
 builder.Services.AddScoped<ILeadService, LeadService>();
 builder.Services.AddScoped<ILeadSourceService, LeadSourceService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+// ================= MODULE 4.3.2: ACCOUNT & ACCESS MANAGEMENT =================
+builder.Services.AddScoped<IEmailService, MockEmailService>();
+builder.Services.AddScoped<ISmsService, MockSmsService>();
+builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IRegistrationService, RegistrationService>();
+
 builder.Services.AddHttpContextAccessor();
+
+
+// ================= AI SERVICES =================
+
+builder.Services.AddScoped<IntentService>();
+builder.Services.AddScoped<GymDataService>();
+builder.Services.AddHttpClient<OpenAIService>();
+builder.Services.AddScoped<IAIService, AIService>();
+
 // ================= SWAGGER =================
 // ================= SWAGGER =================
 builder.Services.AddEndpointsApiExplorer();

@@ -21,4 +21,12 @@ public class Member
 
     // N - N
     public ICollection<ClassBooking> ClassBookings { get; set; } = new List<ClassBooking>();
+
+    // ================= AI =================
+
+    public ICollection<ChatHistory> ChatHistories { get; set; } = new List<ChatHistory>();
+
+    public ICollection<AIRecommendation> AIRecommendations { get; set; } = new List<AIRecommendation>();
+
+    public AIContextCache? AIContextCache { get; set; }
 }

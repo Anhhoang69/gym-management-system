@@ -13,6 +13,18 @@ public class OtpCode
 
     public string Code { get; set; } = null!;
 
+    /// <summary>
+    /// Distinguishes OTP type: "2FA", "PasswordReset", "2FASetup"
+    /// Prevents cross-purpose reuse (e.g. a 2FA OTP cannot reset a password).
+    /// </summary>
+    public string Purpose { get; set; } = "2FA";
+
+    /// <summary>
+    /// Incremented on each failed verification attempt.
+    /// OTP is auto-invalidated (IsUsed = true) at >= 5 attempts.
+    /// </summary>
+    public int AttemptCount { get; set; } = 0;
+
     public DateTime ExpiresAt { get; set; }
 
     public bool IsUsed { get; set; }
@@ -20,4 +32,4 @@ public class OtpCode
     public DateTime? UsedAt { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-}
+}

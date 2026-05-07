@@ -18,6 +18,8 @@ public class User : IdentityUser<Guid>
 
     public string? AvatarUrl { get; set; }
 
+    public string? LanguagePreference { get; set; }
+
     public UserStatus Status { get; set; } = UserStatus.Active;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
