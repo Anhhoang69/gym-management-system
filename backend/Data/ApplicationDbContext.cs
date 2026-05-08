@@ -51,6 +51,7 @@ public class ApplicationDbContext
 
     public DbSet<Promotion> Promotions => Set<Promotion>();
     public DbSet<ContractPromotion> ContractPromotions => Set<ContractPromotion>();
+    public DbSet<ContractDraft> ContractDrafts => Set<ContractDraft>();
 
     // ================= BILLING =================
 
@@ -184,6 +185,36 @@ public class ApplicationDbContext
             .HasOne(c => c.Invoice)
             .WithOne(i => i.Contract)
             .HasForeignKey<Invoice>(i => i.ContractId);
+
+        // ================= CONTRACT DRAFT =================
+
+        builder.Entity<ContractDraft>()
+            .HasKey(d => d.DraftId);
+
+        builder.Entity<ContractDraft>()
+            .HasOne(d => d.CreatedByStaff)
+            .WithMany()
+            .HasForeignKey(d => d.CreatedByStaffId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ContractDraft>()
+            .HasOne(d => d.Member)
+            .WithMany()
+            .HasForeignKey(d => d.MemberUserId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<ContractDraft>()
+            .HasOne(d => d.Package)
+            .WithMany()
+            .HasForeignKey(d => d.PackageId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ContractDraft>()
+            .HasOne(d => d.Pricing)
+            .WithMany()
+            .HasForeignKey(d => d.PricingId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // ================= INVOICE 1-1 PAYMENT =================
 

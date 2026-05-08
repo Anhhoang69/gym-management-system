@@ -14,5 +14,5 @@ public static class AuthorizationRoles
     public const string AdminRoles = SuperAdmin + "," + GymOwner + "," + Staff;
     public const string StaffOrSuperAdmin = SuperAdmin + "," + Staff;
     public const string LeadManagementRoles = StaffOrSuperAdmin;
-    public const string AuditLogRoles = SuperAdmin + "," + GymOwner;
+    public const string AuditLogRoles = SuperAdmin + "," + GymOwner + "," + Staff;
 }

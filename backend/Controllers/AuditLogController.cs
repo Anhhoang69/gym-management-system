@@ -27,14 +27,20 @@ public class AuditLogController : ControllerBase
         int pageSize = 20,
         string? entityType = null,
         string? action = null,
-        Guid? userId = null)
+        Guid? userId = null,
+        DateTime? dateFrom = null,
+        DateTime? dateTo = null,
+        Guid? branchId = null)
     {
         var result = await _service.GetAuditLogsAsync(
             page,
             pageSize,
             entityType,
             action,
-            userId);
+            userId,
+            dateFrom,
+            dateTo,
+            branchId);
 
         return new ApiResponse<PagedResult<AuditLogDto>>(result);
     }

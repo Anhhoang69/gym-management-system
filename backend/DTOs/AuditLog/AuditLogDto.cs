@@ -19,4 +19,8 @@ public class AuditLogDto
     public string? NewValue { get; set; }
 
     public DateTime CreatedAt { get; set; }
+
+    public Guid? BranchId { get; set; }
+    
+    public string? BranchName { get; set; }
 }

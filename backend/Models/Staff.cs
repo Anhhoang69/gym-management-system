@@ -11,6 +11,9 @@ public class Staff
 
     public StaffPosition Position { get; set; }
 
+    // Tỷ lệ hoa hồng (%), null = dùng mặc định 5%
+    public decimal? CommissionRate { get; set; }
+
     public PTProfile? PTProfile { get; set; }
 
     public ICollection<Class> TeachingClasses { get; set; } = new List<Class>();

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260508095638_AddBranchIdToAuditLog")]
+    partial class AddBranchIdToAuditLog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -213,7 +216,7 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime?>("ExpireDate")
+                    b.Property<DateTime>("ExpireDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("IssueDate")
@@ -630,65 +633,6 @@ namespace backend.Migrations
                     b.HasIndex("OldPackageId");
 
                     b.ToTable("ContractAdjusts");
-                });
-
-            modelBuilder.Entity("backend.Models.ContractDraft", b =>
-                {
-                    b.Property<Guid>("DraftId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedByStaffId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("DealPrice")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("DiscountAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsUsed")
-                        .HasColumnType("boolean");
-
-                    b.Property<Guid?>("MemberUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("OriginalPrice")
-                        .HasColumnType("numeric");
-
-                    b.Property<Guid>("PackageId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("PricingId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("PromotionIdsJson")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("DraftId");
-
-                    b.HasIndex("CreatedByStaffId");
-
-                    b.HasIndex("MemberUserId");
-
-                    b.HasIndex("PackageId");
-
-                    b.HasIndex("PricingId");
-
-                    b.ToTable("ContractDrafts");
                 });
 
             modelBuilder.Entity("backend.Models.ContractPromotion", b =>
@@ -1374,9 +1318,6 @@ namespace backend.Migrations
                     b.Property<Guid>("BranchId")
                         .HasColumnType("uuid");
 
-                    b.Property<decimal?>("CommissionRate")
-                        .HasColumnType("numeric");
-
                     b.Property<string>("Position")
                         .IsRequired()
                         .HasColumnType("text");
@@ -1768,40 +1709,6 @@ namespace backend.Migrations
                     b.Navigation("NewPackage");
 
                     b.Navigation("OldPackage");
-                });
-
-            modelBuilder.Entity("backend.Models.ContractDraft", b =>
-                {
-                    b.HasOne("backend.Models.Staff", "CreatedByStaff")
-                        .WithMany()
-                        .HasForeignKey("CreatedByStaffId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.Member", "Member")
-                        .WithMany()
-                        .HasForeignKey("MemberUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("backend.Models.Package", "Package")
-                        .WithMany()
-                        .HasForeignKey("PackageId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.PackagePricing", "Pricing")
-                        .WithMany()
-                        .HasForeignKey("PricingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("CreatedByStaff");
-
-                    b.Navigation("Member");
-
-                    b.Navigation("Package");
-
-                    b.Navigation("Pricing");
                 });
 
             modelBuilder.Entity("backend.Models.ContractPromotion", b =>

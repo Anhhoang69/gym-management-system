@@ -5,5 +5,6 @@ public enum AccessCardStatus
     Active,
     Lost,
     Expired,
-    Disabled
+    Disabled,
+    Inactive
 }

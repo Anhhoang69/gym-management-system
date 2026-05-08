@@ -18,6 +18,9 @@ public class AuditLog
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    public Guid? BranchId { get; set; }
+
     // navigation
     public User User { get; set; } = null!;
+    public Branch? Branch { get; set; }
 }

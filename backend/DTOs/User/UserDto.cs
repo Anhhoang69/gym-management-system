@@ -45,5 +45,7 @@ public class UserDto
 
     public bool IsMember { get; set; }
 
+    public MemberDetailDto? MemberInfo { get; set; }
+
     public PTProfileDto? TrainerProfile { get; set; }
 }

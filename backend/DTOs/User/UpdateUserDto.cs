@@ -20,8 +20,13 @@ public class UpdateUserDto
 
     public StaffPosition? StaffPosition { get; set; }
 
-    public UserStatus Status { get; set; }
+    public UserStatus? Status { get; set; }
+
+    public string? Role { get; set; }
 
     // PT PROFILE
     public PTProfileDto? TrainerProfile { get; set; }
+
+    // MEMBER UPDATE
+    public MemberUpdateDto? MemberUpdate { get; set; }
 }

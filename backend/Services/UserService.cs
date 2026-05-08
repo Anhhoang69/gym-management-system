@@ -8,6 +8,7 @@ using backend.Enums;
 using backend.Models;
 using backend.Interfaces;
 using backend.Helpers;
+using System.Security.Claims;
 
 namespace backend.Services;
 
@@ -18,6 +19,7 @@ public class UserService : IUserService
     private readonly IMapper _mapper;
     private readonly IAuditLogService _auditLogService;
     private readonly UserManager<User> _userManager;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     private static readonly HashSet<string> AllowedCreatableRoles = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -37,12 +39,27 @@ public class UserService : IUserService
         "Member"
     };
 
-    public UserService(ApplicationDbContext context, IMapper mapper, IAuditLogService auditLogService, UserManager<User> userManager)
+    public UserService(ApplicationDbContext context, IMapper mapper, IAuditLogService auditLogService, UserManager<User> userManager, IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _mapper = mapper;
         _auditLogService = auditLogService;
         _userManager = userManager;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    private async Task<(bool IsSuperAdmin, bool IsGymOwner, bool IsBranchAdmin, Guid? BranchId)> GetCallerScopeAsync()
+    {
+        var rawUserId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(rawUserId) || !Guid.TryParse(rawUserId, out var userId)) return (false, false, false, null);
+
+        var isSuperAdmin = _httpContextAccessor.HttpContext?.User?.IsInRole(AuthorizationRoles.SuperAdmin) ?? false;
+        var isGymOwner = _httpContextAccessor.HttpContext?.User?.IsInRole(AuthorizationRoles.GymOwner) ?? false;
+
+        var staff = await _context.Staffs.FirstOrDefaultAsync(s => s.UserId == userId);
+        var isBranchAdmin = staff != null && staff.Position == StaffPosition.BranchAdmin;
+
+        return (isSuperAdmin, isGymOwner, isBranchAdmin, staff?.BranchId);
     }
 
     public async Task<UserDto> CreateUserAsync(CreateUserDto dto, Guid currentUserId)
@@ -97,6 +114,16 @@ public class UserService : IUserService
                 {
                     UserId = user.Id
                 });
+
+                // Tạo AccessCard placeholder (Inactive cho đến khi ActivateMembership)
+                _context.AccessCards.Add(new AccessCard
+                {
+                    AccessCardId = Guid.NewGuid(),
+                    MemberUserId = user.Id,
+                    CardCode     = RegistrationService.GenerateCardCode(user.Id),
+                    Status       = AccessCardStatus.Inactive,
+                    IssueDate    = DateTime.UtcNow
+                });
             }
 
             _auditLogService.Add(_auditLogService.CreateLog(
@@ -138,10 +165,16 @@ public class UserService : IUserService
             Guid? branchId,
             string? role)
     {
+        var scope = await GetCallerScopeAsync();
+        if (!scope.IsSuperAdmin && !scope.IsGymOwner && scope.IsBranchAdmin)
+        {
+            branchId = scope.BranchId; // BranchAdmin can only see their own branch
+        }
+
         var query = _context.Users
             .Include(x => x.InitialBranch)
             .Include(x => x.Staff)
-                .ThenInclude(s => s.Branch)
+                .ThenInclude(s => s!.Branch)
             .AsNoTracking()
             .AsQueryable();
 
@@ -221,15 +254,27 @@ public class UserService : IUserService
         var user = await _context.Users
             .Include(x => x.InitialBranch)
             .Include(x => x.Member)
+                .ThenInclude(m => m!.AccessCard)
+            .Include(x => x.Member)
+                .ThenInclude(m => m!.Contracts.Where(c => c.Status == ContractStatus.Active).OrderByDescending(c => c.CreatedAt).Take(1))
+                    .ThenInclude(c => c.Package)
             .Include(x => x.Staff)
-                .ThenInclude(s => s.Branch)
+                .ThenInclude(s => s!.Branch)
             .Include(x => x.Staff)
-                .ThenInclude(s => s.PTProfile)
+                .ThenInclude(s => s!.PTProfile)
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id);
 
         if (user == null)
             return null;
+
+        var scope = await GetCallerScopeAsync();
+        if (!scope.IsSuperAdmin && !scope.IsGymOwner && scope.IsBranchAdmin)
+        {
+            var targetBranchId = user.Staff?.BranchId ?? user.InitialBranchId;
+            if (targetBranchId != scope.BranchId)
+                throw new UnauthorizedAccessException("Branch admins can only access users in their own branch");
+        }
 
         var dto = _mapper.Map<UserDto>(user);
 
@@ -243,6 +288,18 @@ public class UserService : IUserService
             .FirstOrDefaultAsync();
 
         dto.Role = user.Staff != null ? user.Staff.Position.ToString() : role;
+
+        if (user.Member != null)
+        {
+            var totalContracts = await _context.Contracts.CountAsync(c => c.MemberUserId == user.Id);
+            
+            dto.MemberInfo = new MemberDetailDto
+            {
+                TotalContracts = totalContracts,
+                AccessCard = user.Member.AccessCard != null ? _mapper.Map<AccessCardSummaryDto>(user.Member.AccessCard) : null,
+                ActiveContract = user.Member.Contracts.FirstOrDefault() != null ? _mapper.Map<ContractSummaryDto>(user.Member.Contracts.First()) : null
+            };
+        }
 
         // trainer profile
         if (dto.StaffPosition == StaffPosition.PT ||
@@ -263,15 +320,63 @@ public class UserService : IUserService
     {
         var user = await _context.Users
             .Include(x => x.Staff)
-                .ThenInclude(s => s.PTProfile)
+                .ThenInclude(s => s!.PTProfile)
             .FirstOrDefaultAsync(x => x.Id == id);
 
         if (user == null)
             return false;
 
+        var scope = await GetCallerScopeAsync();
+        if (!scope.IsSuperAdmin && !scope.IsGymOwner && scope.IsBranchAdmin)
+        {
+            var targetBranchId = user.Staff?.BranchId ?? user.InitialBranchId;
+            if (targetBranchId != scope.BranchId)
+                throw new UnauthorizedAccessException("Branch admins can only modify users in their own branch");
+        }
+
+        var changedFields = new List<string>();
+
         // ===== UPDATE BASIC INFO =====
+        if (dto.FullName != null && dto.FullName != user.FullName) changedFields.Add("FullName");
+        if (dto.PhoneNumber != null && dto.PhoneNumber != user.PhoneNumber) changedFields.Add("PhoneNumber");
+        if (dto.Gender != null && dto.Gender != user.Gender) changedFields.Add("Gender");
+        if (dto.Birthday != null && dto.Birthday != user.Birthday) changedFields.Add("Birthday");
+        if (dto.Address != null && dto.Address != user.Address) changedFields.Add("Address");
+        if (dto.Status.HasValue && dto.Status.Value != user.Status)
+        {
+            user.Status = dto.Status.Value;
+            changedFields.Add("Status");
+        }
 
         _mapper.Map(dto, user);
+
+        // ===== UPDATE ROLE (SuperAdmin only, Staff to Staff only) =====
+        if (!string.IsNullOrWhiteSpace(dto.Role) && scope.IsSuperAdmin)
+        {
+            var currentRole = await _userManager.GetRolesAsync(user);
+            if (!currentRole.Contains(dto.Role))
+            {
+                if (user.Staff != null && Enum.TryParse<StaffPosition>(dto.Role, true, out var newPosition))
+                {
+                    user.Staff.Position = newPosition;
+                    await _userManager.RemoveFromRolesAsync(user, currentRole);
+                    await _userManager.AddToRoleAsync(user, "Staff");
+                    changedFields.Add($"Role:{dto.Role}");
+                }
+                else if (user.Staff == null && dto.Role == "SuperAdmin")
+                {
+                     await _userManager.RemoveFromRolesAsync(user, currentRole);
+                     await _userManager.AddToRoleAsync(user, "SuperAdmin");
+                     changedFields.Add("Role:SuperAdmin");
+                }
+                else if (user.Staff == null && dto.Role == "GymOwner")
+                {
+                     await _userManager.RemoveFromRolesAsync(user, currentRole);
+                     await _userManager.AddToRoleAsync(user, "GymOwner");
+                     changedFields.Add("Role:GymOwner");
+                }
+            }
+        }
 
         // ===== UPDATE STAFF INFO =====
 
@@ -312,15 +417,70 @@ public class UserService : IUserService
             _mapper.Map(dto.TrainerProfile, profile);
         }
 
+        // ===== UPDATE MEMBER INFO (AccessCard + new Contract) =====
+
+        if (dto.MemberUpdate != null)
+        {
+            var member = await _context.Members
+                .Include(m => m.AccessCard)
+                .FirstOrDefaultAsync(m => m.UserId == id);
+
+            if (member != null)
+            {
+                // 1. Update AccessCard status
+                if (member.AccessCard != null && dto.MemberUpdate.AccessCardStatus.HasValue)
+                {
+                    member.AccessCard.Status = dto.MemberUpdate.AccessCardStatus.Value;
+                    changedFields.Add($"AccessCard.Status:{dto.MemberUpdate.AccessCardStatus.Value}");
+                }
+
+                // 2. Tạo Contract mới (Pending) nếu đổi gói
+                if (dto.MemberUpdate.NewPackageId.HasValue && dto.MemberUpdate.NewPricingId.HasValue)
+                {
+                    var package = await _context.Packages
+                        .Include(p => p.Pricings)
+                        .FirstOrDefaultAsync(p => p.PackageId == dto.MemberUpdate.NewPackageId.Value
+                                               && p.Status == PackageStatus.Active)
+                        ?? throw new Exception("Package not found or inactive");
+
+                    var pricing = package.Pricings
+                        .FirstOrDefault(pr => pr.PackagePricingId == dto.MemberUpdate.NewPricingId.Value)
+                        ?? throw new Exception("Pricing not found for this package");
+
+                    var newContract = new Contract
+                    {
+                        ContractId           = Guid.NewGuid(),
+                        MemberUserId         = id,
+                        PackageId            = package.PackageId,
+                        StaffId              = adminId,
+                        DealPrice            = pricing.Price,
+                        Status               = ContractStatus.Pending,
+                        StartDate            = DateTime.UtcNow,
+                        EndDate              = DateTime.UtcNow.AddMonths(pricing.DurationMonths),
+                        TotalPrivateSessions = package.PrivatePtLimit,
+                        TotalGroupSessions   = package.GroupPtLimit,
+                        CreatedAt            = DateTime.UtcNow
+                    };
+                    _context.Contracts.Add(newContract);
+                    changedFields.Add($"NewContract:Pending,Package:{package.Name}");
+                }
+            }
+        }
+
         user.UpdatedAt = DateTime.UtcNow;
 
         // ===== AUDIT LOG =====
 
-        _auditLogService.Add(_auditLogService.CreateLog(
-            adminId,
-            "User",
-            id,
-            "UpdateUser"));
+        if (changedFields.Any())
+        {
+            _auditLogService.Add(_auditLogService.CreateLog(
+                adminId,
+                "User",
+                id,
+                "UpdateUser",
+                newValue: string.Join(", ", changedFields),
+                branchId: scope.BranchId));
+        }
 
         await _context.SaveChangesAsync();
 
@@ -329,11 +489,22 @@ public class UserService : IUserService
 
     public async Task<bool> UpdateUserStatusAsync(Guid id, UserStatus status, Guid adminId)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _context.Users
+            .Include(x => x.Staff)
+            .FirstOrDefaultAsync(x => x.Id == id);
 
         if (user == null)
             return false;
 
+        var scope = await GetCallerScopeAsync();
+        if (!scope.IsSuperAdmin && !scope.IsGymOwner && scope.IsBranchAdmin)
+        {
+            var targetBranchId = user.Staff?.BranchId ?? user.InitialBranchId;
+            if (targetBranchId != scope.BranchId)
+                throw new UnauthorizedAccessException("Branch admins can only modify users in their own branch");
+        }
+
+        var oldStatus = user.Status;
         user.Status = status;
         user.UpdatedAt = DateTime.UtcNow;
 
@@ -341,7 +512,10 @@ public class UserService : IUserService
             adminId,
             "User",
             id,
-            $"UpdateUserStatus:{status}"));
+            $"UpdateUserStatus",
+            oldValue: oldStatus.ToString(),
+            newValue: status.ToString(),
+            branchId: scope.BranchId));
 
         await _context.SaveChangesAsync();
 

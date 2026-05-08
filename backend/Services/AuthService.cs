@@ -73,8 +73,19 @@ public class AuthService : IAuthService
             _context.OtpCodes.Add(otp);
             await _context.SaveChangesAsync();
 
-            if (!string.IsNullOrWhiteSpace(user.Email))
+            bool isEmail = dto.EmailOrPhone.Contains('@');
+            if (isEmail && !string.IsNullOrWhiteSpace(user.Email))
                 await _emailService.SendPasswordResetAsync(user.Email, otp.Code);
+            else if (!isEmail && !string.IsNullOrWhiteSpace(user.PhoneNumber))
+                await _smsService.SendPasswordResetAsync(user.PhoneNumber, otp.Code);
+            else
+            {
+                // Fallback in case of missing info
+                if (!string.IsNullOrWhiteSpace(user.Email))
+                    await _emailService.SendPasswordResetAsync(user.Email, otp.Code);
+                else if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
+                    await _smsService.SendPasswordResetAsync(user.PhoneNumber, otp.Code);
+            }
 
             return new AuthResultDto
             {
@@ -134,10 +145,19 @@ public class AuthService : IAuthService
         _context.OtpCodes.Add(otp);
         await _context.SaveChangesAsync();
 
-        if (!string.IsNullOrWhiteSpace(user.Email))
+        bool isEmail = dto.EmailOrPhone.Contains('@');
+        if (isEmail && !string.IsNullOrWhiteSpace(user.Email))
             await _emailService.SendPasswordResetAsync(user.Email, otp.Code);
-        else if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
+        else if (!isEmail && !string.IsNullOrWhiteSpace(user.PhoneNumber))
             await _smsService.SendPasswordResetAsync(user.PhoneNumber, otp.Code);
+        else
+        {
+            // Fallback in case of missing info
+            if (!string.IsNullOrWhiteSpace(user.Email))
+                await _emailService.SendPasswordResetAsync(user.Email, otp.Code);
+            else if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
+                await _smsService.SendPasswordResetAsync(user.PhoneNumber, otp.Code);
+        }
     }
 
     public async Task ResetPasswordAsync(ResetPasswordDto dto)

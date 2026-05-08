@@ -12,5 +12,7 @@ public class RegisterResultDto
 
     public Guid InvoiceId { get; set; }
 
+    public string? AccessCardCode { get; set; }
+
     public string Message { get; set; } = "Account created successfully. Check your email for login credentials.";
 }

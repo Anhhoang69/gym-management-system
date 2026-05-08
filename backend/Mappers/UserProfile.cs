@@ -23,6 +23,10 @@ public class UserProfile : Profile
             .ForMember(d => d.BranchName, opt => opt.MapFrom(s => s.Staff != null ? s.Staff.Branch.Name : (s.InitialBranch != null ? s.InitialBranch.Name : null)))
             .ForMember(d => d.StaffPosition, opt => opt.MapFrom(s => s.Staff != null ? s.Staff.Position : (StaffPosition?)null));
 
+        CreateMap<AccessCard, AccessCardSummaryDto>();
+        CreateMap<Contract, ContractSummaryDto>()
+            .ForMember(d => d.PackageName, opt => opt.MapFrom(s => s.Package.Name));
+
         CreateMap<PTProfile, PTProfileDto>();
         CreateMap<PTProfileDto, PTProfile>();
 

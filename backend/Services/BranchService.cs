@@ -209,24 +209,27 @@ public class BranchService : IBranchService
 
             var update = JsonSerializer.Deserialize<UpdateBranchDto>(request.Payload!);
 
-            _mapper.Map(update, branch);
-
-            if (update.Images != null)
+            if (update != null)
             {
-                var oldImages = await _context.BranchImages
-                    .Where(x => x.BranchId == branch.BranchId)
-                    .ToListAsync();
+                _mapper.Map(update, branch);
 
-                _context.BranchImages.RemoveRange(oldImages);
-
-                foreach (var url in update.Images)
+                if (update.Images != null)
                 {
-                    _context.BranchImages.Add(new BranchImage
+                    var oldImages = await _context.BranchImages
+                        .Where(x => x.BranchId == branch.BranchId)
+                        .ToListAsync();
+
+                    _context.BranchImages.RemoveRange(oldImages);
+
+                    foreach (var url in update.Images)
                     {
-                        BranchImageId = Guid.NewGuid(),
-                        BranchId = branch.BranchId,
-                        ImageUrl = url
-                    });
+                        _context.BranchImages.Add(new BranchImage
+                        {
+                            BranchImageId = Guid.NewGuid(),
+                            BranchId = branch.BranchId,
+                            ImageUrl = url
+                        });
+                    }
                 }
             }
         }

@@ -17,15 +17,17 @@ public class LeadService : ILeadService
     private readonly ApplicationDbContext _context;
     private readonly IMapper _mapper;
     private readonly IAuditLogService _auditLogService;
+    private readonly Microsoft.AspNetCore.Identity.UserManager<User> _userManager;
     private const int DEFAULT_SCORE = 10;
     private static readonly Regex PhoneRegex = new(@"^\d{9,11}$", RegexOptions.Compiled);
     private static readonly Regex EmailRegex = new(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.Compiled);
 
-    public LeadService(ApplicationDbContext context, IMapper mapper, IAuditLogService auditLogService)
+    public LeadService(ApplicationDbContext context, IMapper mapper, IAuditLogService auditLogService, Microsoft.AspNetCore.Identity.UserManager<User> userManager)
     {
         _context = context;
         _mapper = mapper;
         _auditLogService = auditLogService;
+        _userManager = userManager;
     }
 
     public async Task<LeadDto> CreateLeadAsync(CreateLeadDto dto, Guid currentUserId)
@@ -552,6 +554,66 @@ public class LeadService : ILeadService
             .FirstAsync();
 
         return dto;
+    }
+
+    public async Task<Guid> ConvertLeadToMemberAsync(Guid leadId, Guid currentUserId)
+    {
+        await EnsureLeadWritePermissionAsync(currentUserId);
+
+        var lead = await _context.Leads.FirstOrDefaultAsync(l => l.LeadId == leadId);
+        if (lead == null) throw new Exception("Lead not found");
+
+        if (lead.ConvertedMemberUserId.HasValue)
+            throw new Exception("Lead is already converted");
+
+        if (lead.Status == LeadStatus.Lost)
+            throw new Exception("Cannot convert a lost lead");
+
+        var tempPassword = RegistrationService.GenerateTempPassword();
+        var email = string.IsNullOrWhiteSpace(lead.Email) ? $"{lead.Phone}@placeholder.local" : lead.Email;
+        var phone = lead.Phone;
+
+        var user = new User
+        {
+            UserName = email,
+            Email = email,
+            PhoneNumber = phone,
+            FullName = lead.Name,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var result = await _userManager.CreateAsync(user, tempPassword);
+        if (!result.Succeeded)
+            throw new Exception("Failed to create user: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+
+        await _userManager.AddToRoleAsync(user, "Member");
+
+        _context.Members.Add(new Member { UserId = user.Id });
+        
+        _context.AccessCards.Add(new AccessCard
+        {
+            AccessCardId = Guid.NewGuid(),
+            MemberUserId = user.Id,
+            CardCode = RegistrationService.GenerateCardCode(user.Id),
+            Status = AccessCardStatus.Inactive,
+            IssueDate = DateTime.UtcNow
+        });
+
+        lead.ConvertedMemberUserId = user.Id;
+        lead.Status = LeadStatus.Converted;
+        lead.LostReason = null;
+        lead.UpdatedAt = DateTime.UtcNow;
+
+        _auditLogService.Add(_auditLogService.CreateLog(
+            currentUserId,
+            "Lead",
+            lead.LeadId,
+            "Convert",
+            newValue: $"Converted to Member user {user.Id}"));
+
+        await _context.SaveChangesAsync();
+
+        return user.Id;
     }
 
     public async Task<LeadDto?> GetLeadAsync(Guid id)

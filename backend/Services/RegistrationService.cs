@@ -138,12 +138,26 @@ public class RegistrationService : IRegistrationService
                 ProcessedByStaffId = Guid.Empty,
                 CreatedAt = now
             };
-            _context.Payments.Add(payment);
+            await _context.Payments.AddAsync(payment);
+            await _context.SaveChangesAsync();
+
+            // 7. Create AccessCard (Active, tied to contract end date)
+            var cardCode = GenerateCardCode(user.Id);
+            var accessCard = new AccessCard
+            {
+                AccessCardId = Guid.NewGuid(),
+                MemberUserId = user.Id,
+                CardCode     = cardCode,
+                Status       = AccessCardStatus.Active,
+                IssueDate    = now,
+                ExpireDate   = contract.EndDate
+            };
+            _context.AccessCards.Add(accessCard);
             await _context.SaveChangesAsync();
 
             await transaction.CommitAsync();
 
-            // 7. Send activation email / SMS (outside transaction — not critical for rollback)
+            // 8. Send activation email / SMS (outside transaction — not critical for rollback)
             if (!string.IsNullOrWhiteSpace(user.Email))
                 await _emailService.SendActivationAsync(user.Email, user.FullName ?? dto.FullName, tempPassword);
             else if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
@@ -151,12 +165,13 @@ public class RegistrationService : IRegistrationService
 
             return new RegisterResultDto
             {
-                UserId = user.Id,
-                Email = user.Email!,
-                TempPassword = tempPassword,
-                ContractId = contract.ContractId,
-                InvoiceId = invoice.InvoiceId,
-                Message = "Account created successfully. Check your email for login credentials."
+                UserId         = user.Id,
+                Email          = user.Email!,
+                TempPassword   = tempPassword,
+                ContractId     = contract.ContractId,
+                InvoiceId      = invoice.InvoiceId,
+                AccessCardCode = cardCode,
+                Message        = "Account created successfully. Check your email for login credentials."
             };
         }
         catch
@@ -166,10 +181,34 @@ public class RegistrationService : IRegistrationService
         }
     }
 
-    private static string GenerateTempPassword()
+    internal static string GenerateTempPassword()
     {
-        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#";
-        return string.Concat(Enumerable.Range(0, 10)
-            .Select(_ => chars[RandomNumberGenerator.GetInt32(0, chars.Length)]));
+        const string uppers = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const string lowers = "abcdefghjkmnpqrstuvwxyz";
+        const string digits = "23456789";
+        const string specials = "!@#$*";
+        
+        var chars = new[]
+        {
+            uppers[RandomNumberGenerator.GetInt32(0, uppers.Length)],
+            lowers[RandomNumberGenerator.GetInt32(0, lowers.Length)],
+            digits[RandomNumberGenerator.GetInt32(0, digits.Length)],
+            specials[RandomNumberGenerator.GetInt32(0, specials.Length)]
+        }.ToList();
+
+        const string allChars = uppers + lowers + digits + specials;
+        for (int i = 0; i < 6; i++)
+        {
+            chars.Add(allChars[RandomNumberGenerator.GetInt32(0, allChars.Length)]);
+        }
+
+        return new string(chars.OrderBy(x => RandomNumberGenerator.GetInt32(0, 100)).ToArray());
+    }
+
+    /// <summary>Format: GYM-{8 ký tự hex ngẫu nhiên viết hoa}</summary>
+    internal static string GenerateCardCode(Guid userId)
+    {
+        var suffix = Convert.ToHexString(RandomNumberGenerator.GetBytes(4));
+        return $"GYM-{suffix}";
     }
 }

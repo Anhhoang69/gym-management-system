@@ -13,7 +13,7 @@ public class AccessCard
 
     public DateTime IssueDate { get; set; }
 
-    public DateTime ExpireDate { get; set; }
+    public DateTime? ExpireDate { get; set; }
 
     public Member Member { get; set; } = null!;
     public ICollection<Attendance> Attendances { get; set; } = new List<Attendance>();

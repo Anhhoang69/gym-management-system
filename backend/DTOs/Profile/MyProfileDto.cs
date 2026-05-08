@@ -29,4 +29,10 @@ public class MyProfileDto
     public string? Role { get; set; }
 
     public string? BranchName { get; set; }
+
+    /// <summary>Chỉ có giá trị khi người dùng là Member</summary>
+    public MemberProfileInfo? MemberInfo { get; set; }
+
+    /// <summary>Chỉ có giá trị khi người dùng là PT hoặc HeadPT</summary>
+    public PTProfileInfo? TrainerInfo { get; set; }
 }

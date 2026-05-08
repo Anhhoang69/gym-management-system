@@ -99,10 +99,15 @@ builder.Services.AddScoped<ILeadSourceService, LeadSourceService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // ================= MODULE 4.3.2: ACCOUNT & ACCESS MANAGEMENT =================
-builder.Services.AddScoped<IEmailService, MockEmailService>();
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<ISmsService, MockSmsService>();
 builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
+
+// ================= MODULE 4.3.4.b: CONTRACT & INVOICE =================
+builder.Services.AddScoped<IContractService, ContractService>();
+builder.Services.AddScoped<ICommissionService, CommissionService>();
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 
 builder.Services.AddHttpContextAccessor();
 

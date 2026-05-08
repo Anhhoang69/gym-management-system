@@ -128,4 +128,16 @@ public class LeadController : ControllerBase
         var result = await _service.MergeLeadAsync(id, request, currentUserId);
         return new ApiResponse<LeadDto>(result, "Leads merged successfully");
     }
+
+    [HttpPost("{id}/convert-to-member")]
+    [SwaggerOperation(
+        Summary = "Chuyển đổi lead thành hội viên",
+        Description = "Actors: Sales, Super Admin, Branch Admin. Chuyển lead thành Member, tự động tạo User, Member, AccessCard (Inactive)."
+    )]
+    public async Task<ApiResponse<Guid>> ConvertLeadToMember(Guid id)
+    {
+        var currentUserId = User.GetRequiredUserId();
+        var memberUserId = await _service.ConvertLeadToMemberAsync(id, currentUserId);
+        return new ApiResponse<Guid>(memberUserId, "Lead converted to member successfully");
+    }
 }
