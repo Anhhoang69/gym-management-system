@@ -14,7 +14,7 @@ public interface ILeadService
     Task<LeadDto> ContactLeadAsync(Guid id, Guid currentUserId);
     Task<ImportLeadsResultDto> ImportLeadsAsync(ImportLeadsRequestDto request, Guid currentUserId);
     Task<LeadDto> MergeLeadAsync(Guid leadId, MergeLeadDto request, Guid currentUserId);
-    Task<Guid> ConvertLeadToMemberAsync(Guid leadId, Guid currentUserId);
+    Task<ConvertLeadResultDto> ConvertLeadToMemberAsync(Guid leadId, ConvertLeadToMemberDto dto, Guid currentUserId);
 }
 
 public interface ILeadSourceService

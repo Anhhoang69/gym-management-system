@@ -556,7 +556,7 @@ public class LeadService : ILeadService
         return dto;
     }
 
-    public async Task<Guid> ConvertLeadToMemberAsync(Guid leadId, Guid currentUserId)
+    public async Task<ConvertLeadResultDto> ConvertLeadToMemberAsync(Guid leadId, ConvertLeadToMemberDto dto, Guid currentUserId)
     {
         await EnsureLeadWritePermissionAsync(currentUserId);
 
@@ -569,10 +569,59 @@ public class LeadService : ILeadService
         if (lead.Status == LeadStatus.Lost)
             throw new Exception("Cannot convert a lost lead");
 
-        var tempPassword = RegistrationService.GenerateTempPassword();
+        // ── 1. Validate Package / Pricing ──────────────────────────────────────
+        var package = await _context.Packages
+            .Include(p => p.Pricings)
+            .FirstOrDefaultAsync(p => p.PackageId == dto.PackageId && p.Status == PackageStatus.Active)
+            ?? throw new Exception("Package not found or inactive");
+
+        var pricing = package.Pricings.FirstOrDefault(pr => pr.PackagePricingId == dto.PricingId)
+            ?? throw new Exception("Pricing not found for this package");
+
+        // ── 2. Tính giá & Promotions ───────────────────────────────────────────
+        decimal originalPrice = pricing.Price;
+        decimal discountAmount = 0;
+
+        if (dto.PromotionIds != null && dto.PromotionIds.Any())
+        {
+            var promotions = await _context.Promotions
+                .Where(p => dto.PromotionIds.Contains(p.PromotionId) && p.Status == PromotionStatus.Active)
+                .ToListAsync();
+
+            foreach (var promo in promotions)
+            {
+                if (promo.StartDate > DateTime.UtcNow || promo.EndDate < DateTime.UtcNow) continue;
+                if (promo.ApplicablePackageId.HasValue && promo.ApplicablePackageId != package.PackageId) continue;
+                if (promo.CurrentUsage >= promo.MaxUsage) continue;
+
+                if (promo.DiscountType == DiscountType.Percentage)
+                    discountAmount += originalPrice * (promo.DiscountValue / 100);
+                else if (promo.DiscountType == DiscountType.FixedAmount)
+                    discountAmount += promo.DiscountValue;
+
+                promo.CurrentUsage++;
+            }
+        }
+        if (discountAmount > originalPrice) discountAmount = originalPrice;
+        decimal dealPrice = originalPrice - discountAmount;
+
+        // ── 3. Validate email/phone trùng lặp ─────────────────────────────────
         var email = string.IsNullOrWhiteSpace(lead.Email) ? $"{lead.Phone}@placeholder.local" : lead.Email;
         var phone = lead.Phone;
 
+        var emailExists = await _userManager.FindByEmailAsync(email) != null;
+        if (emailExists)
+            throw new Exception($"An account with email '{email}' already exists");
+
+        if (!string.IsNullOrWhiteSpace(phone))
+        {
+            var phoneExists = await _context.Users.AnyAsync(u => u.PhoneNumber == phone);
+            if (phoneExists)
+                throw new Exception($"An account with phone '{phone}' already exists");
+        }
+
+        // ── 4. Tạo User + Member + AccessCard (Inactive) ──────────────────────
+        var tempPassword = RegistrationService.GenerateTempPassword();
         var user = new User
         {
             UserName = email,
@@ -582,23 +631,69 @@ public class LeadService : ILeadService
             CreatedAt = DateTime.UtcNow
         };
 
-        var result = await _userManager.CreateAsync(user, tempPassword);
-        if (!result.Succeeded)
-            throw new Exception("Failed to create user: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+        var createResult = await _userManager.CreateAsync(user, tempPassword);
+        if (!createResult.Succeeded)
+            throw new Exception("Failed to create user: " + string.Join(", ", createResult.Errors.Select(e => e.Description)));
 
         await _userManager.AddToRoleAsync(user, "Member");
 
         _context.Members.Add(new Member { UserId = user.Id });
-        
+
+        var cardCode = RegistrationService.GenerateCardCode(user.Id);
         _context.AccessCards.Add(new AccessCard
         {
             AccessCardId = Guid.NewGuid(),
             MemberUserId = user.Id,
-            CardCode = RegistrationService.GenerateCardCode(user.Id),
-            Status = AccessCardStatus.Inactive,
+            CardCode = cardCode,
+            Status = AccessCardStatus.Inactive,   // chưa kích hoạt
             IssueDate = DateTime.UtcNow
         });
 
+        // ── 5. Tạo Contract (Pending) ──────────────────────────────────────────
+        var staffRecord = await _context.Staffs.AsNoTracking().FirstOrDefaultAsync(s => s.UserId == currentUserId);
+        var staffId = staffRecord?.UserId ?? currentUserId;
+
+        var startDate = dto.StartDate;
+        var endDate = startDate.AddMonths(pricing.DurationMonths);
+
+        var contract = new Contract
+        {
+            ContractId = Guid.NewGuid(),
+            MemberUserId = user.Id,
+            PackageId = package.PackageId,
+            StaffId = staffId,
+            OriginalPrice = originalPrice,
+            DiscountAmount = discountAmount,
+            DealPrice = dealPrice,
+            Note = dto.Note,
+            Status = ContractStatus.Pending,
+            StartDate = startDate,
+            EndDate = endDate,
+            TotalPrivateSessions = package.PrivatePtLimit,
+            TotalGroupSessions = package.GroupPtLimit,
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Contracts.Add(contract);
+
+        // ── 6. Tạo Invoice (Pending) ───────────────────────────────────────────
+        var suffix = Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(3));
+        var invoice = new Invoice
+        {
+            InvoiceId = Guid.NewGuid(),
+            ContractId = contract.ContractId,
+            MemberId = user.Id,
+            InvoiceCode = $"INV-{DateTime.UtcNow:yyyyMMdd}-{suffix}",
+            Subtotal = originalPrice,
+            DiscountAmount = discountAmount,
+            TaxAmount = dto.TaxAmount,
+            TotalAmount = dealPrice + dto.TaxAmount,
+            Status = InvoiceStatus.Pending,   // chưa thu tiền
+            CreatedByStaffId = staffId,
+            CreatedAt = DateTime.UtcNow
+        };
+        _context.Invoices.Add(invoice);
+
+        // ── 7. Cập nhật Lead ───────────────────────────────────────────────────
         lead.ConvertedMemberUserId = user.Id;
         lead.Status = LeadStatus.Converted;
         lead.LostReason = null;
@@ -609,12 +704,25 @@ public class LeadService : ILeadService
             "Lead",
             lead.LeadId,
             "Convert",
-            newValue: $"Converted to Member user {user.Id}"));
+            newValue: $"Converted to Member {user.Id}, Contract {contract.ContractId} (Pending payment)"));
 
         await _context.SaveChangesAsync();
 
-        return user.Id;
+        return new ConvertLeadResultDto
+        {
+            MemberUserId = user.Id,
+            ContractId = contract.ContractId,
+            InvoiceId = invoice.InvoiceId,
+            TotalAmountDue = invoice.TotalAmount,
+            OriginalPrice = originalPrice,
+            DiscountAmount = discountAmount,
+            DealPrice = dealPrice,
+            ContractStartDate = startDate,
+            ContractEndDate = endDate,
+            Message = $"Lead converted to Member (Pending). Collect payment at /api/invoices/{invoice.InvoiceId}/payment then activate at /api/contracts/{contract.ContractId}/activate"
+        };
     }
+
 
     public async Task<LeadDto?> GetLeadAsync(Guid id)
     {

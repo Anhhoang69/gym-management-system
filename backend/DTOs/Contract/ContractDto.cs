@@ -9,6 +9,8 @@ public class ContractDto
     public string MemberName { get; set; } = null!;
     public string PackageName { get; set; } = null!;
     public ContractStatus Status { get; set; }
+    public decimal OriginalPrice { get; set; }
+    public decimal DiscountAmount { get; set; }
     public decimal DealPrice { get; set; }
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }

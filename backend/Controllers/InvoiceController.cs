@@ -32,7 +32,7 @@ public class InvoiceController : ControllerBase
         Summary = "Phát hành hóa đơn",
         Description = "Tạo hóa đơn cho hợp đồng đang chờ thanh toán (UC-27)"
     )]
-    [Authorize(Roles = "SuperAdmin,BranchAdmin,Sales,Receptionist")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<InvoiceDto>> IssueInvoice([FromBody] IssueInvoiceDto dto)
     {
         var result = await _service.IssueInvoiceAsync(dto, GetStaffId());
@@ -43,7 +43,7 @@ public class InvoiceController : ControllerBase
     [SwaggerOperation(
         Summary = "Xem chi tiết hóa đơn"
     )]
-    [Authorize(Roles = "SuperAdmin,BranchAdmin,Sales,Receptionist")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<InvoiceDto>> GetInvoice(Guid id)
     {
         var result = await _service.GetInvoiceAsync(id, GetStaffId());
@@ -55,7 +55,7 @@ public class InvoiceController : ControllerBase
         Summary = "Thu tiền",
         Description = "Ghi nhận thanh toán cho hóa đơn (UC-28). Hỗ trợ thanh toán toàn bộ."
     )]
-    [Authorize(Roles = "SuperAdmin,BranchAdmin,Sales,Receptionist")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<PaymentDto>> CollectPayment(Guid id, [FromBody] CollectPaymentDto dto)
     {
         var result = await _service.CollectPaymentAsync(id, dto, GetStaffId());

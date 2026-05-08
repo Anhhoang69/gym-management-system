@@ -21,6 +21,8 @@ public class ContractService : IContractService
 
     public async Task<ContractDraftPreviewDto> CreateDraftAsync(CreateContractDraftDto dto, Guid staffId)
     {
+        await EnsureC2PermissionAsync(staffId);
+
         var package = await _context.Packages
             .Include(p => p.Pricings)
             .FirstOrDefaultAsync(p => p.PackageId == dto.PackageId && p.Status == PackageStatus.Active)
@@ -110,6 +112,8 @@ public class ContractService : IContractService
 
     public async Task<ContractDraftPreviewDto> GetDraftAsync(Guid draftId, Guid staffId)
     {
+        await EnsureC2PermissionAsync(staffId);
+
         var draft = await _context.ContractDrafts
             .Include(d => d.Package)
             .Include(d => d.Pricing)
@@ -138,6 +142,8 @@ public class ContractService : IContractService
 
     public async Task<ContractDto> GenerateContractAsync(GenerateContractDto dto, Guid staffId)
     {
+        await EnsureC2PermissionAsync(staffId);
+
         var draft = await _context.ContractDrafts
             .Include(d => d.Package)
             .Include(d => d.Pricing)
@@ -159,6 +165,8 @@ public class ContractService : IContractService
             MemberUserId = draft.MemberUserId.Value,
             PackageId = draft.PackageId,
             StaffId = staffId,
+            OriginalPrice = draft.OriginalPrice,
+            DiscountAmount = draft.DiscountAmount,
             DealPrice = draft.DealPrice,
             Note = draft.Note,
             Status = ContractStatus.Pending,
@@ -197,6 +205,8 @@ public class ContractService : IContractService
             MemberName = memberUser.FullName ?? "Unknown",
             PackageName = draft.Package.Name,
             Status = contract.Status,
+            OriginalPrice = contract.OriginalPrice,
+            DiscountAmount = contract.DiscountAmount,
             DealPrice = contract.DealPrice,
             StartDate = contract.StartDate,
             EndDate = contract.EndDate,
@@ -211,6 +221,8 @@ public class ContractService : IContractService
 
     public async Task<ContractDto> GetContractAsync(Guid contractId, Guid staffId)
     {
+        await EnsureC2PermissionAsync(staffId);
+
         var contract = await _context.Contracts
             .Include(c => c.Package)
             .Include(c => c.Member.User)
@@ -225,6 +237,8 @@ public class ContractService : IContractService
             MemberName = contract.Member.User.FullName ?? "Unknown",
             PackageName = contract.Package.Name,
             Status = contract.Status,
+            OriginalPrice = contract.OriginalPrice,
+            DiscountAmount = contract.DiscountAmount,
             DealPrice = contract.DealPrice,
             StartDate = contract.StartDate,
             EndDate = contract.EndDate,
@@ -241,6 +255,8 @@ public class ContractService : IContractService
 
     public async Task<string> ActivateMembershipAsync(Guid contractId, Guid staffId)
     {
+        await EnsureC2PermissionAsync(staffId);
+
         var contract = await _context.Contracts
             .Include(c => c.Invoice)
             .Include(c => c.Member).ThenInclude(m => m.AccessCard)
@@ -305,5 +321,26 @@ public class ContractService : IContractService
         }
 
         return code;
+    }
+
+    private async Task EnsureC2PermissionAsync(Guid staffUserId)
+    {
+        var hasPermission = await _context.Staffs
+            .AsNoTracking()
+            .AnyAsync(s => s.UserId == staffUserId &&
+                          (s.Position == StaffPosition.Sales ||
+                           s.Position == StaffPosition.Receptionist ||
+                           s.Position == StaffPosition.BranchAdmin));
+
+        if (hasPermission)
+            return;
+
+        var isSuperAdmin = await _context.UserRoles
+            .AsNoTracking()
+            .AnyAsync(ur => ur.UserId == staffUserId &&
+                           _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == "SuperAdmin"));
+
+        if (!isSuperAdmin)
+            throw new Exception("You do not have permission to manage contracts (requires Sales, Receptionist, BranchAdmin or SuperAdmin)");
     }
 }

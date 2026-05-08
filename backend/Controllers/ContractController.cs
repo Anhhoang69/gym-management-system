@@ -33,7 +33,7 @@ public class ContractController : ControllerBase
         Summary = "Cấu hình gói hội viên (Tạo bản nháp)",
         Description = "Lưu thông tin cấu hình vào draft để kiểm tra và tính toán (UC-25)"
     )]
-    [Authorize(Roles = "SuperAdmin,BranchAdmin,Sales,Receptionist")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<ContractDraftPreviewDto>> CreateDraft([FromBody] CreateContractDraftDto dto)
     {
         var result = await _service.CreateDraftAsync(dto, GetStaffId());
@@ -45,7 +45,7 @@ public class ContractController : ControllerBase
         Summary = "Xem bản nháp",
         Description = "Xem thông tin một bản nháp hợp đồng"
     )]
-    [Authorize(Roles = "SuperAdmin,BranchAdmin,Sales,Receptionist")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<ContractDraftPreviewDto>> GetDraft(Guid id)
     {
         var result = await _service.GetDraftAsync(id, GetStaffId());
@@ -57,7 +57,7 @@ public class ContractController : ControllerBase
         Summary = "Tạo hợp đồng",
         Description = "Tạo hợp đồng từ bản nháp. Hợp đồng sẽ ở trạng thái PendingPayment (UC-26)"
     )]
-    [Authorize(Roles = "SuperAdmin,BranchAdmin,Sales,Receptionist")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<ContractDto>> GenerateContract([FromBody] GenerateContractDto dto)
     {
         var result = await _service.GenerateContractAsync(dto, GetStaffId());
@@ -68,7 +68,7 @@ public class ContractController : ControllerBase
     [SwaggerOperation(
         Summary = "Xem chi tiết hợp đồng"
     )]
-    [Authorize(Roles = "SuperAdmin,BranchAdmin,Sales,Receptionist")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<ContractDto>> GetContract(Guid id)
     {
         var result = await _service.GetContractAsync(id, GetStaffId());
@@ -80,7 +80,7 @@ public class ContractController : ControllerBase
         Summary = "Kích hoạt hội viên",
         Description = "Kích hoạt hợp đồng sau khi đã thanh toán hóa đơn. Tự động cấp quyền AccessCard và ghi nhận hoa hồng (UC-29)"
     )]
-    [Authorize(Roles = "SuperAdmin,BranchAdmin,Sales,Receptionist")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<string>> ActivateMembership(Guid id)
     {
         var accessCardCode = await _service.ActivateMembershipAsync(id, GetStaffId());

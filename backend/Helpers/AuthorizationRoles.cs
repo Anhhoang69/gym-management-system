@@ -15,4 +15,7 @@ public static class AuthorizationRoles
     public const string StaffOrSuperAdmin = SuperAdmin + "," + Staff;
     public const string LeadManagementRoles = StaffOrSuperAdmin;
     public const string AuditLogRoles = SuperAdmin + "," + GymOwner + "," + Staff;
+
+    /// <summary>Dành cho quick-register: chỉ Receptionist + BranchAdmin + SuperAdmin (không phải Sales/PT)</summary>
+    public const string QuickRegisterRoles = SuperAdmin + "," + GymOwner + "," + Staff;
 }

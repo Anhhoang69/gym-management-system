@@ -1,4 +1,5 @@
 using backend.Data;
+using backend.Enums;
 using backend.Interfaces;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,10 @@ public class CommissionService : ICommissionService
         _context = context;
     }
 
+    /// <summary>
+    /// Ghi nhận hoa hồng khi hợp đồng được kích hoạt (Payment đã Paid).
+    /// Status = Approved ngay — không cần approval workflow.
+    /// </summary>
     public async Task RecordAsync(Guid contractId, Guid triggerStaffId)
     {
         var contract = await _context.Contracts
@@ -27,9 +32,9 @@ public class CommissionService : ICommissionService
         if (staff == null)
             return;
 
-        decimal rate = staff.CommissionRate ?? 5; // 5% default
+        decimal rate = staff.CommissionRate ?? 5m; // 5% default
 
-        var commission = new Commission
+        _context.Commissions.Add(new Commission
         {
             CommissionId = Guid.NewGuid(),
             StaffId = contract.StaffId,
@@ -37,10 +42,10 @@ public class CommissionService : ICommissionService
             InvoiceId = contract.Invoice.InvoiceId,
             Percent = rate,
             Amount = contract.Invoice.TotalAmount * (rate / 100),
+            Status = CommissionStatus.Approved,
             CreatedAt = DateTime.UtcNow
-        };
+        });
 
-        _context.Commissions.Add(commission);
         await _context.SaveChangesAsync();
     }
 }

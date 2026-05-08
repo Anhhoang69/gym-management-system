@@ -12,6 +12,10 @@ public class Contract
 
     public Guid StaffId { get; set; }
 
+    public decimal OriginalPrice { get; set; }
+
+    public decimal DiscountAmount { get; set; }
+
     public decimal DealPrice { get; set; }
 
     public string? Note { get; set; }

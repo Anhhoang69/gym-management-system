@@ -132,12 +132,12 @@ public class LeadController : ControllerBase
     [HttpPost("{id}/convert-to-member")]
     [SwaggerOperation(
         Summary = "Chuyển đổi lead thành hội viên",
-        Description = "Actors: Sales, Super Admin, Branch Admin. Chuyển lead thành Member, tự động tạo User, Member, AccessCard (Inactive)."
+        Description = "Actors: Sales, Super Admin, Branch Admin. Chuyển lead thành Member, tạo hợp đồng + hóa đơn + kích hoạt AccessCard trong 1 thao tác."
     )]
-    public async Task<ApiResponse<Guid>> ConvertLeadToMember(Guid id)
+    public async Task<ApiResponse<ConvertLeadResultDto>> ConvertLeadToMember(Guid id, [FromBody] ConvertLeadToMemberDto dto)
     {
         var currentUserId = User.GetRequiredUserId();
-        var memberUserId = await _service.ConvertLeadToMemberAsync(id, currentUserId);
-        return new ApiResponse<Guid>(memberUserId, "Lead converted to member successfully");
+        var result = await _service.ConvertLeadToMemberAsync(id, dto, currentUserId);
+        return new ApiResponse<ConvertLeadResultDto>(result, result.Message);
     }
 }
