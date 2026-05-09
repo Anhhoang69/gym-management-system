@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using backend.DTOs.Class;
 using backend.Extensions;
+using backend.Enums;
 using backend.Helpers;
 using backend.Interfaces;
 using Swashbuckle.AspNetCore.Annotations;
@@ -24,14 +25,27 @@ public class ClassController : ControllerBase
 
     [HttpGet]
     [SwaggerOperation(
-        Summary = "Lấy danh sách tất cả các lớp học",
-        Description = "Trả về danh sách các lớp học với thông tin chi tiết bao gồm trainer, room và danh sách booking. Dùng để hiển thị lịch lớp cho admin hoặc member."
+        Summary = "Lấy lịch lớp học (Role-based)",
+        Description = "Trả về lịch lớp học theo filter. Dữ liệu được lọc theo vai trò (PT chỉ thấy lớp của mình, Member thấy thông tin booking cá nhân)."
     )]
-    public async Task<ApiResponse<List<ClassDto>>> GetClasses()
+    [AllowAnonymous] // Tạm thời để lấy token trong code
+    public async Task<ApiResponse<List<ClassScheduleDto>>> GetSchedule(
+        [FromQuery] DateOnly? startDate,
+        [FromQuery] DateOnly? endDate,
+        [FromQuery] DateOnly? date,
+        [FromQuery] Guid? roomId,
+        [FromQuery] Guid? trainerId,
+        [FromQuery] ClassType? classType,
+        [FromQuery] ClassStatus? status,
+        [FromQuery] Guid? branchId)
     {
-        var result = await _service.GetClassesAsync();
+        // Require auth, check explicitly to allow smooth fail if needed or just use GetRequiredUserId if [Authorize] is on class
+        // Let's use User.GetRequiredUserId() since controller has [Authorize]
+        var userId = User.GetRequiredUserId();
 
-        return new ApiResponse<List<ClassDto>>(result);
+        var result = await _service.GetScheduleAsync(startDate, endDate, date, roomId, trainerId, classType, status, branchId, userId);
+
+        return new ApiResponse<List<ClassScheduleDto>>(result);
     }
 
     // ================= DETAIL =================
@@ -167,5 +181,49 @@ public class ClassController : ControllerBase
         var result = await _service.GetMyBookingsAsync(memberUserId);
 
         return new ApiResponse<List<ClassBookingDto>>(result);
+    }
+
+    // ================= PT / STAFF ACTIONS =================
+
+    [HttpGet("{id}/members")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)] // Includes PT
+    [SwaggerOperation(
+        Summary = "Lấy danh sách member trong lớp (PT/Staff)",
+        Description = "Trả về danh sách member đã book lớp. PT chỉ xem được lớp mình phụ trách."
+    )]
+    public async Task<ApiResponse<List<ClassMemberDto>>> GetClassMembers(Guid id)
+    {
+        var userId = User.GetRequiredUserId();
+        var result = await _service.GetClassMembersAsync(id, userId);
+
+        return new ApiResponse<List<ClassMemberDto>>(result);
+    }
+
+    [HttpPatch("{id}/class-checkin")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+    [SwaggerOperation(
+        Summary = "Điểm danh member vào lớp học (Staff/PT)",
+        Description = "Staff hoặc PT điểm danh (check-in) member vào một lớp học cụ thể."
+    )]
+    public async Task<ApiResponse<bool>> ClassCheckIn(Guid id, ClassCheckInDto dto)
+    {
+        var userId = User.GetRequiredUserId();
+        var result = await _service.ClassCheckInAsync(id, dto.MemberUserId, userId);
+
+        return new ApiResponse<bool>(true, "Member checked in to class successfully");
+    }
+
+    [HttpPatch("class-bookings/{classId}/members/{memberId}/session-note")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+    [SwaggerOperation(
+        Summary = "Ghi chú buổi tập của member (PT/HeadPT)",
+        Description = "PT cập nhật ghi chú (session note) cho member sau buổi học."
+    )]
+    public async Task<ApiResponse<bool>> UpdateSessionNote(Guid classId, Guid memberId, UpdateSessionNoteDto dto)
+    {
+        var userId = User.GetRequiredUserId();
+        var result = await _service.UpdateSessionNoteAsync(classId, memberId, dto.SessionNote, userId);
+
+        return new ApiResponse<bool>(true, "Session note updated successfully");
     }
 }

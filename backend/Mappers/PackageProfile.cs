@@ -20,5 +20,8 @@ public class PackageProfile : Profile
         CreateMap<PackagePolicy, PackagePolicyDto>().ReverseMap();
 
         CreateMap<UpdatePackageDto, Package>();
+
+        CreateMap<CreatePackageDto, Package>()
+            .ForMember(d => d.PackagePolicy, opt => opt.MapFrom(s => s.Policy));
     }
 }

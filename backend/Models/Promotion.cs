@@ -29,6 +29,18 @@ public class Promotion
 
     public int CurrentUsage { get; set; }
 
+    /// <summary>Kênh bán áp dụng: null = tất cả, "Walk-in" | "Online" | "Referral"</summary>
+    public string? SalesChannel { get; set; }
+
+    /// <summary>Giá trị HĐ tối thiểu để áp dụng khuến mãi; null = không giới hạn</summary>
+    public decimal? MinContractValue { get; set; }
+
+    /// <summary>Cách áp dụng khi có nhiều khuến mãi đồng thời</summary>
+    public ApplicationRuleType ApplicationRule { get; set; } = ApplicationRuleType.BestDiscount;
+
+    /// <summary>Độ ưu tiên (số nhỏ = ưu tiên cao); dùng khi ApplicationRule = HighestPriority</summary>
+    public int Priority { get; set; }
+
     public Guid CreatedByUserId { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

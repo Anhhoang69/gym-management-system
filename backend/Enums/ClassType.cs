@@ -6,5 +6,6 @@ public enum ClassType
     Boxing,
     Cardio,
     Crossfit,
-    Zumba
+    Zumba,
+    PersonalTraining
 }

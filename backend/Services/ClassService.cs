@@ -24,19 +24,81 @@ public class ClassService : IClassService
 
     // ================= LIST =================
 
-    public async Task<List<ClassDto>> GetClassesAsync()
+    public async Task<List<ClassScheduleDto>> GetScheduleAsync(
+        DateOnly? startDate, DateOnly? endDate, DateOnly? date,
+        Guid? roomId, Guid? trainerId, ClassType? classType, ClassStatus? status, Guid? branchId, Guid callerUserId)
     {
-        return await _context.Classes
-            .Include(x => x.Trainer)
-                .ThenInclude(t => t.User)
-            .Include(x => x.Room)
-                .ThenInclude(r => r.Branch)
-            .Include(x => x.Bookings)
+        var query = _context.Classes
+            .Include(c => c.Trainer).ThenInclude(t => t.User)
+            .Include(c => c.Room).ThenInclude(r => r.Branch)
+            .Include(c => c.Bookings)
             .AsNoTracking()
-            .OrderBy(x => x.Date)
-            .ThenBy(x => x.StartTime)
-            .ProjectTo<ClassDto>(_mapper.ConfigurationProvider)
-            .ToListAsync();
+            .AsQueryable();
+
+        if (date.HasValue) query = query.Where(c => c.Date == date.Value);
+        if (startDate.HasValue) query = query.Where(c => c.Date >= startDate.Value);
+        if (endDate.HasValue) query = query.Where(c => c.Date <= endDate.Value);
+        if (roomId.HasValue) query = query.Where(c => c.RoomId == roomId.Value);
+        if (classType.HasValue) query = query.Where(c => c.ClassType == classType.Value);
+        if (status.HasValue) query = query.Where(c => c.Status == status.Value);
+        if (branchId.HasValue) query = query.Where(c => c.Room.BranchId == branchId.Value);
+
+        bool isMember = await _context.UserRoles.AnyAsync(ur => ur.UserId == callerUserId && _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == backend.Helpers.AuthorizationRoles.Member));
+        bool isStaff = await _context.UserRoles.AnyAsync(ur => ur.UserId == callerUserId && _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == backend.Helpers.AuthorizationRoles.Staff));
+        
+        var staff = isStaff ? await _context.Staffs.AsNoTracking().FirstOrDefaultAsync(s => s.UserId == callerUserId) : null;
+
+        if (isStaff && staff?.Position == StaffPosition.PT)
+        {
+            query = query.Where(c => c.TrainerStaffId == callerUserId);
+        }
+        else if (trainerId.HasValue)
+        {
+            query = query.Where(c => c.TrainerStaffId == trainerId.Value);
+        }
+
+        if (isMember)
+        {
+            query = query.Where(c => c.Status == ClassStatus.Scheduled || c.Bookings.Any(b => b.MemberUserId == callerUserId));
+        }
+
+        var classes = await query.OrderBy(c => c.Date).ThenBy(c => c.StartTime).ToListAsync();
+
+        return classes.Select(c => 
+        {
+            var dto = new ClassScheduleDto
+            {
+                ClassId = c.ClassId,
+                Title = c.Title,
+                Description = c.Description,
+                Date = c.Date,
+                StartTime = c.StartTime,
+                EndTime = c.EndTime,
+                ClassType = c.ClassType,
+                Status = c.Status,
+                Capacity = c.Capacity,
+                MinCapacity = c.MinCapacity,
+                TrainerStaffId = c.TrainerStaffId,
+                TrainerName = c.Trainer.User.FullName ?? "",
+                RoomId = c.RoomId,
+                RoomName = c.Room.Name,
+                RoomNumber = c.Room.RoomNumber,
+                BranchId = c.Room.BranchId,
+                BranchName = c.Room.Branch.Name,
+                BookedCount = c.Bookings.Count(b => b.Status == BookingStatus.Booked || b.Status == BookingStatus.Attended),
+            };
+            dto.IsFull = dto.BookedCount >= dto.Capacity;
+
+            if (isMember)
+            {
+                var myBooking = c.Bookings.FirstOrDefault(b => b.MemberUserId == callerUserId);
+                dto.IsBooked = myBooking != null && myBooking.Status != BookingStatus.Cancelled;
+                dto.MyBookingStatus = myBooking?.Status;
+                dto.MySessionNote = myBooking?.SessionNote;
+            }
+
+            return dto;
+        }).ToList();
     }
 
     // ================= DETAIL =================
@@ -200,6 +262,18 @@ public class ClassService : IClassService
         if (@class.Status != ClassStatus.Scheduled)
             throw new Exception("Class is not available for booking");
 
+        var activeContract = await _context.Contracts
+            .Where(c => c.MemberUserId == memberUserId
+                     && c.Status == ContractStatus.Active
+                     && c.EndDate >= DateTime.UtcNow)
+            .FirstOrDefaultAsync();
+
+        if (activeContract == null)
+            throw new Exception("No active membership found. Please renew your package.");
+
+        if (activeContract.UsedGroupSessions >= activeContract.TotalGroupSessions)
+            throw new Exception("Group session quota exceeded for your current package.");
+
         // Check for schedule conflict
         var conflict = await _context.ClassBookings
             .Include(x => x.Class)
@@ -288,6 +362,91 @@ public class ClassService : IClassService
             .Where(b => b.MemberUserId == memberUserId)
             .OrderByDescending(b => b.BookedAt)
             .ProjectTo<ClassBookingDto>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+    }
+
+    // ================= PT / STAFF =================
+
+    public async Task<List<ClassMemberDto>> GetClassMembersAsync(Guid classId, Guid callerUserId)
+    {
+        var @class = await _context.Classes.FindAsync(classId);
+        if (@class == null) throw new Exception("Class not found");
+
+        var isStaff = await _context.UserRoles.AnyAsync(ur => ur.UserId == callerUserId && _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == backend.Helpers.AuthorizationRoles.Staff));
+        var staff = isStaff ? await _context.Staffs.AsNoTracking().FirstOrDefaultAsync(s => s.UserId == callerUserId) : null;
+
+        if (staff != null && staff.Position == StaffPosition.PT && @class.TrainerStaffId != callerUserId)
+            throw new UnauthorizedAccessException("You are not the trainer of this class");
+
+        return await _context.ClassBookings
+            .Include(b => b.Member).ThenInclude(m => m.User)
+            .Where(b => b.ClassId == classId)
+            .ProjectTo<ClassMemberDto>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+    }
+
+    public async Task<bool> UpdateSessionNoteAsync(Guid classId, Guid memberUserId, string note, Guid callerUserId)
+    {
+        var booking = await _context.ClassBookings.Include(b => b.Class).FirstOrDefaultAsync(b => b.ClassId == classId && b.MemberUserId == memberUserId);
+        if (booking == null) throw new Exception("Booking not found");
+
+        var isStaff = await _context.UserRoles.AnyAsync(ur => ur.UserId == callerUserId && _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == backend.Helpers.AuthorizationRoles.Staff));
+        var staff = isStaff ? await _context.Staffs.AsNoTracking().FirstOrDefaultAsync(s => s.UserId == callerUserId) : null;
+
+        if (staff != null && staff.Position == StaffPosition.PT && booking.Class.TrainerStaffId != callerUserId)
+            throw new UnauthorizedAccessException("You are not the trainer of this class");
+
+        booking.SessionNote = note;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> ClassCheckInAsync(Guid classId, Guid memberUserId, Guid callerUserId)
+    {
+        var booking = await _context.ClassBookings.Include(b => b.Class).FirstOrDefaultAsync(b => b.ClassId == classId && b.MemberUserId == memberUserId);
+        if (booking == null) throw new Exception("Booking not found");
+
+        if (booking.Status == BookingStatus.Cancelled)
+            throw new Exception("Booking was cancelled");
+
+        if (booking.Status == BookingStatus.Attended)
+            return true; // Idempotent
+
+        booking.Status = BookingStatus.Attended;
+        booking.CheckedInAt = DateTime.UtcNow;
+
+        var contract = await _context.Contracts.FirstOrDefaultAsync(c => c.MemberUserId == memberUserId && c.Status == ContractStatus.Active);
+        if (contract != null)
+        {
+            contract.UsedGroupSessions++;
+        }
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<List<ClassBookingHistoryDto>> GetMemberTrainingHistoryAsync(Guid memberUserId, Guid callerUserId)
+    {
+        var isStaff = await _context.UserRoles.AnyAsync(ur => ur.UserId == callerUserId && _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == backend.Helpers.AuthorizationRoles.Staff));
+        var staff = isStaff ? await _context.Staffs.AsNoTracking().FirstOrDefaultAsync(s => s.UserId == callerUserId) : null;
+
+        if (staff != null && staff.Position == StaffPosition.PT)
+        {
+            // Kiểm tra xem PT này có class chung nào với member không
+            var hasSharedClass = await _context.ClassBookings
+                .Include(b => b.Class)
+                .AnyAsync(b => b.MemberUserId == memberUserId && b.Class.TrainerStaffId == callerUserId);
+
+            if (!hasSharedClass)
+                throw new UnauthorizedAccessException("You are not authorized to view this member's training history.");
+        }
+
+        return await _context.ClassBookings
+            .Include(b => b.Class).ThenInclude(c => c.Trainer).ThenInclude(t => t.User)
+            .Include(b => b.Class).ThenInclude(c => c.Room)
+            .Where(b => b.MemberUserId == memberUserId)
+            .OrderByDescending(b => b.Class.Date).ThenByDescending(b => b.Class.StartTime)
+            .ProjectTo<ClassBookingHistoryDto>(_mapper.ConfigurationProvider)
             .ToListAsync();
     }
 }

@@ -59,6 +59,11 @@ public class ApplicationDbContext
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<Commission> Commissions => Set<Commission>();
 
+    // ================= PAYROLL =================
+
+    public DbSet<PayrollFormula> PayrollFormulas => Set<PayrollFormula>();
+    public DbSet<PayrollRecord> PayrollRecords => Set<PayrollRecord>();
+
     // ================= SYSTEM =================
 
     public DbSet<Notification> Notifications => Set<Notification>();
@@ -252,6 +257,40 @@ public class ApplicationDbContext
             .WithMany(u => u.HandledRequests)
             .HasForeignKey(r => r.HandledByUserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // ================= PAYROLL =================
+
+        builder.Entity<PayrollFormula>().HasKey(f => f.FormulaId);
+        builder.Entity<PayrollRecord>().HasKey(r => r.PayrollId);
+
+        builder.Entity<PayrollFormula>()
+            .HasOne(f => f.CreatedBy)
+            .WithMany()
+            .HasForeignKey(f => f.CreatedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PayrollRecord>()
+            .HasOne(r => r.Staff)
+            .WithMany()
+            .HasForeignKey(r => r.StaffId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PayrollRecord>()
+            .HasOne(r => r.Formula)
+            .WithMany(f => f.Records)
+            .HasForeignKey(r => r.FormulaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PayrollRecord>()
+            .HasOne(r => r.ApprovedBy)
+            .WithMany()
+            .HasForeignKey(r => r.ApprovedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Unique: 1 staff chỉ có 1 PayrollRecord/kỳ
+        builder.Entity<PayrollRecord>()
+            .HasIndex(r => new { r.StaffId, r.PeriodMonth, r.PeriodYear })
+            .IsUnique();
 
         // ==== NOTIFICATION N-N =====
 

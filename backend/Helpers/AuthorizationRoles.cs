@@ -10,6 +10,7 @@ public static class AuthorizationRoles
     public const string SuperAdminOnly = SuperAdmin;
     public const string GymOwnerOnly = GymOwner;
     public const string MemberOnly = Member;
+    public const string StaffRoles = Staff;
 
     public const string AdminRoles = SuperAdmin + "," + GymOwner + "," + Staff;
     public const string StaffOrSuperAdmin = SuperAdmin + "," + Staff;

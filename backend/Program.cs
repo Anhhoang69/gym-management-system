@@ -109,7 +109,10 @@ builder.Services.AddScoped<IContractService, ContractService>();
 builder.Services.AddScoped<ICommissionService, CommissionService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IMemberService, MemberService>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+builder.Services.AddScoped<IPayrollService, PayrollService>();
 builder.Services.AddScoped<IVietQrService, VietQrService>();
+builder.Services.AddScoped<IReportsService, ReportsService>();
 
 // ================= MODULE 4.3.3.b: BRANCH MANAGEMENT =================
 builder.Services.AddScoped<INotificationService, NotificationService>();

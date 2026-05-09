@@ -10,6 +10,10 @@ public interface IPromotionService
 
     Task<PromotionDto?> GetPromotionAsync(Guid id);
 
+    Task<Guid> CreatePromotionAsync(CreatePromotionDto dto, Guid userId);
+
+    Task<ValidatePromotionResultDto> ValidatePromotionConditionsAsync(ValidatePromotionDto dto);
+
     Task<bool> UpdatePromotionAsync(Guid id, UpdatePromotionDto dto, Guid userId);
 
     Task<bool> UpdatePromotionStatusAsync(Guid id, PromotionStatus status, Guid userId);

@@ -63,6 +63,19 @@ public class PackageController : ControllerBase
         return new ApiResponse<PackageDto?>(result);
     }
 
+    [HttpPost]
+    [Authorize(Roles = AuthorizationRoles.SuperAdminOnly)]
+    [SwaggerOperation(
+        Summary = "Tạo gói tập mới",
+        Description = "SuperAdmin tạo gói tập mới với pricing, PT sessions, freeze policy và package options. Gói được kích hoạt ngay (Active). Ghi audit log."
+    )]
+    public async Task<ApiResponse<Guid>> CreatePackage(CreatePackageDto dto)
+    {
+        var userId = User.GetRequiredUserId();
+        var id = await _service.CreatePackageAsync(dto, userId);
+        return new ApiResponse<Guid>(id, "Package created successfully");
+    }
+
     [HttpPut("{id}")]
     [Authorize(Roles = AuthorizationRoles.SuperAdminOnly)]
     [SwaggerOperation(

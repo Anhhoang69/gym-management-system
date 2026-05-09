@@ -21,5 +21,7 @@ public class PromotionProfile : Profile
                 opt => opt.MapFrom(s => s.ApplicableBranch != null ? s.ApplicableBranch.Name : null));
 
         CreateMap<UpdatePromotionDto, Promotion>();
+
+        CreateMap<CreatePromotionDto, Promotion>();
     }
 }

@@ -50,6 +50,39 @@ public class PromotionController : ControllerBase
         return new ApiResponse<PromotionDto?>(result);
     }
 
+    [HttpPost]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
+    [SwaggerOperation(
+        Summary = "Tạo khuyến mãi mới",
+        Description = "Tạo khuyến mãi mới. Hệ thống tự validate trước khi lưu. Nếu có conflict thì trả lỗi. Ghi audit log."
+    )]
+    public async Task<ApiResponse<Guid>> CreatePromotion(CreatePromotionDto dto)
+    {
+        var userId = User.GetRequiredUserId();
+        
+        try
+        {
+            var id = await _service.CreatePromotionAsync(dto, userId);
+            return new ApiResponse<Guid>(id, "Promotion created successfully");
+        }
+        catch (Exception ex)
+        {
+            return new ApiResponse<Guid>(ex.Message);
+        }
+    }
+
+    [HttpPost("validate")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
+    [SwaggerOperation(
+        Summary = "Validate điều kiện khuyến mãi",
+        Description = "Kiểm tra conflict, code trùng, date range hợp lệ trước khi tạo hoặc cập nhật khuyến mãi."
+    )]
+    public async Task<ApiResponse<ValidatePromotionResultDto>> ValidatePromotion(ValidatePromotionDto dto)
+    {
+        var result = await _service.ValidatePromotionConditionsAsync(dto);
+        return new ApiResponse<ValidatePromotionResultDto>(result);
+    }
+
     [HttpPut("{id}")]
     [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     [SwaggerOperation(

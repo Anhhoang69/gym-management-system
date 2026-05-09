@@ -64,6 +64,68 @@ public class PackageService : IPackageService
             .FirstOrDefaultAsync();
     }
 
+    // ================= CREATE =================
+
+    public async Task<Guid> CreatePackageAsync(CreatePackageDto dto, Guid userId)
+    {
+        if (dto.Pricings == null || dto.Pricings.Count == 0)
+            throw new Exception("Package must have at least one pricing option.");
+
+        var package = _mapper.Map<Package>(dto);
+        
+        package.PackageId = Guid.NewGuid();
+        package.Status = PackageStatus.Active;
+        package.CreatedAt = DateTime.UtcNow;
+
+        if (package.PackagePolicy == null)
+        {
+            package.PackagePolicy = new PackagePolicy
+            {
+                ChangeFeeDefault = 0,
+                ProrationRule = ProrationRuleType.None,
+                UpgradeAllowed = false,
+                DowngradeAllowed = false,
+                FreezeAllowed = false,
+                MaxFreezeDays = 0,
+                MaxFreezeCount = 0,
+                FreezeFee = 0,
+                TransferAllowed = false,
+                EarlyRenewAllowed = false
+            };
+        }
+        package.PackagePolicy.PackageId = package.PackageId;
+
+        if (package.Features != null)
+        {
+            foreach (var f in package.Features)
+            {
+                f.PackageFeatureId = Guid.NewGuid();
+                f.PackageId = package.PackageId;
+            }
+        }
+
+        if (package.Pricings != null)
+        {
+            foreach (var p in package.Pricings)
+            {
+                p.PackagePricingId = Guid.NewGuid();
+                p.PackageId = package.PackageId;
+            }
+        }
+
+        _context.Packages.Add(package);
+
+        _auditLogService.Add(_auditLogService.CreateLog(
+            userId,
+            "Package",
+            package.PackageId,
+            "CreatePackage"));
+
+        await _context.SaveChangesAsync();
+
+        return package.PackageId;
+    }
+
     // ================= UPDATE =================
 
     public async Task<bool> UpdatePackageAsync(Guid id, UpdatePackageDto dto, Guid userId)

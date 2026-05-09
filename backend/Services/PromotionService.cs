@@ -64,6 +64,104 @@ public class PromotionService : IPromotionService
             .FirstOrDefaultAsync();
     }
 
+    // ================= CREATE & VALIDATE =================
+
+    public async Task<ValidatePromotionResultDto> ValidatePromotionConditionsAsync(ValidatePromotionDto dto)
+    {
+        var result = new ValidatePromotionResultDto { IsValid = true };
+
+        // 1. Valid date range
+        if (dto.StartDate >= dto.EndDate)
+        {
+            result.IsValid = false;
+            result.Errors.Add("StartDate must be before EndDate.");
+        }
+
+        // 2. Duplicate Code
+        var duplicateCodeQuery = _context.Promotions.Where(p => p.Code == dto.Code);
+        if (dto.ExcludePromotionId.HasValue)
+        {
+            duplicateCodeQuery = duplicateCodeQuery.Where(p => p.PromotionId != dto.ExcludePromotionId.Value);
+        }
+        
+        if (await duplicateCodeQuery.AnyAsync())
+        {
+            result.IsValid = false;
+            result.Errors.Add($"Promotion code '{dto.Code}' already exists.");
+        }
+
+        // 3. Invalid discount
+        if (dto.DiscountValue <= 0)
+        {
+            result.IsValid = false;
+            result.Errors.Add("Discount value must be greater than 0.");
+        }
+        if (dto.DiscountType == DiscountType.Percentage && dto.DiscountValue > 100)
+        {
+            result.IsValid = false;
+            result.Errors.Add("Percentage discount cannot exceed 100%.");
+        }
+
+        // 4. Overlap Warning (Soft warning)
+        var overlapQuery = _context.Promotions
+            .Where(p => p.StartDate <= dto.EndDate && p.EndDate >= dto.StartDate)
+            .Where(p => p.ApplicablePackageId == dto.ApplicablePackageId &&
+                        p.ApplicableBranchId == dto.ApplicableBranchId &&
+                        p.SalesChannel == dto.SalesChannel &&
+                        p.Status == PromotionStatus.Active);
+
+        if (dto.ExcludePromotionId.HasValue)
+        {
+            overlapQuery = overlapQuery.Where(p => p.PromotionId != dto.ExcludePromotionId.Value);
+        }
+
+        if (await overlapQuery.AnyAsync())
+        {
+            result.Warnings.Add("Another active promotion overlaps with the same conditions (Package, Branch, SalesChannel) during this period.");
+        }
+
+        return result;
+    }
+
+    public async Task<Guid> CreatePromotionAsync(CreatePromotionDto dto, Guid userId)
+    {
+        var validationDto = new ValidatePromotionDto
+        {
+            Code = dto.Code,
+            DiscountType = dto.DiscountType,
+            DiscountValue = dto.DiscountValue,
+            StartDate = dto.StartDate,
+            EndDate = dto.EndDate,
+            ApplicablePackageId = dto.ApplicablePackageId,
+            ApplicableBranchId = dto.ApplicableBranchId,
+            SalesChannel = dto.SalesChannel
+        };
+
+        var validationResult = await ValidatePromotionConditionsAsync(validationDto);
+        if (!validationResult.IsValid)
+        {
+            throw new Exception("Promotion validation failed: " + string.Join("; ", validationResult.Errors));
+        }
+
+        var promo = _mapper.Map<Promotion>(dto);
+        promo.PromotionId = Guid.NewGuid();
+        promo.Status = PromotionStatus.Active;
+        promo.CreatedByUserId = userId;
+        promo.CreatedAt = DateTime.UtcNow;
+
+        _context.Promotions.Add(promo);
+
+        _auditLogService.Add(_auditLogService.CreateLog(
+            userId,
+            "Promotion",
+            promo.PromotionId,
+            "CreatePromotion"));
+
+        await _context.SaveChangesAsync();
+
+        return promo.PromotionId;
+    }
+
     // ================= UPDATE =================
 
     public async Task<bool> UpdatePromotionAsync(Guid id, UpdatePromotionDto dto, Guid userId)

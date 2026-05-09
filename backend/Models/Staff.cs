@@ -14,6 +14,9 @@ public class Staff
     // Tỷ lệ hoa hồng (%), null = dùng mặc định 5%
     public decimal? CommissionRate { get; set; }
 
+    // Lương cơ bản (VND/tháng), null = dùng DefaultBaseSalary từ PayrollFormula
+    public decimal? BaseSalary { get; set; }
+
     public PTProfile? PTProfile { get; set; }
 
     public ICollection<Class> TeachingClasses { get; set; } = new List<Class>();

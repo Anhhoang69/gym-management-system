@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using backend.Data;
@@ -11,9 +12,11 @@ using backend.Data;
 namespace backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260509095438_AddPackagePromotionFields")]
+    partial class AddPackagePromotionFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1127,9 +1130,6 @@ namespace backend.Migrations
                     b.Property<Guid>("PackageId")
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("AllowMultiBranch")
-                        .HasColumnType("boolean");
-
                     b.Property<decimal>("ChangeFeeDefault")
                         .HasColumnType("numeric");
 
@@ -1234,111 +1234,6 @@ namespace backend.Migrations
                     b.HasIndex("ProcessedByStaffId");
 
                     b.ToTable("Payments");
-                });
-
-            modelBuilder.Entity("backend.Models.PayrollFormula", b =>
-                {
-                    b.Property<Guid>("FormulaId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("CommissionPerSession")
-                        .HasColumnType("numeric");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("CreatedByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("DefaultBaseSalary")
-                        .HasColumnType("numeric");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<decimal>("KpiBonus")
-                        .HasColumnType("numeric");
-
-                    b.Property<int>("KpiSessionThreshold")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("FormulaId");
-
-                    b.HasIndex("CreatedByUserId");
-
-                    b.ToTable("PayrollFormulas");
-                });
-
-            modelBuilder.Entity("backend.Models.PayrollRecord", b =>
-                {
-                    b.Property<Guid>("PayrollId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("ApprovedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ApprovedByUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("BaseSalary")
-                        .HasColumnType("numeric");
-
-                    b.Property<DateTime>("CalculatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("FormulaId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("KpiBonus")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("text");
-
-                    b.Property<int>("PeriodMonth")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PeriodYear")
-                        .HasColumnType("integer");
-
-                    b.Property<decimal>("SalesCommission")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("SessionCommission")
-                        .HasColumnType("numeric");
-
-                    b.Property<int>("SessionCount")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("StaffId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<decimal>("TotalSalary")
-                        .HasColumnType("numeric");
-
-                    b.HasKey("PayrollId");
-
-                    b.HasIndex("ApprovedByUserId");
-
-                    b.HasIndex("FormulaId");
-
-                    b.HasIndex("StaffId", "PeriodMonth", "PeriodYear")
-                        .IsUnique();
-
-                    b.ToTable("PayrollRecords");
                 });
 
             modelBuilder.Entity("backend.Models.Promotion", b =>
@@ -1541,9 +1436,6 @@ namespace backend.Migrations
                 {
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
-
-                    b.Property<decimal?>("BaseSalary")
-                        .HasColumnType("numeric");
 
                     b.Property<Guid>("BranchId")
                         .HasColumnType("uuid");
@@ -2182,43 +2074,6 @@ namespace backend.Migrations
                     b.Navigation("ProcessedByStaff");
                 });
 
-            modelBuilder.Entity("backend.Models.PayrollFormula", b =>
-                {
-                    b.HasOne("backend.Models.User", "CreatedBy")
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("CreatedBy");
-                });
-
-            modelBuilder.Entity("backend.Models.PayrollRecord", b =>
-                {
-                    b.HasOne("backend.Models.User", "ApprovedBy")
-                        .WithMany()
-                        .HasForeignKey("ApprovedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("backend.Models.PayrollFormula", "Formula")
-                        .WithMany("Records")
-                        .HasForeignKey("FormulaId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.Staff", "Staff")
-                        .WithMany()
-                        .HasForeignKey("StaffId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ApprovedBy");
-
-                    b.Navigation("Formula");
-
-                    b.Navigation("Staff");
-                });
-
             modelBuilder.Entity("backend.Models.Promotion", b =>
                 {
                     b.HasOne("backend.Models.Branch", "ApplicableBranch")
@@ -2386,11 +2241,6 @@ namespace backend.Migrations
                     b.Navigation("PackagePolicy");
 
                     b.Navigation("Pricings");
-                });
-
-            modelBuilder.Entity("backend.Models.PayrollFormula", b =>
-                {
-                    b.Navigation("Records");
                 });
 
             modelBuilder.Entity("backend.Models.Room", b =>

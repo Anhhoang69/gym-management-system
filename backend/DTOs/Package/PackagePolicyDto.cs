@@ -17,4 +17,8 @@ public class PackagePolicyDto
     public int MaxFreezeDays { get; set; }
 
     public decimal FreezeFee { get; set; }
+
+    public int MaxFreezeCount { get; set; }
+    public bool TransferAllowed { get; set; }      // reserved
+    public bool EarlyRenewAllowed { get; set; }    // reserved
 }

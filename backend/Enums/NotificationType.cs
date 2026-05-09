@@ -7,5 +7,7 @@ public enum NotificationType
     Approval,   // yêu cầu phê duyệt
     Contract,
     Payment,
-    Promotion
+    Promotion,
+    Schedule,   // cập nhật lịch lớp học
+    Payroll     // duyệt bảng lương
 }
