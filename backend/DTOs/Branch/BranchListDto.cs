@@ -8,6 +8,7 @@ public class BranchListDto
     public string Name { get; set; } = null!;
     public string? Address { get; set; }
     public string? Hotline { get; set; }
+    public string? OpeningHours { get; set; }
     public BranchStatus Status { get; set; }
     public int TotalRooms { get; set; }
     public int TotalStaff { get; set; }

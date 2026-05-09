@@ -36,7 +36,8 @@ public class User : IdentityUser<Guid>
 
     public Staff? Staff { get; set; }
 
-    public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    // notification N-N (qua NotificationRecipient)
+    public ICollection<NotificationRecipient> NotificationRecipients { get; set; } = new List<NotificationRecipient>();
 
     public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
     public ICollection<OtpCode> OtpCodes { get; set; } = new List<OtpCode>();

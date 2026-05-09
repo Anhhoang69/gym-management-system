@@ -30,7 +30,7 @@ public class RegistrationService : IRegistrationService
 
     public async Task<RegisterResultDto> RegisterMemberAsync(RegisterMemberDto dto)
     {
-        // ---- Validate uniqueness ----
+        // ── Validate uniqueness ──────────────────────────────────────────────
         var emailNorm = dto.Email.Trim().ToLowerInvariant();
         if (await _context.Users.AnyAsync(u => u.NormalizedEmail == emailNorm.ToUpperInvariant()))
             throw new Exception("Email is already registered");
@@ -38,7 +38,7 @@ public class RegistrationService : IRegistrationService
         if (await _context.Users.AnyAsync(u => u.PhoneNumber == dto.PhoneNumber))
             throw new Exception("Phone number is already registered");
 
-        // ---- Validate Package + Pricing ----
+        // ── Validate Package + Pricing ──────────────────────────────────────
         var package = await _context.Packages
             .Include(p => p.Pricings)
             .FirstOrDefaultAsync(p => p.PackageId == dto.PackageId && p.Status == PackageStatus.Active)
@@ -47,34 +47,32 @@ public class RegistrationService : IRegistrationService
         var pricing = package.Pricings.FirstOrDefault(p => p.PackagePricingId == dto.PricingId)
             ?? throw new Exception("Pricing tier not found for this package");
 
-        // ---- Validate Branch ----
-        var branch = await _context.Branches.FindAsync(dto.BranchId)
+        // ── Validate Branch ─────────────────────────────────────────────────
+        _ = await _context.Branches.FindAsync(dto.BranchId)
             ?? throw new Exception("Branch not found");
 
-        // ---- Begin atomic transaction ----
+        // ── Begin atomic transaction ─────────────────────────────────────────
         await using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            // 1. Generate temp password
+            // 1. Generate temp password & create User
             var tempPassword = GenerateTempPassword();
-
-            // 2. Create User
             var user = new User
             {
-                Id = Guid.NewGuid(),
-                UserName = emailNorm,
-                Email = emailNorm,
-                NormalizedEmail = emailNorm.ToUpperInvariant(),
+                Id               = Guid.NewGuid(),
+                UserName         = emailNorm,
+                Email            = emailNorm,
+                NormalizedEmail  = emailNorm.ToUpperInvariant(),
                 NormalizedUserName = emailNorm.ToUpperInvariant(),
-                FullName = dto.FullName.Trim(),
-                PhoneNumber = dto.PhoneNumber,
-                Gender = dto.Gender,
-                Birthday = dto.Birthday,
-                Address = dto.Address,
-                InitialBranchId = dto.BranchId,
-                Status = UserStatus.Active,
-                CreatedAt = DateTime.UtcNow,
-                EmailConfirmed = true
+                FullName         = dto.FullName.Trim(),
+                PhoneNumber      = dto.PhoneNumber,
+                Gender           = dto.Gender,
+                Birthday         = dto.Birthday,
+                Address          = dto.Address,
+                InitialBranchId  = dto.BranchId,
+                Status           = UserStatus.Active,
+                CreatedAt        = DateTime.UtcNow,
+                EmailConfirmed   = true
             };
 
             var createResult = await _userManager.CreateAsync(user, tempPassword);
@@ -83,81 +81,58 @@ public class RegistrationService : IRegistrationService
 
             await _userManager.AddToRoleAsync(user, "Member");
 
-            // 3. Create Member record
+            // 2. Create Member record
             var member = new Member { UserId = user.Id };
             _context.Members.Add(member);
             await _context.SaveChangesAsync();
 
-            // 4. Create Contract
             var now = DateTime.UtcNow;
+
+            // 3. Create Contract — Pending (chờ thanh toán)
             var contract = new Contract
             {
-                ContractId = Guid.NewGuid(),
-                MemberUserId = user.Id,
-                PackageId = dto.PackageId,
-                StaffId = Guid.Empty,       // system-created; no staff assigned at self-registration
-                DealPrice = pricing.Price,
-                Status = ContractStatus.Active,
-                StartDate = now,
-                EndDate = now.AddMonths(pricing.DurationMonths),
-                TotalPrivateSessions = package.PrivatePtLimit,
-                TotalGroupSessions = package.GroupPtLimit,
-                CreatedAt = now
+                ContractId            = Guid.NewGuid(),
+                MemberUserId          = user.Id,
+                PackageId             = dto.PackageId,
+                StaffId               = Guid.Empty,   // system-created; no staff
+                OriginalPrice         = pricing.Price,
+                DiscountAmount        = 0,
+                DealPrice             = pricing.Price,
+                Status                = ContractStatus.Pending,
+                StartDate             = now,
+                EndDate               = now.AddMonths(pricing.DurationMonths),
+                TotalPrivateSessions  = package.PrivatePtLimit,
+                TotalGroupSessions    = package.GroupPtLimit,
+                CreatedAt             = now
             };
             _context.Contracts.Add(contract);
             await _context.SaveChangesAsync();
 
-            // 5. Create Invoice
-            var invoiceCode = $"INV-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}";
+            // 4. Create Invoice — Pending (chưa thu tiền)
+            var suffix      = Convert.ToHexString(RandomNumberGenerator.GetBytes(3));
+            var invoiceCode = $"INV-{now:yyyyMMdd}-{suffix}";
             var invoice = new Invoice
             {
-                InvoiceId = Guid.NewGuid(),
-                ContractId = contract.ContractId,
-                MemberId = user.Id,
-                InvoiceCode = invoiceCode,
-                Subtotal = pricing.Price,
-                DiscountAmount = 0,
-                TaxAmount = 0,
-                TotalAmount = pricing.Price,
-                Status = InvoiceStatus.Paid,
-                CreatedByStaffId = Guid.Empty, // system-created
-                CreatedAt = now
+                InvoiceId         = Guid.NewGuid(),
+                ContractId        = contract.ContractId,
+                MemberId          = user.Id,
+                InvoiceCode       = invoiceCode,
+                Subtotal          = pricing.Price,
+                DiscountAmount    = 0,
+                TaxAmount         = 0,
+                TotalAmount       = pricing.Price,
+                Status            = InvoiceStatus.Pending,
+                CreatedByStaffId  = Guid.Empty,
+                CreatedAt         = now
             };
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
 
-            // 6. Create Payment (mocked as Paid)
-            var payment = new Payment
-            {
-                PaymentId = Guid.NewGuid(),
-                InvoiceId = invoice.InvoiceId,
-                Method = dto.PaymentMethod,
-                Amount = pricing.Price,
-                Status = PaymentStatus.Completed,
-                ProcessedBy = Guid.Empty,
-                ProcessedByStaffId = Guid.Empty,
-                CreatedAt = now
-            };
-            await _context.Payments.AddAsync(payment);
-            await _context.SaveChangesAsync();
-
-            // 7. Create AccessCard (Active, tied to contract end date)
-            var cardCode = GenerateCardCode(user.Id);
-            var accessCard = new AccessCard
-            {
-                AccessCardId = Guid.NewGuid(),
-                MemberUserId = user.Id,
-                CardCode     = cardCode,
-                Status       = AccessCardStatus.Active,
-                IssueDate    = now,
-                ExpireDate   = contract.EndDate
-            };
-            _context.AccessCards.Add(accessCard);
-            await _context.SaveChangesAsync();
+            // AccessCard sẽ được tạo khi staff activate (POST /api/contracts/{id}/activate)
 
             await transaction.CommitAsync();
 
-            // 8. Send activation email / SMS (outside transaction — not critical for rollback)
+            // 5. Gửi email chào + mật khẩu tạm (ngoài transaction — lỗi không rollback)
             if (!string.IsNullOrWhiteSpace(user.Email))
                 await _emailService.SendActivationAsync(user.Email, user.FullName ?? dto.FullName, tempPassword);
             else if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
@@ -170,8 +145,8 @@ public class RegistrationService : IRegistrationService
                 TempPassword   = tempPassword,
                 ContractId     = contract.ContractId,
                 InvoiceId      = invoice.InvoiceId,
-                AccessCardCode = cardCode,
-                Message        = "Account created successfully. Check your email for login credentials."
+                TotalAmountDue = invoice.TotalAmount,
+                Message        = $"Account created. Please pay {invoice.TotalAmount:N0} VND (Invoice: {invoiceCode}) to activate membership."
             };
         }
         catch
@@ -183,26 +158,24 @@ public class RegistrationService : IRegistrationService
 
     internal static string GenerateTempPassword()
     {
-        const string uppers = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-        const string lowers = "abcdefghjkmnpqrstuvwxyz";
-        const string digits = "23456789";
+        const string uppers   = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        const string lowers   = "abcdefghjkmnpqrstuvwxyz";
+        const string digits   = "23456789";
         const string specials = "!@#$*";
-        
+
         var chars = new[]
         {
-            uppers[RandomNumberGenerator.GetInt32(0, uppers.Length)],
-            lowers[RandomNumberGenerator.GetInt32(0, lowers.Length)],
-            digits[RandomNumberGenerator.GetInt32(0, digits.Length)],
+            uppers  [RandomNumberGenerator.GetInt32(0, uppers.Length)],
+            lowers  [RandomNumberGenerator.GetInt32(0, lowers.Length)],
+            digits  [RandomNumberGenerator.GetInt32(0, digits.Length)],
             specials[RandomNumberGenerator.GetInt32(0, specials.Length)]
         }.ToList();
 
         const string allChars = uppers + lowers + digits + specials;
         for (int i = 0; i < 6; i++)
-        {
             chars.Add(allChars[RandomNumberGenerator.GetInt32(0, allChars.Length)]);
-        }
 
-        return new string(chars.OrderBy(x => RandomNumberGenerator.GetInt32(0, 100)).ToArray());
+        return new string(chars.OrderBy(_ => RandomNumberGenerator.GetInt32(0, 100)).ToArray());
     }
 
     /// <summary>Format: GYM-{8 ký tự hex ngẫu nhiên viết hoa}</summary>

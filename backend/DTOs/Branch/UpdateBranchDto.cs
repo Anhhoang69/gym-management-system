@@ -7,5 +7,6 @@ public class UpdateBranchDto
     public string? Email { get; set; }
     public string? Hotline { get; set; }
     public string? Description { get; set; }
+    public string? OpeningHours { get; set; }
     public List<string>? Images { get; set; }
 }

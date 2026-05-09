@@ -109,6 +109,11 @@ builder.Services.AddScoped<IContractService, ContractService>();
 builder.Services.AddScoped<ICommissionService, CommissionService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IMemberService, MemberService>();
+builder.Services.AddScoped<IVietQrService, VietQrService>();
+
+// ================= MODULE 4.3.3.b: BRANCH MANAGEMENT =================
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IRequestService, RequestService>();
 
 builder.Services.AddHttpContextAccessor();
 

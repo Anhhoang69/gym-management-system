@@ -132,7 +132,7 @@ public class LeadController : ControllerBase
     [HttpPost("{id}/convert-to-member")]
     [SwaggerOperation(
         Summary = "Chuyển đổi lead thành hội viên",
-        Description = "Actors: Sales, Super Admin, Branch Admin. Chuyển lead thành Member, tạo hợp đồng + hóa đơn + kích hoạt AccessCard trong 1 thao tác."
+        Description = "Actors: Sales, BranchAdmin, SuperAdmin. Chuyển lead thành Member, tạo Contract(Pending) + Invoice(Pending). Trả về InvoiceId và ContractId để thu tiền sau."
     )]
     public async Task<ApiResponse<ConvertLeadResultDto>> ConvertLeadToMember(Guid id, [FromBody] ConvertLeadToMemberDto dto)
     {

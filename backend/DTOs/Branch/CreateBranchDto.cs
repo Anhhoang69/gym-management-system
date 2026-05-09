@@ -9,7 +9,7 @@ public class CreateBranchDto
     public string? Description { get; set; }
     public List<string>? Images { get; set; }
     // optional
-    public List<CreateRoomDto>? Rooms { get; set; }
+    public List<CreateBranchRoomDto>? Rooms { get; set; }
     // assign staff
     public List<Guid>? StaffUserIds { get; set; }
     // branch admin

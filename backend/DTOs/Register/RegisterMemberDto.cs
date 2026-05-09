@@ -31,6 +31,4 @@ public class RegisterMemberDto
     [Required]
     public Guid BranchId { get; set; }
 
-    [Required]
-    public PaymentMethod PaymentMethod { get; set; }
 }

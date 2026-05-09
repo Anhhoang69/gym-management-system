@@ -6,24 +6,20 @@ public class Notification
 {
     public Guid NotificationId { get; set; }
 
-    public Guid UserId { get; set; }
-
     public string Title { get; set; } = null!;
 
     public string Message { get; set; } = null!;
 
     public NotificationType Type { get; set; }
 
-    public NotificationStatus Status { get; set; } = NotificationStatus.Active;
+    // null = System-generated
+    public Guid? SenderId { get; set; }
+    public User? Sender { get; set; }
 
     public string? ActionUrl { get; set; }
 
-    public bool IsRead { get; set; }
-
-    public DateTime? ReadAt { get; set; }
-
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    // navigation
-    public User User { get; set; } = null!;
+    // N-N với User thông qua NotificationRecipient
+    public ICollection<NotificationRecipient> Recipients { get; set; } = new List<NotificationRecipient>();
 }

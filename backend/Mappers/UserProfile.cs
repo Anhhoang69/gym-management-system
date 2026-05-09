@@ -41,7 +41,7 @@ public class UserProfile : Profile
             .ForMember(d => d.InitialBranch, opt => opt.Ignore())
             .ForMember(d => d.Member, opt => opt.Ignore())
             .ForMember(d => d.Staff, opt => opt.Ignore())
-            .ForMember(d => d.Notifications, opt => opt.Ignore())
+            .ForMember(d => d.NotificationRecipients, opt => opt.Ignore())
             .ForMember(d => d.AuditLogs, opt => opt.Ignore())
             .ForMember(d => d.Requests, opt => opt.Ignore())
             .ForMember(d => d.HandledRequests, opt => opt.Ignore())

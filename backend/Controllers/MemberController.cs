@@ -23,9 +23,9 @@ public class MemberController : ControllerBase
     [HttpPost("quick-register")]
     [SwaggerOperation(
         Summary = "Đăng ký hội viên nhanh tại quầy (E2 Walk-in)",
-        Description = "Actors: Receptionist, BranchAdmin, SuperAdmin. " +
-                      "Tạo hồ sơ hội viên, chọn gói, thu tiền và kích hoạt AccessCard ngay trong 1 thao tác. " +
-                      "Kết quả: Contract=Active, Invoice=Paid, Card=Active."
+        Description = "Actors: Receptionist only. " +
+                      "Tạo hồ sơ hội viên cho khách vãng lai, chọn gói. " +
+                      "Kết quả: Trả về InvoiceId và ContractId để gọi API thanh toán. Contract=Pending, Invoice=Pending, Card=Inactive."
     )]
     public async Task<ApiResponse<QuickRegisterResultDto>> QuickRegister([FromBody] QuickRegisterDto dto)
     {

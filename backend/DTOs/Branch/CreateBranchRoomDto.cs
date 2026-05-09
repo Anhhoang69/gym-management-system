@@ -1,5 +1,5 @@
 namespace backend.DTOs.Branch;
-public class CreateRoomDto
+public class CreateBranchRoomDto
 {
     public string Name { get; set; } = null!;
 

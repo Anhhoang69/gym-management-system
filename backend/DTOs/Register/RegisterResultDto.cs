@@ -12,7 +12,8 @@ public class RegisterResultDto
 
     public Guid InvoiceId { get; set; }
 
-    public string? AccessCardCode { get; set; }
+    /// <summary>Số tiền cần thanh toán — staff dùng để thu tiền qua POST /api/invoices/{id}/payment</summary>
+    public decimal TotalAmountDue { get; set; }
 
     public string Message { get; set; } = "Account created successfully. Check your email for login credentials.";
 }

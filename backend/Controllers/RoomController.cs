@@ -53,14 +53,14 @@ public class RoomController : ControllerBase
     // ================= CREATE =================
 
     [HttpPost("{branchId}")]
-    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
+    [Authorize(Roles = AuthorizationRoles.StaffOrSuperAdmin)]
     [SwaggerOperation(
         Summary = "Tạo mới phòng",
-        Description = "Tạo phòng mới trong chi nhánh chỉ định. Ghi audit log. Chỉ dành cho admin/staff."
+        Description = "Tạo phòng mới trong chi nhánh chỉ định. Ghi audit log. Các role được phép: SuperAdmin, Staff."
     )]
     public async Task<ApiResponse<bool>> CreateRoom(
-        Guid branchId,
-        CreateRoomDto dto)
+        [FromRoute] Guid branchId,
+        [FromBody] CreateRoomDto dto)
     {
         var adminId = User.GetRequiredUserId();
 
@@ -75,14 +75,14 @@ public class RoomController : ControllerBase
     // ================= UPDATE =================
 
     [HttpPut("{id}")]
-    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
+    [Authorize(Roles = AuthorizationRoles.StaffOrSuperAdmin)]
     [SwaggerOperation(
         Summary = "Cập nhật thông tin phòng",
-        Description = "Cập nhật thông tin phòng theo ID. Ghi audit log. Chỉ dành cho admin/staff."
+        Description = "Cập nhật thông tin phòng theo ID. Ghi audit log. Các role được phép: SuperAdmin, Staff."
     )]
     public async Task<ApiResponse<bool>> UpdateRoom(
-        Guid id,
-        UpdateRoomDto dto)
+        [FromRoute] Guid id,
+        [FromBody] UpdateRoomDto dto)
     {
         var adminId = User.GetRequiredUserId();
 
@@ -97,14 +97,14 @@ public class RoomController : ControllerBase
     // ================= DEACTIVATE =================
 
     [HttpPatch("{id}/status")]
-    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
+    [Authorize(Roles = AuthorizationRoles.StaffOrSuperAdmin)]
     [SwaggerOperation(
         Summary = "Cập nhật trạng thái phòng",
-        Description = "Thay đổi trạng thái của phòng (Active, Inactive). Ghi audit log. Chỉ dành cho admin/staff."
+        Description = "Thay đổi trạng thái của phòng (Active, Inactive). Ghi audit log. Các role được phép: SuperAdmin, Staff."
     )]
     public async Task<ApiResponse<bool>> UpdateRoomStatus(
-    Guid id,
-    UpdateRoomStatusDto dto)
+        [FromRoute] Guid id,
+        [FromBody] UpdateRoomStatusDto dto)
     {
         var adminId = User.GetRequiredUserId();
 
@@ -122,10 +122,10 @@ public class RoomController : ControllerBase
     // ================= DELETE =================
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
+    [Authorize(Roles = AuthorizationRoles.StaffOrSuperAdmin)]
     [SwaggerOperation(
         Summary = "Xóa phòng",
-        Description = "Xóa phòng theo ID. Không cho phép xóa phòng có classes. Ghi audit log. Chỉ dành cho admin/staff."
+        Description = "Xóa phòng theo ID. Không cho phép xóa phòng có classes. Ghi audit log. Các role được phép: SuperAdmin, Staff."
     )]
     public async Task<ApiResponse<bool>> DeleteRoom(Guid id)
     {

@@ -31,7 +31,7 @@ public class ContractController : ControllerBase
     [HttpPost("draft")]
     [SwaggerOperation(
         Summary = "Cấu hình gói hội viên (Tạo bản nháp)",
-        Description = "Lưu thông tin cấu hình vào draft để kiểm tra và tính toán (UC-25)"
+        Description = "Actors: Sales, Receptionist, BranchAdmin, SuperAdmin. Dành cho khách hàng hiện tại (Member) muốn mua thêm gói tập. Lưu thông tin cấu hình vào draft để kiểm tra và tính toán (UC-25)"
     )]
     [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<ContractDraftPreviewDto>> CreateDraft([FromBody] CreateContractDraftDto dto)
@@ -55,7 +55,7 @@ public class ContractController : ControllerBase
     [HttpPost]
     [SwaggerOperation(
         Summary = "Tạo hợp đồng",
-        Description = "Tạo hợp đồng từ bản nháp. Hợp đồng sẽ ở trạng thái PendingPayment (UC-26)"
+        Description = "Actors: Sales, Receptionist, BranchAdmin, SuperAdmin. Tạo hợp đồng từ bản nháp. Hợp đồng sẽ ở trạng thái Pending (chưa thanh toán) (UC-26)"
     )]
     [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<ContractDto>> GenerateContract([FromBody] GenerateContractDto dto)
@@ -78,7 +78,7 @@ public class ContractController : ControllerBase
     [HttpPost("{id}/activate")]
     [SwaggerOperation(
         Summary = "Kích hoạt hội viên",
-        Description = "Kích hoạt hợp đồng sau khi đã thanh toán hóa đơn. Tự động cấp quyền AccessCard và ghi nhận hoa hồng (UC-29)"
+        Description = "Actors: Sales, Receptionist, BranchAdmin, SuperAdmin. Kích hoạt hợp đồng sau khi đã thanh toán hóa đơn. Tự động chuyển đổi trạng thái AccessCard và ghi nhận hoa hồng trạng thái Approved (UC-29)"
     )]
     [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<string>> ActivateMembership(Guid id)

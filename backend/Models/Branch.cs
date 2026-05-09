@@ -12,6 +12,9 @@ public class Branch
 
     public string? Description { get; set; }
 
+    // vd: "06:00 - 22:00"
+    public string? OpeningHours { get; set; }
+
     public BranchStatus Status { get; set; } = BranchStatus.Pending;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

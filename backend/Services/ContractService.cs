@@ -12,11 +12,13 @@ public class ContractService : IContractService
 {
     private readonly ApplicationDbContext _context;
     private readonly ICommissionService _commissionService;
+    private readonly IEmailService _emailService;
 
-    public ContractService(ApplicationDbContext context, ICommissionService commissionService)
+    public ContractService(ApplicationDbContext context, ICommissionService commissionService, IEmailService emailService)
     {
         _context = context;
         _commissionService = commissionService;
+        _emailService = emailService;
     }
 
     public async Task<ContractDraftPreviewDto> CreateDraftAsync(CreateContractDraftDto dto, Guid staffId)
@@ -315,9 +317,36 @@ public class ContractService : IContractService
         {
             await _commissionService.RecordAsync(contract.ContractId, staffId);
         }
-        catch 
+        catch
         {
-            // Fire and forget / ignore commission errors during activation
+            // Fire and forget — ignore commission errors during activation
+        }
+
+        // Gửi email thông báo kích hoạt (ngoài transaction — lỗi email không ảnh hưởng activation)
+        try
+        {
+            var memberUser = await _context.Users
+                .Include(u => u.Member)
+                .FirstOrDefaultAsync(u => u.Id == contract.MemberUserId);
+
+            var pkg = await _context.Packages
+                .FirstOrDefaultAsync(p => p.PackageId == contract.PackageId);
+
+            if (memberUser?.Email != null && pkg != null)
+            {
+                await _emailService.SendMembershipActivatedAsync(
+                    memberUser.Email,
+                    memberUser.FullName ?? "Member",
+                    code,
+                    pkg.Name,
+                    contract.StartDate,
+                    contract.EndDate,
+                    contract.Invoice!.TotalAmount);
+            }
+        }
+        catch
+        {
+            // Fire and forget — log only, do not fail activation
         }
 
         return code;

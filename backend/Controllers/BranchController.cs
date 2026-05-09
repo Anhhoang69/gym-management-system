@@ -21,10 +21,12 @@ public class BranchController : ControllerBase
         _service = service;
     }
 
+    // ===== LIST =====
+
     [HttpGet]
     [SwaggerOperation(
         Summary = "Lấy danh sách chi nhánh",
-        Description = "Trả về danh sách chi nhánh với bộ lọc theo search (Name) và status."
+        Description = "SuperAdmin/GymOwner: xem tất cả. Staff: chỉ xem branch của mình. Lọc theo search và status."
     )]
     public async Task<ApiResponse<List<BranchListDto>>> GetBranches(
         string? search,
@@ -33,6 +35,8 @@ public class BranchController : ControllerBase
         var result = await _service.GetBranchListAsync(search, status);
         return new ApiResponse<List<BranchListDto>>(result);
     }
+
+    // ===== DETAIL =====
 
     [HttpGet("{id}")]
     [SwaggerOperation(
@@ -49,6 +53,8 @@ public class BranchController : ControllerBase
         return new ApiResponse<BranchDto?>(result);
     }
 
+    // ===== STATS =====
+
     [HttpGet("stats")]
     [SwaggerOperation(
         Summary = "Lấy thống kê chi nhánh",
@@ -57,16 +63,33 @@ public class BranchController : ControllerBase
     public async Task<ApiResponse<BranchStatsDto>> GetStats()
     {
         var result = await _service.GetBranchStatsAsync();
-
         return new ApiResponse<BranchStatsDto>(result);
     }
 
-    // UPDATE REQUEST
+    // ===== CREATE =====
+
+    [HttpPost]
+    [Authorize(Roles = AuthorizationRoles.SuperAdminOnly)]
+    [SwaggerOperation(
+        Summary = "Tạo chi nhánh mới",
+        Description = "SuperAdmin tạo branch mới (Status=Pending). Gửi yêu cầu Approve Configuration đến GymOwner. " +
+                      "Có thể đính kèm rooms (Configure Facilities) và staff (Assign Users to Branch). " +
+                      "Response trả warnings nếu thiếu cấu hình."
+    )]
+    public async Task<ApiResponse<CreateBranchResultDto>> CreateBranch(CreateBranchDto dto)
+    {
+        var userId = User.GetRequiredUserId();
+        var result = await _service.CreateBranchAsync(dto, userId);
+        return new ApiResponse<CreateBranchResultDto>(result, "Branch created – awaiting GymOwner approval");
+    }
+
+    // ===== UPDATE REQUEST =====
 
     [HttpPut("{id}")]
+    [Authorize(Roles = AuthorizationRoles.SuperAdminOnly)]
     [SwaggerOperation(
         Summary = "Gửi yêu cầu cập nhật chi nhánh",
-        Description = "Gửi yêu cầu cập nhật thông tin chi nhánh. Yêu cầu cần được phê duyệt bởi gymOwner."
+        Description = "Chỉ SuperAdmin. Gửi yêu cầu cập nhật thông tin chi nhánh. Yêu cầu cần được GymOwner phê duyệt."
     )]
     public async Task<ApiResponse<bool>> UpdateBranch(Guid id, UpdateBranchDto dto)
     {
@@ -76,15 +99,16 @@ public class BranchController : ControllerBase
         if (!result)
             return new ApiResponse<bool>("Branch not found");
 
-        return new ApiResponse<bool>(true, "Update request submitted");
+        return new ApiResponse<bool>(true, "Update request submitted – awaiting GymOwner approval");
     }
 
-    // DEACTIVATE REQUEST
+    // ===== DEACTIVATE REQUEST =====
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = AuthorizationRoles.SuperAdminOnly)]
     [SwaggerOperation(
         Summary = "Gửi yêu cầu vô hiệu hóa chi nhánh",
-        Description = "Gửi yêu cầu vô hiệu hóa chi nhánh. Yêu cầu cần được phê duyệt bởi gymOwner."
+        Description = "Chỉ SuperAdmin. Gửi yêu cầu vô hiệu hóa chi nhánh. Yêu cầu cần được GymOwner phê duyệt."
     )]
     public async Task<ApiResponse<bool>> DeactivateBranch(Guid id)
     {
@@ -94,41 +118,42 @@ public class BranchController : ControllerBase
         if (!result)
             return new ApiResponse<bool>("Branch not found");
 
-        return new ApiResponse<bool>(true, "Deactivate request submitted");
+        return new ApiResponse<bool>(true, "Deactivate request submitted – awaiting GymOwner approval");
     }
 
-    [HttpPost("requests/{requestId}/approve")]
-    [Authorize(Roles = AuthorizationRoles.GymOwnerOnly)]
+    // ===== ASSIGN STAFF =====
+
+    [HttpPost("{id}/staff")]
+    [Authorize(Roles = AuthorizationRoles.SuperAdminOnly)]
     [SwaggerOperation(
-        Summary = "Phê duyệt yêu cầu chi nhánh",
-        Description = "Phê duyệt yêu cầu cập nhật hoặc vô hiệu hóa chi nhánh. Chỉ dành cho gymOwner."
+        Summary = "Gán nhân viên vào chi nhánh",
+        Description = "Gán danh sách users (phải có role Staff) vào chi nhánh. " +
+                      "Bỏ qua nếu đã được gán (warning). Báo lỗi nếu user không hợp lệ (inactive, không phải Staff)."
     )]
-    public async Task<ApiResponse<bool>> ApproveRequest(Guid requestId)
+    public async Task<ApiResponse<AssignStaffResultDto>> AssignStaff(Guid id, AssignStaffDto dto)
     {
-        var userId = User.GetRequiredUserId();
-
-        var result = await _service.ApproveBranchRequestAsync(requestId, userId);
-
-        if (!result)
-            return new ApiResponse<bool>("Request not found");
-
-        return new ApiResponse<bool>(true, "Request approved");
+        var adminId = User.GetRequiredUserId();
+        var result = await _service.AssignStaffAsync(id, dto, adminId);
+        return new ApiResponse<AssignStaffResultDto>(result);
     }
 
-    [HttpPost("requests/{requestId}/reject")]
-    [Authorize(Roles = AuthorizationRoles.GymOwnerOnly)]
-    public async Task<ApiResponse<bool>> RejectRequest(
-    Guid requestId,
-    string? message)
-    {
-        var userId = User.GetRequiredUserId();
+    // ===== REMOVE STAFF =====
 
-        var result = await _service.RejectBranchRequestAsync(requestId, userId, message);
+    [HttpDelete("{id}/staff/{userId}")]
+    [Authorize(Roles = AuthorizationRoles.SuperAdminOnly)]
+    [SwaggerOperation(
+        Summary = "Gỡ nhân viên khỏi chi nhánh",
+        Description = "Gỡ user khỏi chi nhánh. Không xóa Staff record, chỉ ghi audit log. " +
+                      "Không thể gỡ nếu còn lớp học đang diễn ra."
+    )]
+    public async Task<ApiResponse<bool>> RemoveStaff(Guid id, Guid userId)
+    {
+        var adminId = User.GetRequiredUserId();
+        var result = await _service.RemoveStaffFromBranchAsync(id, userId, adminId);
 
         if (!result)
-            return new ApiResponse<bool>("Request not found");
+            return new ApiResponse<bool>("Staff assignment not found");
 
-        return new ApiResponse<bool>(true, "Request rejected");
+        return new ApiResponse<bool>(true, "Staff removed from branch");
     }
-
 }

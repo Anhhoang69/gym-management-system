@@ -13,6 +13,9 @@ public class Request
 
     public RequestCategory Category { get; set; }
 
+    // tiêu đề hiển thị trong approval center
+    public string Title { get; set; } = null!;
+
     public string Description { get; set; } = null!;
 
     public RequestStatus Status { get; set; } = RequestStatus.Pending;
@@ -20,7 +23,7 @@ public class Request
     public string? ResponseMessage { get; set; }
 
     public string? AttachmentUrl { get; set; }
-    public string? Payload { get; set; }
+    public string? Payload { get; set; }  // JSON snapshot data
 
     public string? RelatedEntityType { get; set; }
 

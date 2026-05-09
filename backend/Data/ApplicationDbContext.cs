@@ -62,6 +62,7 @@ public class ApplicationDbContext
     // ================= SYSTEM =================
 
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<NotificationRecipient> NotificationRecipients => Set<NotificationRecipient>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<OtpCode> OtpCodes => Set<OtpCode>();
     public DbSet<LoginHistory> LoginHistories => Set<LoginHistory>();
@@ -251,6 +252,31 @@ public class ApplicationDbContext
             .WithMany(u => u.HandledRequests)
             .HasForeignKey(r => r.HandledByUserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // ==== NOTIFICATION N-N =====
+
+        builder.Entity<Notification>()
+            .HasOne(n => n.Sender)
+            .WithMany()
+            .HasForeignKey(n => n.SenderId)
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<NotificationRecipient>()
+            .HasOne(nr => nr.Notification)
+            .WithMany(n => n.Recipients)
+            .HasForeignKey(nr => nr.NotificationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<NotificationRecipient>()
+            .HasOne(nr => nr.User)
+            .WithMany(u => u.NotificationRecipients)
+            .HasForeignKey(nr => nr.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<NotificationRecipient>()
+            .HasIndex(nr => new { nr.NotificationId, nr.UserId })
+            .IsUnique();
 
         // ================= AI CHAT =================
 
