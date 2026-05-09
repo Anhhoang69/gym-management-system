@@ -79,7 +79,7 @@ public class RequestService : IRequestService
                     (role.Name == AuthorizationRoles.GymOwner || role.Name == AuthorizationRoles.SuperAdmin)));
 
         if (request.UserId != callerId && !isAdmin)
-            throw new UnauthorizedAccessException("Bạn không có quyền xem request này");
+            throw new UnauthorizedAccessException("You do not have permission to view this request");
 
         return new RequestDetailDto
         {
@@ -109,11 +109,11 @@ public class RequestService : IRequestService
 
         // Chỉ owner mới được hủy
         if (request.UserId != userId)
-            throw new UnauthorizedAccessException("Bạn chỉ có thể hủy request do chính mình tạo");
+            throw new UnauthorizedAccessException("You can only cancel requests created by yourself");
 
         // Chỉ hủy được khi Pending
         if (request.Status != RequestStatus.Pending)
-            throw new InvalidOperationException("Không thể hủy request đã được xử lý");
+            throw new InvalidOperationException("Cannot cancel a request that has already been processed");
 
         request.Status = RequestStatus.Cancelled;
         request.ResolvedAt = DateTime.UtcNow;
@@ -194,7 +194,7 @@ public class RequestService : IRequestService
         if (request == null) return false;
 
         if (request.Status != RequestStatus.Pending)
-            throw new InvalidOperationException("Request đã được xử lý trước đó");
+            throw new InvalidOperationException("Request has already been processed");
 
         // ===== DISPATCH THEO CATEGORY =====
 
@@ -218,7 +218,7 @@ public class RequestService : IRequestService
                 break;
 
             default:
-                throw new InvalidOperationException($"Không hỗ trợ approve category: {request.Category}");
+                throw new InvalidOperationException($"Unsupported approve category: {request.Category}");
         }
 
         // cập nhật request
@@ -256,7 +256,7 @@ public class RequestService : IRequestService
         if (request == null) return false;
 
         if (request.Status != RequestStatus.Pending)
-            throw new InvalidOperationException("Request đã được xử lý trước đó");
+            throw new InvalidOperationException("Request has already been processed");
 
         request.Status = RequestStatus.Rejected;
         request.ResponseMessage = message;
@@ -291,7 +291,7 @@ public class RequestService : IRequestService
 
         var branch = await _context.Branches
             .FirstOrDefaultAsync(b => b.BranchId == request.RelatedEntityId.Value)
-            ?? throw new InvalidOperationException("Branch không tồn tại");
+            ?? throw new InvalidOperationException("Branch does not exist");
 
         branch.Status = BranchStatus.Active;
         branch.UpdatedAt = DateTime.UtcNow;
@@ -304,7 +304,7 @@ public class RequestService : IRequestService
         var branch = await _context.Branches
             .Include(b => b.Images)
             .FirstOrDefaultAsync(b => b.BranchId == request.RelatedEntityId.Value)
-            ?? throw new InvalidOperationException("Branch không tồn tại");
+            ?? throw new InvalidOperationException("Branch does not exist");
 
         var update = JsonSerializer.Deserialize<UpdateBranchDto>(request.Payload,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
@@ -345,7 +345,7 @@ public class RequestService : IRequestService
 
         var branch = await _context.Branches
             .FirstOrDefaultAsync(b => b.BranchId == request.RelatedEntityId.Value)
-            ?? throw new InvalidOperationException("Branch không tồn tại");
+            ?? throw new InvalidOperationException("Branch does not exist");
 
         branch.Status = BranchStatus.Inactive;
         branch.UpdatedAt = DateTime.UtcNow;

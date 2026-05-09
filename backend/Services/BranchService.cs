@@ -317,7 +317,7 @@ public class BranchService : IBranchService
     public async Task<AssignStaffResultDto> AssignStaffAsync(Guid branchId, AssignStaffDto dto, Guid adminId)
     {
         var branch = await _context.Branches.FindAsync(branchId)
-            ?? throw new InvalidOperationException("Chi nhánh không tồn tại");
+            ?? throw new InvalidOperationException("Branch does not exist");
 
         var result = new AssignStaffResultDto();
 
@@ -404,7 +404,7 @@ public class BranchService : IBranchService
             .Any(c => c.Status == ClassStatus.Scheduled);
 
         if (hasActiveClasses)
-            throw new InvalidOperationException("Không thể gỡ nhân viên này vì còn lớp học đang diễn ra");
+            throw new InvalidOperationException("Cannot remove this employee because there are ongoing classes");
 
         // KHÔNG hard delete – chỉ set BranchId = null để giữ audit history
         // Lấy branch ID mới nhất để không mất FK
