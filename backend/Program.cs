@@ -196,17 +196,20 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// ================= RUN SEEDER =================
+// ================= RUN SEEDER (OPTIONAL) =================
 
-using (var scope = app.Services.CreateScope())
+if (Environment.GetEnvironmentVariable("RUN_MIGRATIONS") == "true" || app.Environment.IsDevelopment())
 {
-    var services = scope.ServiceProvider;
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
 
-    var context = services.GetRequiredService<ApplicationDbContext>();
-    var userManager = services.GetRequiredService<UserManager<User>>();
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        var userManager = services.GetRequiredService<UserManager<User>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
 
-    await DbSeeder.SeedAsync(context, userManager, roleManager);
+        await DbSeeder.SeedAsync(context, userManager, roleManager);
+    }
 }
 
 app.Run();
