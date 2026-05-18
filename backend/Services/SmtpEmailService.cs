@@ -1,5 +1,6 @@
-using System.Net;
-using System.Net.Mail;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 using backend.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -59,43 +60,49 @@ public class SmtpEmailService : IEmailService
 
     private async Task SendEmailAsync(string toEmail, string subject, string body)
     {
-        var host = _configuration["EmailSettings:Host"] ?? "smtp.gmail.com";
-        var port = int.TryParse(_configuration["EmailSettings:Port"], out var p) ? p : 587;
-        var user = _configuration["EmailSettings:Username"];
-        var pass = _configuration["EmailSettings:Password"];
-        var from = _configuration["EmailSettings:FromEmail"] ?? user;
+        // Try getting Brevo API Key from direct variable or fallback to Password field
+        var apiKey = _configuration["Brevo__ApiKey"] ?? _configuration["EmailSettings:Password"];
+        var senderEmail = _configuration["EmailSettings:FromEmail"] ?? "bmn233485@gmail.com";
+        var senderName = "Gym Management System";
 
-        if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass))
+        if (string.IsNullOrEmpty(apiKey))
         {
-            _logger.LogWarning("EmailSettings (Username/Password) not found in appsettings.json. Falling back to mock email output.");
+            _logger.LogWarning("Brevo API Key not found. Falling back to mock email output.");
             _logger.LogInformation("[MOCK EMAIL] To: {ToEmail} | Subject: {Subject} | Body: {Body}", toEmail, subject, body);
             return;
         }
 
-        using var client = new SmtpClient(host, port)
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Add("api-key", apiKey);
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        var payload = new
         {
-            Credentials = new NetworkCredential(user, pass),
-            EnableSsl = true
+            sender = new { name = senderName, email = senderEmail },
+            to = new[] { new { email = toEmail } },
+            subject = subject,
+            htmlContent = body
         };
 
-        var mailMessage = new MailMessage
-        {
-            From = new MailAddress(from!, "Gym Management System"),
-            Subject = subject,
-            Body = body,
-            IsBodyHtml = true
-        };
-        mailMessage.To.Add(toEmail);
+        var json = JsonSerializer.Serialize(payload);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
 
         try
         {
-            await client.SendMailAsync(mailMessage);
-            _logger.LogInformation("Real email sent to {ToEmail}", toEmail);
+            var response = await client.PostAsync("https://api.brevo.com/v3/smtp/email", content);
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Brevo API Error: {response.StatusCode} - {responseString}");
+            }
+
+            _logger.LogInformation("Real email sent to {ToEmail} via Brevo API", toEmail);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending email to {ToEmail}", toEmail);
-            throw new Exception($"Could not send email: {ex.Message} | Inner: {ex.InnerException?.Message}", ex);
+            throw new Exception($"Could not send email: {ex.Message}", ex);
         }
     }
 }
