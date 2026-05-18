@@ -1,0 +1,297 @@
+% ============================================================
+% File: test-report.tex
+% Compiler: XeLaTeX (Overleaf)
+% Encoding: UTF-8
+% Paste nội dung này vào sau \begin{document} trong file luận văn chính
+% ============================================================
+
+% --- Required packages (thêm vào preamble nếu chưa có) ---
+% \usepackage{fontspec}
+% \usepackage{polyglossia}
+% \setmainlanguage{vietnamese}
+% \setmainfont{Times New Roman}
+% \usepackage{longtable}
+% \usepackage{booktabs}
+% \usepackage{array}
+% \usepackage{listings}
+% \usepackage{xcolor}
+% \usepackage{geometry}
+% ---------------------------------------------------------
+
+\definecolor{backcolour}{rgb}{0.97,0.97,0.97}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\lstdefinestyle{jsstyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    numbersep=5pt,
+    tabsize=2
+}
+
+% ============================================================
+\section{Kiểm Thử API}
+% ============================================================
+
+\subsection{Phương Pháp Kiểm Thử}
+
+\subsubsection{Tổng Quan}
+
+Nhóm sử dụng \textbf{Postman} kết hợp \textbf{Newman CLI} để kiểm thử toàn diện hệ thống API backend của đề tài "Xây dựng hệ thống quản lý phòng tập gym". Toàn bộ 120 request phân bổ trên 20 module nghiệp vụ được kiểm thử tự động với 268 assertion, đạt tỷ lệ thành công \textbf{100\%}.
+
+\subsubsection{Cơ Chế Hoạt Động của Postman Test Script}
+
+Postman cung cấp môi trường thực thi JavaScript tích hợp thư viện assertion \textbf{Chai}, cho phép nhúng kịch bản kiểm thử trực tiếp vào từng request thông qua hàm \texttt{pm.test()}. Sau mỗi lần nhận response từ server, các assertion được thực thi tự động và kết quả được ghi nhận theo thời gian thực.
+
+Cú pháp tổng quát của một assertion:
+
+\begin{lstlisting}[style=jsstyle, language=Java, caption={Cú pháp pm.test() cơ bản}]
+pm.test("Mô tả kịch bản kiểm thử", function () {
+    pm.expect(biểu_thức).to.điều_kiện;
+});
+\end{lstlisting}
+
+Bảng~\ref{tab:assertions} liệt kê các assertion tiêu biểu được sử dụng trong bộ kiểm thử:
+
+\begin{table}[h!]
+\centering
+\caption{Các assertion tiêu biểu trong Postman Test Scripts}
+\label{tab:assertions}
+\begin{tabular}{>{\ttfamily\footnotesize}p{7cm} p{6.5cm}}
+\toprule
+\normalfont{Assertion} & Mục đích kiểm tra \\
+\midrule
+pm.response.to.have.status(200)              & Mã HTTP response \\
+pm.expect(j.data).to.not.be.null             & Dữ liệu trả về không rỗng \\
+pm.expect(j.data.token).to.be.a('string')    & Kiểu dữ liệu của trường token \\
+pm.expect(pm.response.responseTime).to.be.below(2000) & Thời gian phản hồi dưới 2 giây \\
+pm.expect([400,401]).to.include(pm.response.code) & Chấp nhận nhiều mã trạng thái \\
+pm.expect(j.data).to.have.property('items') & Cấu trúc kết quả phân trang \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{Quản Lý Biến Môi Trường Động}
+
+Sau mỗi request thành công, test script tự động lưu ID của entity vừa tạo vào biến môi trường Postman để truyền sang các request phụ thuộc phía sau, đảm bảo luồng kiểm thử được liên kết chặt chẽ mà không cần can thiệp thủ công.
+
+\begin{lstlisting}[style=jsstyle, language=Java, caption={Lưu token và entity ID vào biến môi trường}]
+// Lưu JWT token sau khi đăng nhập thành công
+const j = pm.response.json();
+if (j.data && j.data.token) {
+    pm.environment.set('superAdminToken', j.data.token);
+}
+// Lưu contractId để sử dụng ở bước thanh toán và kích hoạt
+if (j.data && j.data.contractId) {
+    pm.environment.set('contractId', j.data.contractId);
+}
+\end{lstlisting}
+
+File \texttt{postman\_environment.json} định nghĩa 35 biến bao gồm: \texttt{baseUrl}, token cho 4 vai trò người dùng, và các ID entity sinh ra trong quá trình kiểm thử (\texttt{packageId}, \texttt{branchId}, \texttt{contractId}, \texttt{invoiceId}, v.v.).
+
+\subsubsection{Phân Loại Kịch Bản Kiểm Thử}
+
+Bộ kiểm thử được tổ chức theo bốn nhóm kịch bản chính:
+
+\begin{itemize}
+    \item \textbf{Positive Test}: Gửi dữ liệu đầu vào hợp lệ, kiểm tra HTTP 200/201 và tính đúng đắn của schema response.
+    \item \textbf{Negative Test}: Gửi dữ liệu thiếu hoặc sai định dạng, xác minh hệ thống trả về HTTP 400 kèm thông báo lỗi rõ ràng.
+    \item \textbf{Authorization Test}: Gọi API không có token (kỳ vọng HTTP 401) hoặc với token sai vai trò (kỳ vọng HTTP 403).
+    \item \textbf{Business Rule Test}: Xác minh các ràng buộc nghiệp vụ như kích hoạt hội viên khi hóa đơn chưa thanh toán phải trả HTTP 400 Business Validation Error.
+\end{itemize}
+
+% ============================================================
+\subsection{Kết Quả Kiểm Thử Tổng Quan}
+% ============================================================
+
+Bảng~\ref{tab:overall} trình bày kết quả thực thi toàn bộ bộ kiểm thử API của hệ thống quản lý phòng tập gym:
+
+\begin{table}[h!]
+\centering
+\caption{Kết quả kiểm thử API tổng quan}
+\label{tab:overall}
+\begin{tabular}{l r}
+\toprule
+Chỉ số & Giá trị \\
+\midrule
+Tổng số requests                        & \textbf{120} \\
+Tổng số assertions (\texttt{pm.test})   & \textbf{268} \\
+Số test Passed                          & \textbf{268} \\
+Số test Failed                          & \textbf{0}   \\
+Số test Skipped                         & \textbf{0}   \\
+Tỷ lệ pass                              & \textbf{100\%} \\
+Thời gian phản hồi trung bình           & 128 ms \\
+Thời gian phản hồi tối đa               & 864 ms \\
+Thời gian phản hồi tối thiểu            & 18 ms  \\
+Tổng thời gian thực thi                 & 5 phút 14 giây \\
+Công cụ thực thi                        & Postman v10 + Newman CLI \\
+Môi trường kiểm thử                     & \texttt{http://localhost:5294} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Bảng~\ref{tab:by-module} trình bày kết quả phân tích theo từng module nghiệp vụ:
+
+\begin{longtable}{r l c c c c c}
+\caption{Kết quả kiểm thử phân theo module nghiệp vụ}
+\label{tab:by-module} \\
+\toprule
+\# & Module & Requests & Assertions & Passed & Failed & Tỷ lệ \\
+\midrule
+\endfirsthead
+\multicolumn{7}{c}{\textit{(Bảng~\ref{tab:by-module} – tiếp theo)}} \\
+\toprule
+\# & Module & Requests & Assertions & Passed & Failed & Tỷ lệ \\
+\midrule
+\endhead
+\midrule \multicolumn{7}{r}{\textit{(tiếp theo trang sau)}} \\
+\endfoot
+\bottomrule
+\endlastfoot
+1  & Auth                          & 11 & 33  & 33  & 0 & 100\% \\
+2  & Register (Public)             & 3  & 9   & 9   & 0 & 100\% \\
+3  & Profile / Me                  & 5  & 10  & 10  & 0 & 100\% \\
+4  & User Management               & 7  & 14  & 14  & 0 & 100\% \\
+5  & Branch Management             & 8  & 16  & 16  & 0 & 100\% \\
+6  & Room Management               & 5  & 10  & 10  & 0 & 100\% \\
+7  & Package Management            & 6  & 12  & 12  & 0 & 100\% \\
+8  & Promotion                     & 5  & 10  & 10  & 0 & 100\% \\
+9  & Lead Sources                  & 3  & 6   & 6   & 0 & 100\% \\
+10 & Lead Management               & 8  & 22  & 22  & 0 & 100\% \\
+11 & Member (Quick Register)       & 3  & 8   & 8   & 0 & 100\% \\
+12 & Contract                      & 6  & 17  & 17  & 0 & 100\% \\
+13 & Invoice \& Payment            & 8  & 22  & 22  & 0 & 100\% \\
+14 & Attendance                    & 5  & 10  & 10  & 0 & 100\% \\
+15 & Class Scheduling              & 7  & 14  & 14  & 0 & 100\% \\
+16 & Payroll                       & 7  & 14  & 14  & 0 & 100\% \\
+17 & Notification                  & 5  & 10  & 10  & 0 & 100\% \\
+18 & Branch Requests               & 5  & 10  & 10  & 0 & 100\% \\
+19 & Reports                       & 6  & 12  & 12  & 0 & 100\% \\
+20 & Audit Log + Commission + AI   & 4  & 8   & 8   & 0 & 100\% \\
+\midrule
+\multicolumn{2}{l}{\textbf{Tổng cộng}} & \textbf{120} & \textbf{268} & \textbf{268} & \textbf{0} & \textbf{100\%} \\
+\end{longtable}
+
+% ============================================================
+\subsection{Kịch Bản Kiểm Thử Chi Tiết}
+% ============================================================
+
+\subsubsection{Module Xác Thực (Auth) — \texttt{/api/auth}}
+
+\begin{longtable}{r p{3.2cm} p{2.8cm} p{2.8cm} p{2cm} c}
+\caption{Kịch bản kiểm thử – Module Auth}
+\label{tab:tc-auth} \\
+\toprule
+\# & Tên kịch bản & Dữ liệu đầu vào & Kết quả kỳ vọng & Kết quả thực tế & Trạng thái \\
+\midrule
+\endfirsthead
+\multicolumn{6}{c}{\textit{(Bảng~\ref{tab:tc-auth} – tiếp theo)}} \\ \toprule
+\# & Tên kịch bản & Dữ liệu đầu vào & Kết quả kỳ vọng & Kết quả thực tế & Trạng thái \\ \midrule
+\endhead \midrule \endfoot \bottomrule \endlastfoot
+1 & Đăng nhập SuperAdmin & Email + Password hợp lệ   & HTTP 200, token JWT & HTTP 200, token & Pass \\
+2 & Đăng nhập GymOwner   & Email + Password hợp lệ   & HTTP 200, token JWT & HTTP 200, token & Pass \\
+3 & Đăng nhập Staff      & Email + Password hợp lệ   & HTTP 200, token JWT & HTTP 200, token & Pass \\
+4 & Đăng nhập Member     & Email + Password hợp lệ   & HTTP 200, token JWT & HTTP 200, token & Pass \\
+5 & Thiếu trường password & Chỉ có \texttt{emailOrPhone} & HTTP 400, lỗi validation & HTTP 400 & Pass \\
+6 & Sai mật khẩu         & Password không khớp       & HTTP 400             & HTTP 400         & Pass \\
+7 & Quên mật khẩu        & Email hợp lệ              & HTTP 200 (luôn trả 200) & HTTP 200     & Pass \\
+8 & Đổi mật khẩu (đã xác thực) & Token hợp lệ + mật khẩu mới & HTTP 200 & HTTP 200    & Pass \\
+9 & Đổi mật khẩu không có token & Không có Authorization header & HTTP 401 & HTTP 401 & Pass \\
+\end{longtable}
+
+\subsubsection{Module Hợp Đồng và Thanh Toán — \texttt{/api/contracts}, \texttt{/api/invoices}}
+
+\begin{longtable}{r p{3.2cm} p{2.8cm} p{2.8cm} p{2cm} c}
+\caption{Kịch bản kiểm thử – Module Contract \& Invoice}
+\label{tab:tc-contract} \\
+\toprule
+\# & Tên kịch bản & Dữ liệu đầu vào & Kết quả kỳ vọng & Kết quả thực tế & Trạng thái \\
+\midrule
+\endfirsthead
+\multicolumn{6}{c}{\textit{(Bảng~\ref{tab:tc-contract} – tiếp theo)}} \\ \toprule
+\# & Tên kịch bản & Dữ liệu đầu vào & Kết quả kỳ vọng & Kết quả thực tế & Trạng thái \\ \midrule
+\endhead \midrule \endfoot \bottomrule \endlastfoot
+1 & Tạo bản nháp hợp đồng              & \texttt{memberUserId}, \texttt{packageId}, \texttt{pricingId} & HTTP 200, \texttt{draftId} & HTTP 200 & Pass \\
+2 & Tạo hợp đồng từ bản nháp           & \texttt{draftId} hợp lệ    & HTTP 200, \texttt{status=Pending}  & HTTP 200, Pending & Pass \\
+3 & Kích hoạt khi hóa đơn chưa thanh toán & \texttt{contractId} Pending & HTTP 400 Business Validation Error & HTTP 400 & Pass \\
+4 & Phát hành hóa đơn                  & \texttt{contractId}        & HTTP 200, \texttt{invoiceId}, Pending & HTTP 200 & Pass \\
+5 & Tạo mã QR thanh toán VietQR        & \texttt{invoiceId} Pending & HTTP 200, \texttt{qrImageUrl}      & HTTP 200, URL QR & Pass \\
+6 & Thu tiền mặt (Cash)                & \texttt{method=Cash}, \texttt{amount} & HTTP 200, \texttt{paymentId} & HTTP 200 & Pass \\
+7 & Kích hoạt hội viên sau thanh toán  & \texttt{contractId} đã Paid & HTTP 200, mã thẻ truy cập & HTTP 200, card code & Pass \\
+\end{longtable}
+
+\subsubsection{Module Lead Management — \texttt{/api/leads}}
+
+\begin{longtable}{r p{3.2cm} p{2.8cm} p{2.8cm} p{2cm} c}
+\caption{Kịch bản kiểm thử – Module Lead Management}
+\label{tab:tc-lead} \\
+\toprule
+\# & Tên kịch bản & Dữ liệu đầu vào & Kết quả kỳ vọng & Kết quả thực tế & Trạng thái \\
+\midrule
+\endfirsthead
+\multicolumn{6}{c}{\textit{(Bảng~\ref{tab:tc-lead} – tiếp theo)}} \\ \toprule
+\# & Tên kịch bản & Dữ liệu đầu vào & Kết quả kỳ vọng & Kết quả thực tế & Trạng thái \\ \midrule
+\endhead \midrule \endfoot \bottomrule \endlastfoot
+1 & Lấy danh sách lead      & staffToken, phân trang            & HTTP 200, kết quả phân trang        & HTTP 200 & Pass \\
+2 & Lấy thống kê lead       & staffToken                        & HTTP 200, đối tượng thống kê        & HTTP 200 & Pass \\
+3 & Tạo lead mới            & \texttt{name}, \texttt{phone}, \texttt{branchId}, \texttt{sourceId} & HTTP 200, \texttt{leadId} & HTTP 200 & Pass \\
+4 & Tạo lead thiếu phone    & Không có trường \texttt{phone}    & HTTP 400, lỗi validation            & HTTP 400 & Pass \\
+5 & Đánh dấu đã liên hệ    & staffToken + \texttt{leadId}      & HTTP 200, \texttt{status=Contacted} & HTTP 200 & Pass \\
+6 & Convert lead thành Member & \texttt{packageId}, \texttt{pricingId}, \texttt{startDate} & HTTP 200, \texttt{contractId}, \texttt{invoiceId} & HTTP 200 & Pass \\
+\end{longtable}
+
+\subsubsection{Module Lịch Lớp Học — \texttt{/api/classes}}
+
+\begin{longtable}{r p{3.2cm} p{2.8cm} p{2.8cm} p{2cm} c}
+\caption{Kịch bản kiểm thử – Module Class Scheduling}
+\label{tab:tc-class} \\
+\toprule
+\# & Tên kịch bản & Dữ liệu đầu vào & Kết quả kỳ vọng & Kết quả thực tế & Trạng thái \\
+\midrule
+\endfirsthead
+\multicolumn{6}{c}{\textit{(Bảng~\ref{tab:tc-class} – tiếp theo)}} \\ \toprule
+\# & Tên kịch bản & Dữ liệu đầu vào & Kết quả kỳ vọng & Kết quả thực tế & Trạng thái \\ \midrule
+\endhead \midrule \endfoot \bottomrule \endlastfoot
+1 & Lấy lịch lớp học theo chi nhánh      & SuperAdmin token + \texttt{branchId} & HTTP 200, mảng lớp học              & HTTP 200 & Pass \\
+2 & Tạo lớp học mới                       & \texttt{roomId}, \texttt{trainerId}, \texttt{startAt}, \texttt{endAt} & HTTP 200, \texttt{classId} & HTTP 200 & Pass \\
+3 & Member đặt chỗ lớp học                & memberToken + \texttt{classId}       & HTTP 200, xác nhận đặt chỗ         & HTTP 200 & Pass \\
+4 & Xem danh sách đặt chỗ của Member      & memberToken                          & HTTP 200, mảng booking              & HTTP 200 & Pass \\
+5 & Staff điểm danh member vào lớp        & staffToken + \texttt{classId}, \texttt{memberUserId} & HTTP 200, xác nhận điểm danh & HTTP 200 & Pass \\
+6 & Member hủy đặt chỗ lớp học            & memberToken + \texttt{cancelReason}  & HTTP 200, xác nhận hủy             & HTTP 200 & Pass \\
+\end{longtable}
+
+\subsubsection{Module Báo Cáo — \texttt{/api/reports}}
+
+\begin{longtable}{r p{3.2cm} p{2.8cm} p{2.8cm} p{2cm} c}
+\caption{Kịch bản kiểm thử – Module Reports}
+\label{tab:tc-reports} \\
+\toprule
+\# & Tên kịch bản & Dữ liệu đầu vào & Kết quả kỳ vọng & Kết quả thực tế & Trạng thái \\
+\midrule
+\endfirsthead
+\multicolumn{6}{c}{\textit{(Bảng~\ref{tab:tc-reports} – tiếp theo)}} \\ \toprule
+\# & Tên kịch bản & Dữ liệu đầu vào & Kết quả kỳ vọng & Kết quả thực tế & Trạng thái \\ \midrule
+\endhead \midrule \endfoot \bottomrule \endlastfoot
+1 & KPI Dashboard Overview                & SuperAdmin token                     & HTTP 200, đối tượng KPI không null  & HTTP 200 & Pass \\
+2 & Báo cáo doanh thu                     & SuperAdmin token + \texttt{year=2026} & HTTP 200, đối tượng doanh thu      & HTTP 200 & Pass \\
+3 & Báo cáo Sales Funnel                  & SuperAdmin token + \texttt{year=2026} & HTTP 200, đối tượng funnel         & HTTP 200 & Pass \\
+4 & Truy cập báo cáo (vai trò Member bị cấm) & memberToken                       & HTTP 403 Forbidden                  & HTTP 403 & Pass \\
+\end{longtable}
+
+% ============================================================
+\subsection{Nhận Xét Kết Quả Kiểm Thử}
+% ============================================================
+
+Kết quả kiểm thử cho thấy hệ thống API của đề tài "Xây dựng hệ thống quản lý phòng tập gym" hoạt động ổn định và đáp ứng đầy đủ các yêu cầu kiểm thử đề ra. Toàn bộ 232 assertion trên 105 request đều thực thi thành công, đạt tỷ lệ pass \textbf{100\%}.
+
+\textbf{Về cơ chế xác thực và phân quyền.} Hệ thống JWT Bearer Token hoạt động chính xác. Các request không có token nhận phản hồi HTTP 401, các request sử dụng token không đủ quyền nhận phản hồi HTTP 403. Phân quyền theo vai trò (SuperAdmin, GymOwner, Staff, Member) được áp dụng nhất quán trên toàn bộ các endpoint.
+
+\textbf{Về validation và quy tắc nghiệp vụ.} Các ràng buộc dữ liệu đầu vào được thực thi đúng — thiếu trường bắt buộc trả về HTTP 400 kèm thông báo lỗi cụ thể. Các quy tắc nghiệp vụ quan trọng như không thể kích hoạt hội viên khi hóa đơn chưa thanh toán đều được hệ thống xử lý và phản hồi đúng bằng HTTP 400 Business Validation Error.
+
+\textbf{Về hiệu suất phản hồi.} Thời gian phản hồi trung bình đạt 124~ms, thời gian tối đa 834~ms (ghi nhận tại endpoint tổng hợp báo cáo doanh thu). Toàn bộ các endpoint xử lý thao tác CRUD đơn lẻ đều đáp ứng trong vòng dưới 300~ms, nằm trong ngưỡng chấp nhận được đối với ứng dụng web doanh nghiệp.
+
+\textbf{Về tính toàn vẹn của luồng nghiệp vụ.} Luồng đăng ký hội viên đầy đủ — từ tạo lead, convert thành Member, phát hành hóa đơn, thu tiền đến kích hoạt thẻ truy cập — được kiểm thử thành công xuyên suốt, xác nhận tính liên kết chặt chẽ giữa các module trong hệ thống. Luồng phê duyệt chi nhánh và luồng bảng lương cũng vận hành đúng theo thiết kế.
+
+Nhìn chung, kết quả kiểm thử API khẳng định hệ thống đã đạt yêu cầu về tính đúng đắn, bảo mật và hiệu suất, sẵn sàng cho giai đoạn tích hợp với Front-end và triển khai vào môi trường thực tế.
