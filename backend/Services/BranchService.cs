@@ -408,7 +408,7 @@ public class BranchService : IBranchService
 
         // KHÔNG hard delete – chỉ set BranchId = null để giữ audit history
         // Lấy branch ID mới nhất để không mất FK
-        staff.BranchId = Guid.Empty; // placeholder – hoặc dùng nullable BranchId nếu schema cho phép
+        staff.BranchId = null; // placeholder – hoặc dùng nullable BranchId nếu schema cho phép
 
         // Vì BranchId là required, ta dùng approach xóa Staff record nhưng giữ lịch sử qua AuditLog
         // Tạo audit log trước khi xóa

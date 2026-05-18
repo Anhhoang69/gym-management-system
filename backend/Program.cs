@@ -113,6 +113,7 @@ builder.Services.AddScoped<IAttendanceService, AttendanceService>();
 builder.Services.AddScoped<IPayrollService, PayrollService>();
 builder.Services.AddScoped<IVietQrService, VietQrService>();
 builder.Services.AddScoped<IReportsService, ReportsService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
 
 // ================= MODULE 4.3.3.b: BRANCH MANAGEMENT =================
 builder.Services.AddScoped<INotificationService, NotificationService>();

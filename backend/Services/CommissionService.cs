@@ -1,5 +1,7 @@
 using backend.Data;
+using backend.DTOs.Commission;
 using backend.Enums;
+using backend.Helpers;
 using backend.Interfaces;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
@@ -37,7 +39,7 @@ public class CommissionService : ICommissionService
         _context.Commissions.Add(new Commission
         {
             CommissionId = Guid.NewGuid(),
-            StaffId = contract.StaffId,
+            StaffId = contract.StaffId.Value,
             ContractId = contract.ContractId,
             InvoiceId = contract.Invoice.InvoiceId,
             Percent = rate,
@@ -47,5 +49,43 @@ public class CommissionService : ICommissionService
         });
 
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<PagedResult<CommissionListDto>> GetMyCommissionsAsync(Guid staffId, int? month, int? year, int page, int pageSize)
+    {
+        var q = _context.Commissions
+            .Include(c => c.Contract)
+                .ThenInclude(ct => ct.Member)
+                    .ThenInclude(m => m.User)
+            .Include(c => c.Contract)
+                .ThenInclude(ct => ct.Package)
+            .Where(c => c.StaffId == staffId)
+            .AsQueryable();
+
+        if (month.HasValue)
+            q = q.Where(c => c.CreatedAt.Month == month.Value);
+
+        if (year.HasValue)
+            q = q.Where(c => c.CreatedAt.Year == year.Value);
+
+        var total = await q.CountAsync();
+
+        var items = await q.OrderByDescending(c => c.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(c => new CommissionListDto
+            {
+                CommissionId = c.CommissionId,
+                ContractId = c.ContractId,
+                MemberName = c.Contract.Member.User.FullName ?? "Unknown",
+                PackageName = c.Contract.Package.Name,
+                Percent = c.Percent,
+                Amount = c.Amount,
+                Status = c.Status,
+                CreatedAt = c.CreatedAt
+            })
+            .ToListAsync();
+
+        return new PagedResult<CommissionListDto>(items, total, page, pageSize);
     }
 }

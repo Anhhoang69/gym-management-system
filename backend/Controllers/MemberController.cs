@@ -34,3 +34,31 @@ public class MemberController : ControllerBase
         return new ApiResponse<QuickRegisterResultDto>(result, result.Message);
     }
 }
+
+[ApiController]
+[Route("api/cards")]
+[Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+public class AccessCardController : ControllerBase
+{
+    private readonly IMemberService _service;
+
+    public AccessCardController(IMemberService service)
+    {
+        _service = service;
+    }
+
+    [HttpPatch("{id}/status")]
+    [SwaggerOperation(
+        Summary = "Cập nhật trạng thái thẻ",
+        Description = "Actors: Receptionist, BranchAdmin, SuperAdmin. " +
+                      "Cập nhật trạng thái thẻ (Active/Inactive/Lost/Disabled/Expired). " +
+                      "Gội cho các trường hợp: báo mất thẻ, khóa/mở khóa thẻ. Ghi AuditLog."
+    )]
+    public async Task<ApiResponse<bool>> UpdateCardStatus(Guid id, [FromBody] UpdateAccessCardStatusDto dto)
+    {
+        var staffId = User.GetRequiredUserId();
+        var result = await _service.UpdateAccessCardStatusAsync(id, dto, staffId);
+        if (!result) return new ApiResponse<bool>("Access card not found");
+        return new ApiResponse<bool>(true, "Card status updated successfully");
+    }
+}

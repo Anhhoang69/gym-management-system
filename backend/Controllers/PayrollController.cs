@@ -40,8 +40,17 @@ public class PayrollController : ControllerBase
         return new ApiResponse<Guid>(result);
     }
 
+    [HttpPatch("formula/{id}/active")]
+    [Authorize(Roles = AuthorizationRoles.SuperAdminOnly)]
+    [SwaggerOperation(Summary = "Kích hoạt công thức lương", Description = "Chuyển công thức sang trạng thái Active, các công thức khác tự động thành Inactive.")]
+    public async Task<ApiResponse<bool>> SetActiveFormula(Guid id)
+    {
+        var result = await _service.SetActiveFormulaAsync(id);
+        return new ApiResponse<bool>(result);
+    }
+
     [HttpPost("calculate")]
-    [Authorize(Roles = AuthorizationRoles.StaffOrSuperAdmin)] // BranchAdmin, SuperAdmin
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)] // BranchAdmin, SuperAdmin
     [SwaggerOperation(Summary = "Tính lương cho kỳ (Batch)", Description = "Xóa draft cũ (nếu có) và tính lại toàn bộ lương cho Staff dựa trên Formula.")]
     public async Task<ApiResponse<int>> CalculatePayroll(CalculatePayrollDto dto)
     {
@@ -50,7 +59,7 @@ public class PayrollController : ControllerBase
     }
 
     [HttpGet("report")]
-    [Authorize(Roles = AuthorizationRoles.StaffOrSuperAdmin)] // BranchAdmin, SuperAdmin
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)] // BranchAdmin, SuperAdmin
     [SwaggerOperation(Summary = "Xem báo cáo lương")]
     public async Task<ApiResponse<List<PayrollRecordDto>>> GetReport([FromQuery] int? month, [FromQuery] int? year, [FromQuery] Guid? branchId, [FromQuery] Guid? staffId, [FromQuery] string? position)
     {
@@ -79,7 +88,7 @@ public class PayrollController : ControllerBase
     }
 
     [HttpGet("export")]
-    [Authorize(Roles = AuthorizationRoles.StaffOrSuperAdmin)]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     [SwaggerOperation(Summary = "Xuất CSV lương")]
     public async Task<IActionResult> ExportCsv([FromQuery] int month, [FromQuery] int year, [FromQuery] Guid? branchId)
     {

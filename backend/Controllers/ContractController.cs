@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Security.Claims;
+using backend.DTOs.Common;
 
 namespace backend.Controllers;
 
@@ -85,5 +86,61 @@ public class ContractController : ControllerBase
     {
         var accessCardCode = await _service.ActivateMembershipAsync(id, GetStaffId());
         return new ApiResponse<string>(accessCardCode, "Membership activated successfully");
+    }
+
+    [HttpGet]
+    [SwaggerOperation(Summary = "Lấy danh sách hợp đồng", Description = "Lọc theo branchId, memberId, status, dateRange")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+    public async Task<ApiResponse<PagedResult<ContractDto>>> GetContracts([FromQuery] ContractQueryDto query)
+    {
+        var result = await _service.GetContractsAsync(query, GetStaffId());
+        return new ApiResponse<PagedResult<ContractDto>>(result);
+    }
+
+    [HttpPut("{id}")]
+    [SwaggerOperation(Summary = "Cập nhật hợp đồng", Description = "Chỉ cho phép sửa StartDate khi hợp đồng Pending. Notes có thể sửa bất kỳ lúc nào.")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+    public async Task<ApiResponse<ContractDto>> UpdateContract(Guid id, [FromBody] UpdateContractDto dto)
+    {
+        var result = await _service.UpdateContractAsync(id, dto, GetStaffId());
+        return new ApiResponse<ContractDto>(result, "Contract updated successfully");
+    }
+
+    [HttpPatch("{id}/cancel")]
+    [SwaggerOperation(Summary = "Hủy hợp đồng", Description = "Chuyển trạng thái sang Cancelled, vô hiệu hóa thẻ, ghi AuditLog.")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+    public async Task<ApiResponse<bool>> CancelContract(Guid id)
+    {
+        var result = await _service.CancelContractAsync(id, GetStaffId());
+        if (!result) return new ApiResponse<bool>("Contract not found");
+        return new ApiResponse<bool>(true, "Contract cancelled successfully");
+    }
+
+    [HttpGet("drafts")]
+    [SwaggerOperation(Summary = "Lấy danh sách bản nháp", Description = "Actors: Sales, Receptionist, BranchAdmin, SuperAdmin.")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+    public async Task<ApiResponse<PagedResult<ContractDraftPreviewDto>>> GetDrafts([FromQuery] ContractDraftQueryDto query)
+    {
+        var result = await _service.GetDraftsAsync(query, GetStaffId());
+        return new ApiResponse<PagedResult<ContractDraftPreviewDto>>(result);
+    }
+
+    [HttpPut("drafts/{id}")]
+    [SwaggerOperation(Summary = "Cập nhật bản nháp", Description = "Chỉ cho sửa ngày bắt đầu và ghi chú.")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+    public async Task<ApiResponse<ContractDraftPreviewDto>> UpdateDraft(Guid id, [FromBody] UpdateContractDraftDto dto)
+    {
+        var result = await _service.UpdateDraftAsync(id, dto, GetStaffId());
+        return new ApiResponse<ContractDraftPreviewDto>(result, "Draft updated successfully");
+    }
+
+    [HttpDelete("drafts/{id}")]
+    [SwaggerOperation(Summary = "Xóa bản nháp", Description = "Chỉ xóa khi bản nháp chưa được sử dụng.")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+    public async Task<ApiResponse<bool>> DeleteDraft(Guid id)
+    {
+        var result = await _service.DeleteDraftAsync(id, GetStaffId());
+        if (!result) return new ApiResponse<bool>("Draft not found or already used");
+        return new ApiResponse<bool>(true, "Draft deleted successfully");
     }
 }

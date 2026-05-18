@@ -156,10 +156,10 @@ public class ReportsService : IReportsService
         var totalRevenue = invoices.Sum(i => i.TotalAmount);
         var totalCount = invoices.Count;
 
-        var byBranch = invoices.GroupBy(i => new { i.CreatedByStaff.BranchId, i.CreatedByStaff.Branch.Name })
+        var byBranch = invoices.GroupBy(i => new { BranchId = i.CreatedByStaff?.BranchId, Name = i.CreatedByStaff?.Branch?.Name ?? "Unknown" })
             .Select(g => new RevenueBranchItemDto
             {
-                BranchId = g.Key.BranchId,
+                BranchId = g.Key.BranchId.GetValueOrDefault(),
                 BranchName = g.Key.Name,
                 Revenue = g.Sum(i => i.TotalAmount),
                 InvoiceCount = g.Count()

@@ -3,6 +3,7 @@ using backend.DTOs.Invoice;
 using backend.Enums;
 using backend.Interfaces;
 using backend.Models;
+using backend.Helpers;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 
@@ -141,6 +142,84 @@ public class InvoiceService : IInvoiceService
         };
 
         return (paymentDto, invoice.Status.ToString());
+    }
+
+    public async Task<PagedResult<InvoiceListDto>> GetInvoicesAsync(InvoiceQueryDto query, Guid staffId)
+    {
+        await EnsureC2PermissionAsync(staffId);
+
+        var q = _context.Invoices
+            .Include(i => i.Member).ThenInclude(m => m.User)
+            .Include(i => i.CreatedByStaff).ThenInclude(s => s.User)
+            .AsQueryable();
+
+        if (query.BranchId.HasValue)
+            q = q.Where(i => i.CreatedByStaff.BranchId == query.BranchId.Value);
+
+        if (query.Status.HasValue)
+            q = q.Where(i => i.Status == query.Status.Value);
+
+        if (query.FromDate.HasValue)
+            q = q.Where(i => i.CreatedAt >= query.FromDate.Value);
+
+        if (query.ToDate.HasValue)
+            q = q.Where(i => i.CreatedAt <= query.ToDate.Value);
+
+        var total = await q.CountAsync();
+        var items = await q.OrderByDescending(i => i.CreatedAt)
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .Select(i => new InvoiceListDto
+            {
+                InvoiceId = i.InvoiceId,
+                ContractId = i.ContractId,
+                InvoiceCode = i.InvoiceCode,
+                MemberName = i.Member.User.FullName ?? "Unknown",
+                TotalAmount = i.TotalAmount,
+                Status = i.Status,
+                CreatedAt = i.CreatedAt,
+                CreatedByStaffName = i.CreatedByStaff.User.FullName ?? "Unknown"
+            })
+            .ToListAsync();
+
+        return new PagedResult<InvoiceListDto>
+        {
+            Items = items,
+            TotalItems = total,
+            Page = query.Page,
+            PageSize = query.PageSize,
+            TotalPages = (int)Math.Ceiling(total / (double)query.PageSize)
+        };
+    }
+
+    public async Task<bool> CancelInvoiceAsync(Guid invoiceId, Guid staffId)
+    {
+        await EnsureC2PermissionAsync(staffId);
+
+        var invoice = await _context.Invoices.FirstOrDefaultAsync(i => i.InvoiceId == invoiceId);
+        if (invoice == null) return false;
+
+        if (invoice.Status == InvoiceStatus.Paid)
+        {
+            throw new Exception("Không thể hủy hóa đơn đã thanh toán thành công");
+        }
+
+        invoice.Status = InvoiceStatus.Cancelled;
+        invoice.UpdatedAt = DateTime.UtcNow;
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            AuditLogId = Guid.NewGuid(),
+            UserId = staffId,
+            Action = "CancelInvoice",
+            EntityType = "Invoice",
+            EntityId = invoice.InvoiceId,
+            CreatedAt = DateTime.UtcNow,
+            NewValue = "Cancelled"
+        });
+
+        await _context.SaveChangesAsync();
+        return true;
     }
 
     private async Task EnsureC2PermissionAsync(Guid staffUserId)

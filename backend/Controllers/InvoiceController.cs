@@ -82,4 +82,23 @@ public class InvoiceController : ControllerBase
         var result = await _service.CollectPaymentAsync(id, dto, GetStaffId());
         return new ApiResponse<PaymentDto>(result.Payment, $"Payment collected. Invoice status is now {result.NewInvoiceStatus}");
     }
+
+    [HttpGet]
+    [SwaggerOperation(Summary = "Lấy danh sách hóa đơn", Description = "Lọc theo status, branchId, dateRange")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+    public async Task<ApiResponse<PagedResult<InvoiceListDto>>> GetInvoices([FromQuery] InvoiceQueryDto query)
+    {
+        var result = await _service.GetInvoicesAsync(query, GetStaffId());
+        return new ApiResponse<PagedResult<InvoiceListDto>>(result);
+    }
+
+    [HttpPatch("{id}/cancel")]
+    [SwaggerOperation(Summary = "Hủy hóa đơn", Description = "Chỉ được hủy hóa đơn khi chưa thanh toán.")]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+    public async Task<ApiResponse<bool>> CancelInvoice(Guid id)
+    {
+        var result = await _service.CancelInvoiceAsync(id, GetStaffId());
+        if (!result) return new ApiResponse<bool>("Invoice not found");
+        return new ApiResponse<bool>(true, "Invoice cancelled successfully");
+    }
 }

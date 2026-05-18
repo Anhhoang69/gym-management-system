@@ -3,6 +3,7 @@ using backend.DTOs.Contract;
 using backend.Enums;
 using backend.Interfaces;
 using backend.Models;
+using backend.Helpers;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
@@ -371,5 +372,250 @@ public class ContractService : IContractService
 
         if (!isSuperAdmin)
             throw new Exception("You do not have permission to manage contracts (requires Sales, Receptionist, BranchAdmin or SuperAdmin)");
+    }
+
+    // Draft Management
+    public async Task<PagedResult<ContractDraftPreviewDto>> GetDraftsAsync(ContractDraftQueryDto query, Guid staffId)
+    {
+        await EnsureC2PermissionAsync(staffId);
+
+        var q = _context.ContractDrafts
+            .Include(d => d.Package)
+            .Include(d => d.Pricing)
+            .Include(d => d.Member!).ThenInclude(m => m.User)
+            .Include(d => d.CreatedByStaff)
+            .Where(d => !d.IsUsed);
+
+        if (query.MemberId.HasValue)
+            q = q.Where(d => d.MemberUserId == query.MemberId.Value);
+
+        if (query.BranchId.HasValue)
+            q = q.Where(d => d.CreatedByStaff.BranchId == query.BranchId.Value);
+
+        if (query.FromDate.HasValue)
+            q = q.Where(d => d.CreatedAt >= query.FromDate.Value);
+
+        if (query.ToDate.HasValue)
+            q = q.Where(d => d.CreatedAt <= query.ToDate.Value);
+
+        var total = await q.CountAsync();
+        var items = await q.OrderByDescending(d => d.CreatedAt)
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .Select(draft => new ContractDraftPreviewDto
+            {
+                DraftId = draft.DraftId,
+                MemberName = draft.Member != null && draft.Member.User != null ? (draft.Member.User.FullName ?? "Unknown") : "Unknown",
+                PackageName = draft.Package.Name,
+                DurationMonths = draft.Pricing.DurationMonths,
+                StartDate = draft.StartDate,
+                EndDate = draft.StartDate.AddMonths(draft.Pricing.DurationMonths),
+                OriginalPrice = draft.OriginalPrice,
+                DiscountAmount = draft.DiscountAmount,
+                DealPrice = draft.DealPrice,
+                AppliedPromotions = new List<string>(),
+                ExpiresAt = draft.ExpiresAt
+            })
+            .ToListAsync();
+
+        return new PagedResult<ContractDraftPreviewDto>
+        {
+            Items = items,
+            TotalItems = total,
+            Page = query.Page,
+            PageSize = query.PageSize,
+            TotalPages = (int)Math.Ceiling(total / (double)query.PageSize)
+        };
+    }
+
+    public async Task<ContractDraftPreviewDto> UpdateDraftAsync(Guid draftId, UpdateContractDraftDto dto, Guid staffId)
+    {
+        await EnsureC2PermissionAsync(staffId);
+
+        var draft = await _context.ContractDrafts
+            .Include(d => d.Package)
+            .Include(d => d.Pricing)
+            .Include(d => d.Member!).ThenInclude(m => m.User)
+            .FirstOrDefaultAsync(d => d.DraftId == draftId && !d.IsUsed)
+            ?? throw new Exception("Draft not found or already used");
+
+        draft.StartDate = dto.StartDate;
+        draft.Note = dto.Note;
+        draft.ExpiresAt = DateTime.UtcNow.AddHours(24);
+
+        await _context.SaveChangesAsync();
+
+        return new ContractDraftPreviewDto
+        {
+            DraftId = draft.DraftId,
+            MemberName = draft.Member?.User?.FullName ?? "Unknown",
+            PackageName = draft.Package.Name,
+            DurationMonths = draft.Pricing.DurationMonths,
+            StartDate = draft.StartDate,
+            EndDate = draft.StartDate.AddMonths(draft.Pricing.DurationMonths),
+            OriginalPrice = draft.OriginalPrice,
+            DiscountAmount = draft.DiscountAmount,
+            DealPrice = draft.DealPrice,
+            AppliedPromotions = new List<string>(),
+            ExpiresAt = draft.ExpiresAt
+        };
+    }
+
+    public async Task<bool> DeleteDraftAsync(Guid draftId, Guid staffId)
+    {
+        await EnsureC2PermissionAsync(staffId);
+
+        var draft = await _context.ContractDrafts.FirstOrDefaultAsync(d => d.DraftId == draftId && !d.IsUsed);
+        if (draft == null) return false;
+
+        _context.ContractDrafts.Remove(draft);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    // Contract Management
+    public async Task<PagedResult<ContractDto>> GetContractsAsync(ContractQueryDto query, Guid staffId)
+    {
+        await EnsureC2PermissionAsync(staffId);
+
+        var q = _context.Contracts
+            .Include(c => c.Package)
+            .Include(c => c.Member).ThenInclude(m => m.User)
+            .Include(c => c.Invoice)
+            .Include(c => c.Staff)
+            .AsQueryable();
+
+        if (query.MemberId.HasValue)
+            q = q.Where(c => c.MemberUserId == query.MemberId.Value);
+
+        if (query.BranchId.HasValue)
+            q = q.Where(c => c.Staff.BranchId == query.BranchId.Value);
+
+        if (query.Status.HasValue)
+            q = q.Where(c => c.Status == query.Status.Value);
+
+        if (query.FromDate.HasValue)
+            q = q.Where(c => c.CreatedAt >= query.FromDate.Value);
+
+        if (query.ToDate.HasValue)
+            q = q.Where(c => c.CreatedAt <= query.ToDate.Value);
+
+        var total = await q.CountAsync();
+        var items = await q.OrderByDescending(c => c.CreatedAt)
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .Select(c => new ContractDto
+            {
+                ContractId = c.ContractId,
+                MemberUserId = c.MemberUserId,
+                MemberName = c.Member.User.FullName ?? "Unknown",
+                PackageName = c.Package.Name,
+                Status = c.Status,
+                OriginalPrice = c.OriginalPrice,
+                DiscountAmount = c.DiscountAmount,
+                DealPrice = c.DealPrice,
+                StartDate = c.StartDate,
+                EndDate = c.EndDate,
+                TotalPrivateSessions = c.TotalPrivateSessions,
+                UsedPrivateSessions = c.UsedPrivateSessions,
+                TotalGroupSessions = c.TotalGroupSessions,
+                UsedGroupSessions = c.UsedGroupSessions,
+                Note = c.Note,
+                CreatedAt = c.CreatedAt,
+                InvoiceId = c.Invoice != null ? c.Invoice.InvoiceId : (Guid?)null,
+                InvoiceStatus = c.Invoice != null ? c.Invoice.Status : (InvoiceStatus?)null
+            })
+            .ToListAsync();
+
+        return new PagedResult<ContractDto>
+        {
+            Items = items,
+            TotalItems = total,
+            Page = query.Page,
+            PageSize = query.PageSize,
+            TotalPages = (int)Math.Ceiling(total / (double)query.PageSize)
+        };
+    }
+
+    public async Task<ContractDto> UpdateContractAsync(Guid contractId, UpdateContractDto dto, Guid staffId)
+    {
+        await EnsureC2PermissionAsync(staffId);
+
+        var contract = await _context.Contracts
+            .Include(c => c.Package)
+            .Include(c => c.Member).ThenInclude(m => m.User)
+            .Include(c => c.Invoice)
+            .FirstOrDefaultAsync(c => c.ContractId == contractId)
+            ?? throw new Exception("Contract not found");
+
+        if (contract.Status == ContractStatus.Pending)
+        {
+            var oldStartDate = contract.StartDate;
+            contract.StartDate = dto.StartDate;
+            var duration = contract.EndDate - oldStartDate; 
+            contract.EndDate = dto.StartDate.Add(duration);
+        }
+
+        contract.Note = dto.Note;
+        contract.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return new ContractDto
+        {
+            ContractId = contract.ContractId,
+            MemberUserId = contract.MemberUserId,
+            MemberName = contract.Member.User.FullName ?? "Unknown",
+            PackageName = contract.Package.Name,
+            Status = contract.Status,
+            OriginalPrice = contract.OriginalPrice,
+            DiscountAmount = contract.DiscountAmount,
+            DealPrice = contract.DealPrice,
+            StartDate = contract.StartDate,
+            EndDate = contract.EndDate,
+            TotalPrivateSessions = contract.TotalPrivateSessions,
+            UsedPrivateSessions = contract.UsedPrivateSessions,
+            TotalGroupSessions = contract.TotalGroupSessions,
+            UsedGroupSessions = contract.UsedGroupSessions,
+            Note = contract.Note,
+            CreatedAt = contract.CreatedAt,
+            InvoiceId = contract.Invoice?.InvoiceId,
+            InvoiceStatus = contract.Invoice?.Status
+        };
+    }
+
+    public async Task<bool> CancelContractAsync(Guid contractId, Guid staffId)
+    {
+        await EnsureC2PermissionAsync(staffId);
+
+        var contract = await _context.Contracts
+            .Include(c => c.Member).ThenInclude(m => m.AccessCard)
+            .FirstOrDefaultAsync(c => c.ContractId == contractId);
+
+        if (contract == null) return false;
+
+        contract.Status = ContractStatus.Cancelled;
+        contract.UpdatedAt = DateTime.UtcNow;
+
+        // Deactivate access card if active
+        if (contract.Member?.AccessCard != null && contract.Member.AccessCard.Status == AccessCardStatus.Active)
+        {
+            contract.Member.AccessCard.Status = AccessCardStatus.Inactive;
+        }
+
+        // Add audit log
+        _context.AuditLogs.Add(new AuditLog
+        {
+            AuditLogId = Guid.NewGuid(),
+            UserId = staffId,
+            Action = "CancelContract",
+            EntityType = "Contract",
+            EntityId = contract.ContractId,
+            CreatedAt = DateTime.UtcNow,
+            NewValue = "Cancelled"
+        });
+
+        await _context.SaveChangesAsync();
+        return true;
     }
 }

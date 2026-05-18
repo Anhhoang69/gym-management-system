@@ -9,4 +9,5 @@ public interface IMemberService
     /// Kết quả: Contract=Active, Invoice=Paid, Card=Active.
     /// </summary>
     Task<QuickRegisterResultDto> QuickRegisterAsync(QuickRegisterDto dto, Guid staffId);
+    Task<bool> UpdateAccessCardStatusAsync(Guid cardId, UpdateAccessCardStatusDto dto, Guid staffId);
 }

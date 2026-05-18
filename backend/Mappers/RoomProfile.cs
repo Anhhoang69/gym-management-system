@@ -20,8 +20,10 @@ public class RoomProfile : Profile
         .ForMember(d => d.TotalClasses,
             opt => opt.MapFrom(s => s.Classes.Count));
 
-        CreateMap<CreateRoomDto, Room>();
+        CreateMap<CreateRoomDto, Room>()
+            .ForMember(d => d.Images, opt => opt.Ignore());
 
-        CreateMap<UpdateRoomDto, Room>();
+        CreateMap<UpdateRoomDto, Room>()
+            .ForMember(d => d.Images, opt => opt.Ignore());
     }
 }

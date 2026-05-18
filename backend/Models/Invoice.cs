@@ -22,7 +22,7 @@ public class Invoice
 
     public InvoiceStatus Status { get; set; } = InvoiceStatus.Pending;
 
-    public Guid CreatedByStaffId { get; set; }
+    public Guid? CreatedByStaffId { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -34,7 +34,7 @@ public class Invoice
 
     public Member Member { get; set; } = null!;
 
-    public Staff CreatedByStaff { get; set; } = null!;
+    public Staff? CreatedByStaff { get; set; }
 
     public Payment? Payment { get; set; }
 }

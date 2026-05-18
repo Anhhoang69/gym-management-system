@@ -121,7 +121,9 @@ public class RoomService : IRoomService
         if (room == null)
             return false;
 
-        _mapper.Map(dto, room);
+        room.Name = dto.Name;
+        room.RoomNumber = dto.RoomNumber;
+        room.Capacity = dto.Capacity;
 
         if (dto.Images != null)
         {

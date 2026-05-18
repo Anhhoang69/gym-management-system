@@ -186,4 +186,45 @@ public class MemberService : IMemberService
             Message = $"Member onboarded. Collect payment at POST /api/invoices/{invoice.InvoiceId}/payment, then activate at POST /api/contracts/{contract.ContractId}/activate"
         };
     }
+
+    public async Task<bool> UpdateAccessCardStatusAsync(Guid cardId, UpdateAccessCardStatusDto dto, Guid staffId)
+    {
+        // Kiểm tra quyền: BranchAdmin, Receptionist, SuperAdmin
+        var hasPermission = await _context.Staffs
+            .AsNoTracking()
+            .AnyAsync(s => s.UserId == staffId &&
+                          (s.Position == StaffPosition.BranchAdmin ||
+                           s.Position == StaffPosition.Receptionist));
+
+        if (!hasPermission)
+        {
+            var isSuperOrOwner = await _context.UserRoles
+                .AsNoTracking()
+                .AnyAsync(ur => ur.UserId == staffId &&
+                               _context.Roles.Any(r => r.Id == ur.RoleId &&
+                                   (r.Name == "SuperAdmin" || r.Name == "GymOwner")));
+
+            if (!isSuperOrOwner)
+                throw new Exception("You do not have permission to update card status");
+        }
+
+        var card = await _context.AccessCards.FirstOrDefaultAsync(c => c.AccessCardId == cardId);
+        if (card == null) return false;
+
+        card.Status = dto.Status;
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            AuditLogId = Guid.NewGuid(),
+            UserId = staffId,
+            Action = "UpdateAccessCardStatus",
+            EntityType = "AccessCard",
+            EntityId = card.AccessCardId,
+            CreatedAt = DateTime.UtcNow,
+            NewValue = $"{dto.Status}. Reason: {dto.Reason ?? "N/A"}"
+        });
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }

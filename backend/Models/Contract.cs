@@ -10,7 +10,7 @@ public class Contract
 
     public Guid PackageId { get; set; }
 
-    public Guid StaffId { get; set; }
+    public Guid? StaffId { get; set; }
 
     public decimal OriginalPrice { get; set; }
 
@@ -44,7 +44,7 @@ public class Contract
 
     public Package Package { get; set; } = null!;
 
-    public Staff Staff { get; set; } = null!;
+    public Staff? Staff { get; set; }
 
      // 1 - 1
     public Invoice? Invoice { get; set; }

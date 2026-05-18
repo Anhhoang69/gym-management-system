@@ -45,7 +45,7 @@ public class ClassService : IClassService
 
         bool isMember = await _context.UserRoles.AnyAsync(ur => ur.UserId == callerUserId && _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == backend.Helpers.AuthorizationRoles.Member));
         bool isStaff = await _context.UserRoles.AnyAsync(ur => ur.UserId == callerUserId && _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == backend.Helpers.AuthorizationRoles.Staff));
-        
+
         var staff = isStaff ? await _context.Staffs.AsNoTracking().FirstOrDefaultAsync(s => s.UserId == callerUserId) : null;
 
         if (isStaff && staff?.Position == StaffPosition.PT)
@@ -64,7 +64,7 @@ public class ClassService : IClassService
 
         var classes = await query.OrderBy(c => c.Date).ThenBy(c => c.StartTime).ToListAsync();
 
-        return classes.Select(c => 
+        return classes.Select(c =>
         {
             var dto = new ClassScheduleDto
             {

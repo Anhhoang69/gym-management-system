@@ -67,7 +67,13 @@ public class AttendanceService : IAttendanceService
         // Load branch for mapping
         await _context.Entry(attendance).Reference(a => a.Branch).LoadAsync();
 
-        return _mapper.Map<AttendanceDto>(attendance);
+        var dtoResult = _mapper.Map<AttendanceDto>(attendance);
+        if (string.IsNullOrEmpty(dtoResult.MemberName) && card.Member?.User != null)
+            dtoResult.MemberName = card.Member.User.FullName;
+        if (string.IsNullOrEmpty(dtoResult.BranchName) && attendance.Branch != null)
+            dtoResult.BranchName = attendance.Branch.Name;
+
+        return dtoResult;
     }
 
     public async Task<AttendanceDto> CheckOutAsync(CheckInRequestDto dto)
@@ -88,7 +94,14 @@ public class AttendanceService : IAttendanceService
         attendance.CheckoutAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
-        return _mapper.Map<AttendanceDto>(attendance);
+        var dtoResult = _mapper.Map<AttendanceDto>(attendance);
+        // Manual safety if mapper fails to pick up names
+        if (string.IsNullOrEmpty(dtoResult.MemberName) && attendance.Member?.User != null)
+            dtoResult.MemberName = attendance.Member.User.FullName;
+        if (string.IsNullOrEmpty(dtoResult.BranchName) && attendance.Branch != null)
+            dtoResult.BranchName = attendance.Branch.Name;
+
+        return dtoResult;
     }
 
     public async Task<AttendanceDto> ManualCheckInAsync(ManualCheckInDto dto, Guid staffUserId)
@@ -129,7 +142,13 @@ public class AttendanceService : IAttendanceService
 
         await _context.Entry(attendance).Reference(a => a.Branch).LoadAsync();
 
-        return _mapper.Map<AttendanceDto>(attendance);
+        var dtoResult = _mapper.Map<AttendanceDto>(attendance);
+        if (string.IsNullOrEmpty(dtoResult.MemberName) && member.User != null)
+            dtoResult.MemberName = member.User.FullName;
+        if (string.IsNullOrEmpty(dtoResult.BranchName) && attendance.Branch != null)
+            dtoResult.BranchName = attendance.Branch.Name;
+
+        return dtoResult;
     }
 
     public async Task<List<AttendanceDto>> GetMyAttendanceAsync(Guid memberUserId)

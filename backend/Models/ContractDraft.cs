@@ -9,7 +9,7 @@ public class ContractDraft
     public Guid DraftId { get; set; }
 
     /// <summary>Staff tạo bản nháp này</summary>
-    public Guid CreatedByStaffId { get; set; }
+    public Guid? CreatedByStaffId { get; set; }
 
     /// <summary>Member đích (không null khi target là Member)</summary>
     public Guid? MemberUserId { get; set; }
@@ -42,7 +42,7 @@ public class ContractDraft
     public DateTime ExpiresAt { get; set; }
 
     // Navigation
-    public Staff CreatedByStaff { get; set; } = null!;
+    public Staff? CreatedByStaff { get; set; }
 
     public Member? Member { get; set; }
 

@@ -9,7 +9,7 @@ public class AttendanceProfile : Profile
     public AttendanceProfile()
     {
         CreateMap<Attendance, AttendanceDto>()
-            .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.Member.User.FullName))
-            .ForMember(dest => dest.BranchName, opt => opt.MapFrom(src => src.Branch.Name));
+            .ForMember(dest => dest.MemberName, opt => opt.MapFrom(src => src.Member != null && src.Member.User != null ? src.Member.User.FullName : null))
+            .ForMember(dest => dest.BranchName, opt => opt.MapFrom(src => src.Branch != null ? src.Branch.Name : null));
     }
 }

@@ -94,7 +94,7 @@ public class RegistrationService : IRegistrationService
                 ContractId            = Guid.NewGuid(),
                 MemberUserId          = user.Id,
                 PackageId             = dto.PackageId,
-                StaffId               = Guid.Empty,   // system-created; no staff
+                StaffId               = null,   // system-created; no staff
                 OriginalPrice         = pricing.Price,
                 DiscountAmount        = 0,
                 DealPrice             = pricing.Price,
@@ -122,7 +122,7 @@ public class RegistrationService : IRegistrationService
                 TaxAmount         = 0,
                 TotalAmount       = pricing.Price,
                 Status            = InvoiceStatus.Pending,
-                CreatedByStaffId  = Guid.Empty,
+                CreatedByStaffId  = null,
                 CreatedAt         = now
             };
             _context.Invoices.Add(invoice);
