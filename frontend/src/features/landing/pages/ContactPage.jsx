@@ -24,7 +24,7 @@ export default function ContactPage() {
         title="Bạn cần PT chuyên nghiệp?"
         description="Tham khảo đội ngũ Huấn luyện viên của EnerGym tại đây: "
         buttonText="Huấn luyện viên"
-        buttonLink="/pt"
+        buttonLink="/trainers"
       />
     </div>
   );

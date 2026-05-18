@@ -186,7 +186,7 @@ export default function LandingHeader() {
 
     {
       name: 'Huấn luyện viên',
-      path: '/pt'
+      path: '/trainers'
     },
 
     {

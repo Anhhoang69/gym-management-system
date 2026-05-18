@@ -56,7 +56,7 @@ export default function AppRouter() {
           <Route path="ai" element={<AIChatPage />} />
           <Route path="faqs" element={<FAQPage />} />
           <Route path="packages" element={<PackagePage />} />
-          <Route path="pt" element={<PtPage />} />
+          <Route path="trainers" element={<PtPage />} />
           <Route path="contact" element={<ContactPage />} />
         </Route>
 
