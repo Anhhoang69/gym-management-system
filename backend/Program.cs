@@ -174,11 +174,9 @@ var app = builder.Build();
 // Global Exception Middleware
 app.UseGlobalException();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Enable Swagger in all environments (including Production on Railway)
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // ===== FIX NGROK HTTPS =====
 app.UseForwardedHeaders(new ForwardedHeadersOptions
