@@ -12,7 +12,7 @@ import PtPage from '../../features/landing/pages/PtPage.jsx';
 import PackagePage from '../../features/landing/pages/PackagePage.jsx';
 import ContactPage from '../../features/landing/pages/ContactPage.jsx';
 import NotFoundPage from '../../shared/components/NotFoundPage.jsx';
-import FAQPage from '../../features/landing/pages/FAQPage.jsx';
+import FAQPage from '../../features/landing/pages/FaqPage.jsx';
 import AIChatPage from '../../features/landing/pages/AIChatPage.jsx';
 import MemberProfilePage from '../../features/landing/pages/MemberProfilePage.jsx';
 import ClassSchedulePage from '../../features/landing/pages/ClassSchedulePage.jsx';
@@ -35,7 +35,9 @@ import FinancialReportsPage from "../../features/super-admin/pages/FinancialRepo
 import ProfilePage from "../../features/super-admin/pages/ProfilePage.jsx"
 
 import StaffDashboardPage from '../../features/staff/pages/StaffDashboardPage.jsx';
+import StaffProfilePage from '../../features/staff/pages/StaffProfilePage.jsx';
 import PtDashboardPage from '../../features/pt/pages/PtDashboardPage.jsx';
+import PtProfilePage from '../../features/pt/pages/PtProfilePage.jsx';
 export default function AppRouter() {
   return (
     <Router>
@@ -63,11 +65,13 @@ export default function AppRouter() {
         {/* Staff Dashboard */}
         <Route path="/staff" element={<StaffLayout />}>
           <Route index element={<StaffDashboardPage />} />
+          <Route path="profile" element={<StaffProfilePage />} />
         </Route>
 
         {/* PT Dashboard */}
         <Route path="/pt" element={<PtLayout />}>
           <Route index element={<PtDashboardPage />} />
+          <Route path="profile" element={<PtProfilePage />} />
         </Route>
 
         {/* Admin Dashboard */}
