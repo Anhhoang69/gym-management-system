@@ -95,7 +95,7 @@ public class SmtpEmailService : IEmailService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sending email to {ToEmail}", toEmail);
-            throw new Exception("Could not send email. Please check SMTP configuration.", ex);
+            throw new Exception($"Could not send email: {ex.Message} | Inner: {ex.InnerException?.Message}", ex);
         }
     }
 }
