@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    },
+    "types": ["node", "@playwright/test"]
+  },
+  "include": ["src/**/*", "e2e/**/*", "playwright.config.ts"]
+}

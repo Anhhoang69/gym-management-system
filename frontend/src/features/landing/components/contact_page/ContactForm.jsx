@@ -1,11 +1,11 @@
 export default function ContactForm() {
   return (
-    <form className="rounded-xl bg-[var(--bg-secondary)] p-8 shadow-lg">
-          <h2 className="text-3xl font-bold text-[var(--text-primary)] text-center mb-6">
-            Gửi yêu cầu tư vấn
-          </h2>
+    <form className="rounded-2xl p-6 border transition-all duration-300 shadow-sm hover:shadow-md" style={{ backgroundColor: 'var(--bg-third)', borderColor: 'var(--border)' }}>
+      <h2 className="text-xl font-extrabold text-center mb-6 uppercase tracking-tight" style={{ color: 'var(--brand)' }}>
+        Gửi yêu cầu tư vấn
+      </h2>
 
-      <div className="space-y-5">
+      <div className="space-y-4">
         <Input label="Họ và tên" required />
         <Input label="Email" type="email" required />
         <Input label="Số điện thoại" required />
@@ -24,19 +24,13 @@ export default function ContactForm() {
 
       <button
         type="submit"
-        className="
-          mt-6
-          w-full
-          rounded-lg
-          bg-[var(--brand)]
-          py-3
-          font-semibold
-          text-black
-          transition
-          hover:opacity-90
-        "
+        className="mt-6 w-full rounded-xl py-3 font-bold transition-all hover:scale-[1.01] active:scale-[0.99]"
+        style={{
+          backgroundColor: 'var(--brand)',
+          color: 'var(--on-brand)',
+        }}
       >
-        Gửi
+        Gửi Ngay
       </button>
     </form>
   );
@@ -48,7 +42,7 @@ export default function ContactForm() {
 function Input({ label, type = "text", required = false }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-[var(--text-secondary)] ">
+      <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>
         {label}
         {required && <span className="ml-1 text-red-500">*</span>}
       </label>
@@ -56,20 +50,12 @@ function Input({ label, type = "text", required = false }) {
       <input
         type={type}
         required={required}
-        className="
-          mt-2
-          w-full
-          rounded-lg
-          border
-          border-[var(--border)]
-          bg-[var(--surface)]
-          px-4
-          py-2.5
-          text-sm
-          focus:outline-none
-          focus:ring-2
-          focus:ring-[var(--brand)]
-        "
+        className="w-full rounded-xl border px-4 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
+        style={{ 
+          backgroundColor: 'var(--bg-secondary)', 
+          borderColor: 'var(--border)',
+          color: 'var(--text-primary)'
+        }}
       />
     </div>
   );
@@ -81,34 +67,23 @@ function Input({ label, type = "text", required = false }) {
 function Select({ label, options = [], required = false }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-[var(--text-secondary)]">
+      <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>
         {label}
         {required && <span className="ml-1 text-red-500">*</span>}
       </label>
 
       <select
         required={required}
-        className="
-          mt-2
-          w-full
-          rounded-lg
-          border
-          border-[var(--border)]
-          bg-[var(--surface)]
-          px-4
-          py-2.5
-          text-sm
-          focus:outline-none
-          focus:ring-2
-          focus:ring-[var(--brand)]
-        "
+        className="w-full rounded-xl border px-4 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
+        style={{ 
+          backgroundColor: 'var(--bg-secondary)', 
+          borderColor: 'var(--border)',
+          color: 'var(--text-primary)'
+        }}
       >
         <option value="">Chọn chi nhánh</option>
-
         {options.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
+          <option key={opt} value={opt}>{opt}</option>
         ))}
       </select>
     </div>
@@ -121,28 +96,20 @@ function Select({ label, options = [], required = false }) {
 function Textarea({ label, required = false }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-[var(--text-secondary)]">
+      <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>
         {label}
         {required && <span className="ml-1 text-red-500">*</span>}
       </label>
 
       <textarea
-        rows={6}
+        rows={3}
         required={required}
-        className="
-          mt-2
-          w-full
-          rounded-lg
-          border
-          border-[var(--border)]
-          bg-[var(--surface)]
-          px-4
-          py-2.5
-          text-sm
-          focus:outline-none
-          focus:ring-2
-          focus:ring-[var(--brand)]
-        "
+        className="w-full rounded-xl border px-4 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
+        style={{ 
+          backgroundColor: 'var(--bg-secondary)', 
+          borderColor: 'var(--border)',
+          color: 'var(--text-primary)'
+        }}
       />
     </div>
   );

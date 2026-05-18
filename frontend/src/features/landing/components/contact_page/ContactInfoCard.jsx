@@ -1,11 +1,16 @@
 export default function ContactInfoCard({ title, content }) {
   return (
-    <div className="aspect-square rounded-xl bg-[var(--bg-secondary)] p-5 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.15),0_8px_10px_-6px_rgba(0,0,0,0.10)]">
-      <h4 className="text-xl text-center font-bold tracking-wide text-[var(--brand)]">
+    <div className="rounded-2xl p-6 border transition-all duration-300 hover:shadow-md" 
+      style={{ 
+        backgroundColor: 'var(--bg-third)', 
+        borderColor: 'var(--border)' 
+      }}
+    >
+      <h4 className="text-lg font-bold uppercase tracking-tight mb-3" style={{ color: 'var(--brand)' }}>
         {title}
       </h4>
 
-      <p className="mt-2 whitespace-pre-line text-base leading-relaxed text-[var(--text-secondary)]">
+      <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: 'var(--text-primary)' }}>
         {content}
       </p>
     </div>

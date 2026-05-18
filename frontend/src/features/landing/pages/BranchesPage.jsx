@@ -31,7 +31,13 @@ export default function BranchesPage() {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const currentBranches = filteredBranches.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
+  const isFirstRender = useRef(true);
+
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     listRef.current?.scrollIntoView({
       behavior: 'smooth',
       block: 'start',

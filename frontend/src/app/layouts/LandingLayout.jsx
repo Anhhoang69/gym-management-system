@@ -4,12 +4,12 @@ import LandingFooter from '../../features/landing/components/LandingFooter';
 
 export default function LandingLayout() {
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-[var(--bg)]">
       {/* Header */}
       <LandingHeader />
 
       {/* Nội dung trang */}
-      <main className="flex-1">
+      <main className="flex-1 pt-16 overflow-hidden">
         <Outlet />
       </main>
 

@@ -3,11 +3,11 @@ export default function PTCard({
   name,
   specialty,
   experience,
-  onClick,   
+  onClick,
 }) {
   return (
     <div
-      onClick={onClick} 
+      onClick={onClick}
       className="
         cursor-pointer
         rounded-xl
@@ -28,7 +28,7 @@ export default function PTCard({
 
       {/* CONTENT */}
       <div className="px-4 py-4 text-center">
-        <h3 className="text-xl font-semibold text-[var(--text-primary)]">
+        <h3 className="text-lg font-semibold text-[var(--text-primary)]">
           {name}
         </h3>
 

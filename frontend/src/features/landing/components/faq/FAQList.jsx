@@ -62,7 +62,7 @@ export default function FAQList({ searchQuery, activeFilter }) {
   };
 
   return (
-    <div className="mx-auto max-w-4xl px-4 pb-16">
+    <div className="mx-auto w-[85%] px-4 pb-16">
       <div className="mb-8 space-y-4">
         {paginatedFAQs.map((faq) => (
           <FAQItem

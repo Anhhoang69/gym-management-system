@@ -48,24 +48,34 @@ export default function PTGrid() {
   const currentItems = trainers.slice(start, start + ITEMS_PER_PAGE);
 
   return (
-    <section className="bg-[var(--bg)] py-16">
+    <section className="bg-[var(--bg)] py-20 relative">
+      {/* DECORATIVE BACKGROUND ELEMENTS */}
+      <div className="absolute top-0 left-0 w-64 h-64 bg-[var(--brand)]/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-[var(--brand)]/5 rounded-full blur-3xl translate-x-1/3 translate-y-1/3 pointer-events-none"></div>
+
       {/* INTRO */}
-      <div className="mx-auto max-w-4xl px-6 text-center">
-        <p className="block text-xl italic md:text-2xl text-[var(--text-primary)]">
+      <div className="relative z-10 mx-auto max-w-4xl px-6 text-center">
+        <h2 className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-6">
+          Chuyên Gia Của <span className="text-[var(--brand)]">Chúng Tôi</span>
+        </h2>
+        <p className="block text-lg md:text-xl text-[var(--text-secondary)] leading-relaxed">
           Đội ngũ Huấn luyện viên của chúng tôi gồm những chuyên gia được chứng nhận
           quốc tế, có nhiều năm kinh nghiệm trong lĩnh vực thể hình và sức khỏe.
+          Sẵn sàng đồng hành cùng bạn trên mọi hành trình.
         </p>
+        <div className="w-24 h-1 bg-[var(--brand)] mx-auto mt-8 rounded-full"></div>
       </div>
 
       {/* GRID */}
       <div
         className="
+          relative z-10
           mt-16
           mx-auto
           grid
           max-w-7xl
           grid-cols-1
-          gap-6
+          gap-8
           px-6
           sm:grid-cols-2
           lg:grid-cols-4
@@ -85,7 +95,7 @@ export default function PTGrid() {
 
       {/* PAGINATION */}
       {totalPages > 1 && (
-        <div className="mt-12 flex justify-center gap-3">
+        <div className="relative z-10 mt-16 flex justify-center gap-4">
           {Array.from({ length: totalPages }).map((_, i) => {
             const pageNumber = i + 1;
             const isActive = page === pageNumber;
@@ -95,13 +105,12 @@ export default function PTGrid() {
                 key={pageNumber}
                 onClick={() => setPage(pageNumber)}
                 className={`
-                  h-10 w-10 rounded-full text-sm font-medium transition
-                  ${
-                    isActive
-                      ? "bg-[var(--brand)] text-black"
-                      : "bg-[var(--surface)] text-[var(--text-primary)] hover:bg-[var(--hover)]"
+                   h-12 w-12 rounded-full text-base font-bold transition-all duration-300
+                   ${isActive
+                    ? "bg-[var(--brand)] text-black shadow-[0_0_15px_rgba(255,193,7,0.5)] -translate-y-1"
+                    : "bg-[var(--surface)] text-[var(--text-secondary)] hover:bg-[var(--brand)]/10 hover:text-[var(--brand)] hover:-translate-y-1 border border-[var(--border)]"
                   }
-                `}
+                 `}
               >
                 {pageNumber}
               </button>

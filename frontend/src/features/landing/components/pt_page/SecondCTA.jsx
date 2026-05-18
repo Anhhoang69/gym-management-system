@@ -1,7 +1,7 @@
 export default function PtPackageCTA() {
   return (
     <section className="relative overflow-hidden bg-[var(--brand)] py-14">
-      
+
       {/* WAVES – BACKGROUND LAYER */}
       <svg
         className="pointer-events-none absolute inset-0 h-full w-full"
