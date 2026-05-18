@@ -68,6 +68,27 @@ public class BranchService : IBranchService
             .ToListAsync();
     }
 
+    public async Task<List<PublicBranchDto>> GetPublicBranchListAsync()
+    {
+        return await _context.Branches
+            .Where(x => x.Status == BranchStatus.Active)
+            .Include(x => x.Images)
+            .AsNoTracking()
+            .OrderBy(x => x.Name)
+            .Select(x => new PublicBranchDto
+            {
+                BranchId     = x.BranchId,
+                Name         = x.Name,
+                Address      = x.Address,
+                Hotline      = x.Hotline,
+                Email        = x.Email,
+                Description  = x.Description,
+                OpeningHours = x.OpeningHours,
+                Images       = x.Images.Select(i => i.ImageUrl).ToList()
+            })
+            .ToListAsync();
+    }
+
     public async Task<BranchDto?> GetBranchAsync(Guid id)
     {
         return await _context.Branches

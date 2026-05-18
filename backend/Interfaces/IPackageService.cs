@@ -14,6 +14,8 @@ public interface IPackageService
 
     Task<PackageDto?> GetPackageAsync(Guid id);
 
+    Task<List<PublicPackageDto>> GetPublicPackagesAsync();
+
     Task<Guid> CreatePackageAsync(CreatePackageDto dto, Guid userId);
 
     Task<bool> UpdatePackageAsync(

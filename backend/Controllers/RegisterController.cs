@@ -17,11 +17,19 @@ public class RegisterController : ControllerBase
 {
     private readonly IRegistrationService _registrationService;
     private readonly ApplicationDbContext _context;
+    private readonly IBranchService _branchService;
+    private readonly IPackageService _packageService;
 
-    public RegisterController(IRegistrationService registrationService, ApplicationDbContext context)
+    public RegisterController(
+        IRegistrationService registrationService, 
+        ApplicationDbContext context,
+        IBranchService branchService,
+        IPackageService packageService)
     {
         _registrationService = registrationService;
         _context = context;
+        _branchService = branchService;
+        _packageService = packageService;
     }
 
     [HttpGet("packages")]
@@ -31,35 +39,19 @@ public class RegisterController : ControllerBase
     )]
     public async Task<ApiResponse<object>> GetPublicPackages()
     {
-        var packages = await _context.Packages
-            .Where(p => p.Status == PackageStatus.Active)
-            .Include(p => p.Pricings)
-            .Include(p => p.Features)
-            .OrderBy(p => p.DisplayOrder)
-            .Select(p => new
-            {
-                p.PackageId,
-                p.Name,
-                p.Description,
-                p.ThumbnailUrl,
-                p.Tier,
-                p.IsPtIncluded,
-                p.PrivatePtLimit,
-                p.GroupPtLimit,
-                p.MaxCheckinsPerWeek,
-                p.BadgeLabel,
-                Features = p.Features.OrderBy(f => f.DisplayOrder).Select(f => f.Content),
-                Pricings = p.Pricings.Select(pr => new
-                {
-                    pr.PackagePricingId,
-                    pr.DurationMonths,
-                    pr.Price,
-                    pr.OriginalPrice
-                })
-            })
-            .ToListAsync();
+        var packages = await _packageService.GetPublicPackagesAsync();
+        return new ApiResponse<object>(packages, "Packages retrieved");
+    }
 
-        return new ApiResponse<object>(packages!, "Packages retrieved");
+    [HttpGet("branches")]
+    [SwaggerOperation(
+        Summary = "Danh sách chi nhánh (công khai)",
+        Description = "Trả về các chi nhánh đang hoạt động để khách hàng chọn khi đăng ký tài khoản (UC-1)."
+    )]
+    public async Task<ApiResponse<object>> GetPublicBranches()
+    {
+        var branches = await _branchService.GetPublicBranchListAsync();
+        return new ApiResponse<object>(branches, "Branches retrieved");
     }
 
     [HttpPost]

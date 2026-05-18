@@ -26,6 +26,7 @@ public class ProfileService : IProfileService
                 .ThenInclude(s => s!.PTProfile)
             .Include(u => u.Member)
                 .ThenInclude(m => m!.AccessCard)
+            .Include(u => u.InitialBranch)          // cần cho Member
             .FirstOrDefaultAsync(u => u.Id == userId)
             ?? throw new Exception("User not found");
 
@@ -50,7 +51,7 @@ public class ProfileService : IProfileService
             TwoFactorEnabled   = user.TwoFactorEnabled,
             LastLoginAt  = user.LastLoginAt,
             Role         = roleName,
-            BranchName   = user.Staff?.Branch?.Name
+            BranchName   = user.Staff?.Branch?.Name ?? user.InitialBranch?.Name
         };
 
         // ---- Member-specific info ----
