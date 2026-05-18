@@ -6,6 +6,10 @@
 # dotenv files
 .env
 
+# Local secrets - DO NOT COMMIT
+appsettings.Local.json
+appsettings.*.Local.json
+
 # User-specific files
 *.rsuser
 *.suo

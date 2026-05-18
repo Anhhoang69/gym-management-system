@@ -115,6 +115,9 @@ builder.Services.AddScoped<IVietQrService, VietQrService>();
 builder.Services.AddScoped<IReportsService, ReportsService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
+// ================= CLOUDINARY =================
+builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
+
 // ================= MODULE 4.3.3.b: BRANCH MANAGEMENT =================
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IRequestService, RequestService>();
