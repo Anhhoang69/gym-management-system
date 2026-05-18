@@ -9,6 +9,7 @@ public interface IBranchService
     Task<List<BranchListDto>> GetBranchListAsync(string? search, BranchStatus? status);
     Task<BranchDto?> GetBranchAsync(Guid id);
     Task<BranchStatsDto> GetBranchStatsAsync();
+    Task<List<PublicBranchDto>> GetPublicBranchListAsync();
 
     // ===== CREATE =====
     /// <summary>SuperAdmin tạo branch mới → Status=Pending → gửi approve request đến GymOwner</summary>

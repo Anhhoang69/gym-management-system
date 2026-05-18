@@ -64,6 +64,38 @@ public class PackageService : IPackageService
             .FirstOrDefaultAsync();
     }
 
+    public async Task<List<PublicPackageDto>> GetPublicPackagesAsync()
+    {
+        return await _context.Packages
+            .Where(p => p.Status == PackageStatus.Active)
+            .Include(p => p.Pricings)
+            .Include(p => p.Features)
+            .AsNoTracking()
+            .OrderBy(p => p.DisplayOrder)
+            .Select(p => new PublicPackageDto
+            {
+                PackageId          = p.PackageId,
+                Name               = p.Name,
+                Description        = p.Description,
+                ThumbnailUrl       = p.ThumbnailUrl,
+                Tier               = p.Tier.ToString(),
+                IsPtIncluded       = p.IsPtIncluded,
+                PrivatePtLimit     = p.PrivatePtLimit,
+                GroupPtLimit       = p.GroupPtLimit,
+                MaxCheckinsPerWeek = p.MaxCheckinsPerWeek,
+                BadgeLabel         = p.BadgeLabel,
+                Features           = p.Features.OrderBy(f => f.DisplayOrder).Select(f => f.Content).ToList(),
+                Pricings           = p.Pricings.Select(pr => new PublicPackagePricingDto
+                {
+                    PackagePricingId = pr.PackagePricingId,
+                    DurationMonths   = pr.DurationMonths,
+                    Price            = pr.Price,
+                    OriginalPrice    = pr.OriginalPrice
+                }).ToList()
+            })
+            .ToListAsync();
+    }
+
     // ================= CREATE =================
 
     public async Task<Guid> CreatePackageAsync(CreatePackageDto dto, Guid userId)
