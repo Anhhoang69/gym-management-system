@@ -1,6 +1,6 @@
-import StatsCards from "../components/StatsCards"
-import ContractFilters from "../components/ContractFilters"
-import ContractsTable from "../components/ContractsTable"
+import StatsCards from "../components/common/StatsCards"
+import ContractFilters from "../components/contract/ContractFilters"
+import ContractsTable from "../components/contract/ContractsTable"
 
 import {
   cilFile,
@@ -9,7 +9,14 @@ import {
   cilWarning
 } from "@coreui/icons"
 
+import { useState } from "react"
+import UnifiedPaymentDrawer from "../components/common/UnifiedPaymentDrawer"
+
+
 function ContractsPage() {
+  const [showPayment, setShowPayment] = useState(false)
+  const [paymentData, setPaymentData] = useState({})
+
 
   const stats = [
     {
@@ -79,8 +86,26 @@ function ContractsPage() {
 
       {/* Table */}
       <div className="mt-4">
-        <ContractsTable />
+        <ContractsTable 
+          onPayClick={(data) => {
+            setPaymentData(data);
+            setShowPayment(true);
+          }}
+        />
       </div>
+
+      <UnifiedPaymentDrawer
+        isOpen={showPayment}
+        onClose={() => setShowPayment(false)}
+        invoiceId={paymentData.invoiceId}
+        contractId={paymentData.contractId}
+        totalAmountDue={paymentData.totalAmountDue}
+        invoiceCode={paymentData.invoiceCode}
+        onSuccess={() => {
+          // You could trigger a re-fetch here if ContractsTable manages its own state,
+          // or if ContractPage manages it.
+        }}
+      />
 
     </div>
   )

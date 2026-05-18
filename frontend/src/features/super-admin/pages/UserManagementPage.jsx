@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react"
 
-import StatsCards from "../components/StatsCards"
-import UserFilters from "../components/UserFilters"
-import UsersTable from "../components/UsersTable"
-import CreateUserModal from "../components/CreateUserModal"
-import EditUserModal from "../components/EditUserModal"
-import Pagination from "../components/Pagination"
+import StatsCards from "../components/common/StatsCards"
+import UserFilters from "../components/user-management/UserFilters"
+import UsersTable from "../components/user-management/UsersTable"
+import CreateUserModal from "../components/user-management/CreateUserModal"
+import EditUserModal from "../components/user-management/EditUserModal"
+import Pagination from "../components/common/Pagination"
 
 import { getBranches } from "../services/branchService"
 

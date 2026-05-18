@@ -2,29 +2,20 @@ import { Search } from 'lucide-react';
 
 export default function FAQSearch({ value, onChange }) {
   return (
-    <div className="relative z-10 mx-auto -mt-8 max-w-2xl px-4">
+    <div className="relative w-full min-w-[280px]">
       <div
-        className="flex items-center gap-3 rounded-2xl px-6 py-4 shadow-lg transition-all duration-300 hover:shadow-xl"
+        className="flex items-center gap-3 rounded-xl px-4 py-2.5 border transition-all duration-300 focus-within:ring-2 focus-within:ring-[var(--brand)] focus-within:border-transparent"
         style={{ backgroundColor: 'var(--bg-third)', borderColor: 'var(--border)' }}
       >
-        <Search className="h-5 w-5 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
+        <Search className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
         <input
           type="text"
-          placeholder="Tìm kiếm câu hỏi..."
+          placeholder="Tìm kiếm thắc mắc..."
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="flex-1 bg-transparent text-base outline-none"
+          className="flex-1 bg-transparent text-sm outline-none border-none p-0 focus:ring-0 min-w-0"
           style={{ color: 'var(--text-primary)' }}
         />
-        <button
-          className="flex-shrink-0 rounded-lg px-6 py-2 font-medium transition-all hover:scale-105"
-          style={{
-            backgroundColor: 'var(--brand)',
-            color: 'var(--on-brand)',
-          }}
-        >
-          Tìm kiếm
-        </button>
       </div>
     </div>
   );

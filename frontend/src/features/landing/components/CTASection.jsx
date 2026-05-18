@@ -12,7 +12,7 @@ export default function CTASection({
 
   return (
     <section
-      className="relative overflow-hidden bg-cover bg-center bg-no-repeat py-12 sm:py-16 lg:py-20"
+      className="relative overflow-hidden bg-cover bg-center bg-no-repeat py-6 lg:py-8"
       style={{ backgroundImage: `url(${CtaBg})` }}
     >
       {/* Overlay */}
@@ -20,21 +20,24 @@ export default function CTASection({
 
       {/* Content */}
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6">
-        <div className={`max-w-full sm:max-w-lg lg:max-w-2xl xl:max-w-3xl`}>
-          <h3 className="text-2xl font-bold text-yellow-400 sm:text-3xl xl:text-4xl">{title}</h3>
+        <h3
+          className="text-2xl sm:text-3xl lg:text-4xl font-extrabold"
+          style={{ color: 'var(--brand)' }}
+        >
+          {title}
+        </h3>
 
-          <p className="mt-4 text-sm leading-relaxed text-gray-200 italic sm:text-base xl:text-lg">
-            {description}
-          </p>
+        <p className="mt-3 text-sm sm:text-base text-gray-200 font-light">
+          {description}
+        </p>
 
-          <button
-            onClick={() => navigate(buttonLink)}
-            className="group mt-6 inline-flex items-center gap-3 rounded-xl bg-yellow-400 px-6 py-3 text-sm font-semibold text-black transition hover:bg-yellow-300 sm:px-7 sm:py-4 sm:text-base"
-          >
-            {buttonText}
-            <FaArrowRight className="transition-transform group-hover:translate-x-1" />
-          </button>
-        </div>
+        <button
+          onClick={() => navigate(buttonLink)}
+          className="group mt-1 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-500 to-yellow-400 px-6 py-3 text-sm font-bold text-black shadow-[0_0_20px_rgba(255,193,7,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(255,193,7,0.6)]"
+        >
+          {buttonText}
+          <FaArrowRight className="transition-transform group-hover:translate-x-1" />
+        </button>
       </div>
     </section>
   );

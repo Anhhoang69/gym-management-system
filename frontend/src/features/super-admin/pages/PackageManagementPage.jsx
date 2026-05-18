@@ -1,17 +1,18 @@
 import { useState, useEffect } from "react"
 
-import StatsCards from "../components/StatsCards"
-import PackageFilters from "../components/PackageFilters"
-import PackageGrid from "../components/PackageGrid"
-import PackageForm from "../components/PackageForm"
-import Pagination from "../components/Pagination"
-import ConfirmDeleteModal from "../components/ConfirmDeleteModal"
+import StatsCards from "../components/common/StatsCards"
+import PackageFilters from "../components/package-management/PackageFilters"
+import PackageGrid from "../components/package-management/PackageGrid"
+import PackageForm from "../components/package-management/PackageForm"
+import Pagination from "../components/common/Pagination"
+import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal"
 
 import {
   getPackages,
   getPackageStats,
   getPackageById,
   updatePackage,
+  createPackage,
   deletePackage,
   updatePackageStatus
 } from "../services/packageService"
@@ -20,7 +21,9 @@ import {
   CModal,
   CModalHeader,
   CModalTitle,
-  CModalBody
+  CModalBody,
+  CModalFooter,
+  CButton
 } from "@coreui/react"
 
 import {
@@ -206,7 +209,11 @@ function PackageManagementPage() {
 
       }
 
-      await updatePackage(editingPackage.id, payload)
+      if (editingPackage) {
+        await updatePackage(editingPackage.id, payload)
+      } else {
+        await createPackage(payload)
+      }
 
       setShowForm(false)
 
@@ -306,76 +313,56 @@ function PackageManagementPage() {
   }
 
   return (
-
-
-    <div>
-
-      {/* HEADER */}
-
-      <div className="d-flex justify-content-between align-items-center mb-4">
-
-        <div>
-
-          <h3 className="fw-bold mb-1">
-            Quản Lý Gói Tập
-          </h3>
-
+    <div className="d-flex flex-column h-100">
+      {/* FIXED TOP AREA */}
+      <div className="flex-shrink-0">
+        {/* HEADER */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h3 className="fw-bold mb-1">
+              Quản Lý Gói Tập
+            </h3>
+          </div>
+          <button
+            className="btn btn-warning px-4 fw-semibold shadow-sm"
+            onClick={handleCreate}
+          >
+            + Tạo Gói Mới
+          </button>
         </div>
 
-        <button
-          className="btn btn-warning px-4 fw-semibold"
-          onClick={handleCreate}
-        >
-          + Tạo Gói Mới
-        </button>
-
+        {/* STATS */}
+        <StatsCards stats={stats} />
       </div>
 
-      {/* STATS */}
-
-      <StatsCards stats={stats} />
-
-      {/* FILTERS */}
-
-      <div className="mt-4">
-        <PackageFilters />
-      </div>
-
-      {/* PACKAGE GRID */}
-
-      <div className="mt-4">
-
+      {/* SCROLLABLE GRID AREA */}
+      <div className="flex-grow-1 overflow-auto pe-2 pb-4 mt-4">
         <PackageGrid
           packages={currentPackages}
           onEdit={handleEdit}
           onDelete={handleDeleteClick}
+          onToggleStatus={handleToggleStatus}
         />
 
-      </div>
-
-      {/* PAGINATION */}
-
-      <div className="mt-4 d-flex justify-content-end">
-
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onChange={setPage}
-        />
-
+        {/* PAGINATION */}
+        <div className="mt-4 d-flex justify-content-end">
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onChange={setPage}
+          />
+        </div>
       </div>
 
       {/* FORM MODAL */}
-
       <CModal
         visible={showForm}
         onClose={() => setShowForm(false)}
         backdrop="static"
         keyboard={false}
-        size="xl"
+        fullscreen
       >
-
-        <CModalHeader>
+        <CModalHeader className="bg-light">
 
           <CModalTitle>
 
@@ -387,16 +374,22 @@ function PackageManagementPage() {
 
         </CModalHeader>
 
-        <CModalBody>
-
+        <CModalBody className="bg-light p-4" style={{ overflowY: 'auto' }}>
           <PackageForm
+            formId="package-form"
             initialData={editingPackage || {}}
             onSubmit={handleSubmit}
             onClose={() => setShowForm(false)}
           />
-
         </CModalBody>
-
+        <CModalFooter className="bg-white border-top">
+            <CButton color="secondary" variant="ghost" className="px-4" onClick={() => setShowForm(false)}>
+                Hủy bỏ
+            </CButton>
+            <CButton color="success" className="px-5 text-white fw-bold shadow-sm" type="submit" form="package-form">
+                Lưu Gói Tập
+            </CButton>
+        </CModalFooter>
       </CModal>
       <ConfirmDeleteModal
         visible={showDeleteModal}

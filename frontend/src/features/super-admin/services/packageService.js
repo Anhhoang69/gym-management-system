@@ -1,4 +1,4 @@
-import api from "../api/api"
+import api from "../../../shared/api/api"
 
 export const getPackages = async (search = "", status = "", tier = "") => {
 
@@ -24,6 +24,11 @@ export const getPackageById = async (id) => {
 
     return res.data.data
 
+}
+
+export const createPackage = async (payload) => {
+    const res = await api.post("/api/packages", payload)
+    return res.data.data
 }
 
 export const updatePackage = async (id, payload) => {

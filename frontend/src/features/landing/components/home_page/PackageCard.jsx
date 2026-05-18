@@ -3,9 +3,9 @@ import { FaCheck, FaTimes, FaArrowRight } from "react-icons/fa";
 export default function PackageCard({
     image,
     title = "Basic",
-    price = "6.88",
-    period = "month",
-    description = "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
+    price = "500.000",
+    period = "tháng",
+    description = "Mô tả gói tập.",
     features = [],
     highlight = false,
 }) {
@@ -13,19 +13,20 @@ export default function PackageCard({
         <div
             className={`
                 relative
-                rounded-[32px]
-                bg-black
+                rounded-[24px]
+                bg-[#121212]
+                border border-[#2a2a2a]
                 text-white
                 overflow-hidden
-                shadow-xl
-                transition
+                shadow-[0_10px_30px_rgba(0,0,0,0.2)]
+                transition-all duration-300
                 hover:-translate-y-2
-                hover:shadow-2xl
-                ${highlight ? "ring-2 ring-yellow-400 scale-105" : ""}
+                hover:shadow-[0_20px_40px_rgba(255,193,7,0.15)]
+                ${highlight ? "ring-2 ring-yellow-400 scale-105 shadow-[0_10px_40px_rgba(255,193,7,0.2)]" : ""}
             `}
         >
             {/* IMAGE */}
-            <div className="relative h-[200px]">
+            <div className="relative h-[150px]">
                 <img
                     src={image}
                     alt={title}
@@ -35,25 +36,25 @@ export default function PackageCard({
             </div>
 
             {/* CONTENT */}
-            <div className="p-6">
+            <div className="p-3">
                 {/* TITLE */}
-                <h3 className="text-lg font-semibold text-center">
+                <h3 className="text-base font-semibold text-center">
                     {title}
                 </h3>
 
                 {/* PRICE */}
-                <div className="mt-3 flex items-end justify-center gap-1">
-                    <span className="text-4xl font-bold">${price}</span>
-                    <span className="text-sm text-yellow-400">/{period}</span>
+                <div className="mt-1 flex items-end justify-center gap-1">
+                    <span className="text-2xl font-extrabold text-white">{price}đ</span>
+                    <span className="text-xs font-medium text-yellow-400 mb-1">/{period}</span>
                 </div>
 
                 {/* DESCRIPTION */}
-                <p className="mt-4 text-sm text-gray-300 text-center">
+                <p className="mt-1 text-xs text-gray-300 text-center">
                     {description}
                 </p>
 
                 {/* FEATURES */}
-                <ul className="mt-6 space-y-3">
+                <ul className="mt-1 space-y-1">
                     {features.map((item, index) => (
                         <li key={index} className="flex items-center gap-3 text-sm">
                             {item.available ? (
@@ -69,22 +70,22 @@ export default function PackageCard({
                 </ul>
 
                 {/* CTA */}
-                <button
+                <button style={{ borderRadius: '50px' }}
                     className="
                         group
-                        mt-6
+                        mt-5
                         w-full
-                        flex items-center justify-center gap-3
+                        flex items-center justify-center gap-2
                         rounded-full
                         border border-white
-                        py-3
+                        py-2
                         text-sm font-medium
                         transition
                         hover:bg-white
                         hover:text-black
                     "
                 >
-                    Get Started
+                    Đăng Ký Ngay
                     <FaArrowRight className="transition-transform group-hover:translate-x-1" />
                 </button>
             </div>

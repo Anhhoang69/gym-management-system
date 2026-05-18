@@ -1,5 +1,5 @@
-import AttendanceFilters from "../components/AttendanceFilters.jsx"
-import AttendanceTable from "../components/AttendanceTable.jsx"
+import AttendanceFilters from "../components/attendance/AttendanceFilters.jsx"
+import AttendanceTable from "../components/attendance/AttendanceTable.jsx"
 
 function AttendancePage() {
   return (

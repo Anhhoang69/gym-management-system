@@ -1,9 +1,11 @@
-import StatsCards from "../components/StatsCards"
-import RevenueChart from "../components/RevenueChart"
-import MemberDistribution from "../components/MemberDistribution"
-import RecentMembers from "../components/RecentMembers"
-import RecentActivities from "../components/RecentActivities"
-import SystemAlerts from "../components/SystemAlerts"
+import { useState, useEffect } from "react"
+import StatsCards from "../components/common/StatsCards"
+import RevenueChart from "../components/dashboard/RevenueChart"
+import MemberDistribution from "../components/dashboard/MemberDistribution"
+import RecentMembers from "../components/dashboard/RecentMembers"
+import RecentActivities from "../components/dashboard/RecentActivities"
+import SystemAlerts from "../components/dashboard/SystemAlerts"
+import { getOverview, getRevenueReport } from "../services/reportService"
 
 import {
   cilPeople,
@@ -13,21 +15,43 @@ import {
 } from "@coreui/icons"
 
 function DashboardPage() {
+  const [overviewData, setOverviewData] = useState(null)
+  const [revenueData, setRevenueData] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  const stats = [
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const [overview, revenue] = await Promise.all([
+          getOverview(),
+          getRevenueReport({ month: new Date().getMonth() + 1, year: new Date().getFullYear() })
+        ])
+        setOverviewData(overview)
+        setRevenueData(revenue)
+      } catch (error) {
+        console.error("Failed to fetch dashboard data", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
+  const stats = overviewData ? [
     {
       title: "Tổng Số Thành Viên",
-      value: "2,847",
-      change: "+12% so với tháng trước",
+      value: overviewData.activeMembersTotal?.toLocaleString("vi-VN") || "0",
+      change: `${overviewData.newMembersMtd > 0 ? '+' : ''}${overviewData.newMembersMtd} trong tháng này`,
       icon: cilPeople,
       bg: "#FFF3CD",
       color: "#F59E0B",
-      positive: true
+      positive: overviewData.newMembersMtd >= 0
     },
     {
-      title: "Gói Đang Hoạt Động",
-      value: "1,923",
-      change: "+8% so với tháng trước",
+      title: "Tỷ Lệ Chuyển Đổi (Lead)",
+      value: `${overviewData.leadConversionRateMtd || 0}%`,
+      change: "Hiệu suất Sales tháng này",
       icon: cilCreditCard,
       bg: "#DCFCE7",
       color: "#22C55E",
@@ -35,75 +59,71 @@ function DashboardPage() {
     },
     {
       title: "Doanh Thu Tháng",
-      value: "$89,420",
-      change: "+15% so với tháng trước",
+      value: new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(overviewData.totalRevenueMtd || 0),
+      change: `${overviewData.revenueGrowthPercent > 0 ? '+' : ''}${overviewData.revenueGrowthPercent}% so với tháng trước`,
       icon: cilDollar,
       bg: "#F3E8FF",
       color: "#A855F7",
-      positive: true
+      positive: overviewData.revenueGrowthPercent >= 0
     },
     {
-      title: "Điểm Danh Hôm Nay",
-      value: "421",
-      change: "-3% so với hôm qua",
+      title: "Check-in Hôm Nay",
+      value: overviewData.checkInsTodayTotal?.toLocaleString("vi-VN") || "0",
+      change: "Lượt khách đến phòng tập",
       icon: cilClock,
       bg: "#FFEAD5",
       color: "#FB923C",
-      positive: false
+      positive: true
     }
-  ]
+  ] : []
 
   return (
     <div>
 
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
-
         <div>
           <h3 className="fw-bold mb-1">Tổng Quan Dashboard</h3>
           <p className="text-muted mb-0">
             Chào mừng bạn quay lại!
           </p>
         </div>
-
       </div>
 
-      <StatsCards stats={stats} />
+      {loading ? (
+        <div className="text-center my-5">Đang tải dữ liệu...</div>
+      ) : (
+        <>
+          <StatsCards stats={stats} />
 
-      {/* Charts */}
-      <div className="row mt-4 g-4 align-items-stretch">
+          {/* Charts */}
+          <div className="row mt-4 g-4 align-items-stretch">
+            <div className="col-md-6">
+              <RevenueChart revenueData={revenueData} />
+            </div>
+            <div className="col-md-6">
+              <MemberDistribution />
+            </div>
+          </div>
 
-        <div className="col-md-6">
-          <RevenueChart />
-        </div>
+          {/* Members + Activities */}
+          <div className="row mt-4">
+            <div className="col-md-6">
+              <RecentMembers />
+            </div>
+            <div className="col-md-6">
+              <RecentActivities />
+            </div>
+          </div>
 
-        <div className="col-md-6">
-          <MemberDistribution />
-        </div>
-
-      </div>
-
-      {/* Members + Activities */}
-      <div className="row mt-4">
-
-        <div className="col-md-6">
-          <RecentMembers />
-        </div>
-
-        <div className="col-md-6">
-          <RecentActivities />
-        </div>
-
-      </div>
-
-      {/* Alerts */}
-      <div className="row mt-4">
-
-        <div className="col-md-6">
-          <SystemAlerts />
-        </div>
-
-      </div>
+          {/* Alerts */}
+          <div className="row mt-4">
+            <div className="col-md-6">
+              <SystemAlerts />
+            </div>
+          </div>
+        </>
+      )}
 
     </div>
   )

@@ -1,4 +1,9 @@
-import api from "../api/api"
+import api from "../../../shared/api/api"
+
+export const createPromotion = async (payload) => {
+    const res = await api.post("/api/promotions", payload)
+    return res.data.data
+}
 
 export const getPromotions = async (search = "", status = "", type = "") => {
 
@@ -53,4 +58,9 @@ export const deletePromotion = async (id) => {
 
   return res.data.data
 
+}
+
+export const updatePromotionStatus = async (id, status) => {
+    const res = await api.patch(`/api/promotions/${id}/status`, { status })
+    return res.data.data
 }

@@ -1,6 +1,6 @@
-import StatsCards from "../components/StatsCards"
-import RevenueChart from "../components/RevenueChart"
-import SalesTable from "../components/SalesTable"
+import StatsCards from "../components/common/StatsCards"
+import RevenueChart from "../components/dashboard/RevenueChart"
+import SalesTable from "../components/revenue-sales/SalesTable"
 
 import {
   cilDollar,

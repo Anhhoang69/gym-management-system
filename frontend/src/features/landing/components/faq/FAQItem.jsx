@@ -6,7 +6,7 @@ export default function FAQItem({ category, question, answer }) {
 
   return (
     <div
-      className="overflow-hidden rounded-xl transition-all duration-300 hover:shadow-md"
+      className="overflow-hidden rounded-xl transition-all duration-300"
       style={{
         backgroundColor: 'var(--bg-third)',
         border: '1px solid var(--border)',
@@ -14,30 +14,19 @@ export default function FAQItem({ category, question, answer }) {
     >
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-start gap-4 px-6 py-5 text-left transition-colors"
+        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition-colors"
         style={{
-          backgroundColor: isOpen ? 'var(--hover)' : 'transparent',
+          backgroundColor: 'transparent',
         }}
       >
-        <div className="flex-1">
-          <div
-            className="mb-2 inline-block rounded-full px-3 py-1 text-xs font-medium"
-            style={{
-              backgroundColor: 'var(--bg-secondary)',
-              color: 'var(--text-secondary)',
-            }}
-          >
-            {category}
-          </div>
-          <h3
-            className="text-base font-semibold md:text-lg"
-            style={{ color: 'var(--text-primary)' }}
-          >
-            {question}
-          </h3>
-        </div>
+        <h3
+          className="text-base md:text-[18px] font-semibold"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          {question}
+        </h3>
         <ChevronDown
-          className={`mt-1 h-5 w-5 flex-shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+          className={`h-5 w-5 flex-shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
           style={{ color: 'var(--brand)' }}
         />
       </button>

@@ -1,17 +1,19 @@
 import { useState, useEffect } from "react"
+import { CModal, CModalHeader, CModalTitle, CModalBody, CButton } from "@coreui/react"
 
-import StatsCards from "../components/StatsCards"
-import BranchGrid from "../components/BranchGrid"
-import Pagination from "../components/Pagination"
-import CreateBranchModal from "../components/CreateBranchModal"
-import BranchDetailModal from "../components/BranchDetailModal"
-import ConfirmDeleteModal from "../components/ConfirmDeleteModal"
+import StatsCards from "../components/common/StatsCards"
+import BranchGrid from "../components/branch-management/BranchGrid"
+import Pagination from "../components/common/Pagination"
+import CreateBranchModal from "../components/branch-management/CreateBranchModal"
+import BranchDetailModal from "../components/branch-management/BranchDetailModal"
+import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal"
 
 import {
   getBranches,
   getBranchById,
   updateBranch,
-  deleteBranch
+  deleteBranch,
+  getBranchStats
 } from "../services/branchService"
 
 import {
@@ -34,6 +36,25 @@ function BranchManagementPage() {
 
   const [page, setPage] = useState(1)
   const pageSize = 4
+
+  const [apiStats, setApiStats] = useState({
+    totalBranches: 0,
+    activeBranches: 0,
+    pendingBranches: 0,
+    inactiveBranches: 0
+  })
+
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [successMessage, setSuccessMessage] = useState("")
+
+  const loadStats = async () => {
+    try {
+      const data = await getBranchStats()
+      setApiStats(data)
+    } catch (err) {
+      console.error("Load branch stats failed:", err)
+    }
+  }
 
   const loadBranches = async () => {
 
@@ -85,58 +106,39 @@ function BranchManagementPage() {
   }
 
   useEffect(() => {
-
-
     loadBranches()
-
-
+    loadStats()
   }, [])
 
   const stats = [
-
-
     {
       title: "Tổng Chi Nhánh",
-      value: branches.length,
+      value: apiStats.totalBranches,
       icon: cilLocationPin,
       bg: "#FFF3CD",
       color: "#F59E0B"
     },
-
     {
-      title: "Tổng Nhân Viên",
-      value: branches.reduce(
-        (sum, b) => sum + (b.totalStaff || 0),
-        0
-      ),
+      title: "Đang Hoạt Động",
+      value: apiStats.activeBranches,
+      icon: cilChartLine,
+      bg: "#DCFCE7",
+      color: "#22C55E"
+    },
+    {
+      title: "Chờ Phê Duyệt",
+      value: apiStats.pendingBranches,
       icon: cilPeople,
       bg: "#FFF3CD",
       color: "#F59E0B"
     },
-
     {
-      title: "Checkin Hôm Nay",
-      value: branches.reduce(
-        (sum, b) => sum + (b.totalCheckinsToday || 0),
-        0
-      ),
+      title: "Ngừng Hoạt Động",
+      value: apiStats.inactiveBranches,
       icon: cilPeople,
-      bg: "#DCFCE7",
-      color: "#22C55E"
-    },
-
-    {
-      title: "Tổng Phòng",
-      value: branches.reduce(
-        (sum, b) => sum + (b.totalRooms || 0),
-        0
-      ),
-      icon: cilChartLine,
-      bg: "#DBEAFE",
-      color: "#3B82F6"
+      bg: "#FEE2E2",
+      color: "#EF4444"
     }
-
-
   ]
 
   const totalPages = Math.ceil(branches.length / pageSize)
@@ -196,29 +198,15 @@ function BranchManagementPage() {
   }
 
   const handleUpdate = async (id, payload) => {
-
-
     try {
-
       await updateBranch(id, payload)
-
-      setBranches(prev =>
-        prev.map(b =>
-          b.id === id
-            ? { ...b, ...payload }
-            : b
-        )
-      )
-
+      // Do not update branches array locally, wait for Gym Owner approval
       setShowDetailModal(false)
-
+      setSuccessMessage("Đã gửi yêu cầu cập nhật đến Gym Owner. Vui lòng chờ phê duyệt.")
+      setShowSuccessModal(true)
     } catch (err) {
-
       console.error("Update branch failed:", err)
-
     }
-
-
   }
 
   const handleDelete = (branch) => {
@@ -231,28 +219,17 @@ function BranchManagementPage() {
   }
 
   const confirmDelete = async () => {
-
-
     if (!deletingBranch) return
-
     try {
-
       await deleteBranch(deletingBranch.id)
-
-      setBranches(prev =>
-        prev.filter(b => b.id !== deletingBranch.id)
-      )
-
+      // Do not delete from branches array locally, wait for Gym Owner approval
       setShowDeleteModal(false)
       setDeletingBranch(null)
-
+      setSuccessMessage("Đã gửi yêu cầu xóa đến Gym Owner. Vui lòng chờ phê duyệt.")
+      setShowSuccessModal(true)
     } catch (err) {
-
       console.error("Delete branch failed:", err)
-
     }
-
-
   }
 
   return (
@@ -320,6 +297,22 @@ function BranchManagementPage() {
         onConfirm={confirmDelete}
         itemName={deletingBranch?.name}
       />
+
+      <CModal visible={showSuccessModal} onClose={() => setShowSuccessModal(false)} alignment="center">
+        <CModalHeader closeButton className="border-0 pb-0"></CModalHeader>
+        <CModalBody className="text-center pt-0 pb-4">
+          <div className="mb-3 text-success d-flex justify-content-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" className="bi bi-check-circle-fill" viewBox="0 0 16 16">
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            </svg>
+          </div>
+          <h5 className="mb-3">Gửi yêu cầu thành công</h5>
+          <p className="text-muted">{successMessage}</p>
+          <CButton color="success" onClick={() => setShowSuccessModal(false)} className="mt-2 text-white">
+            Đóng
+          </CButton>
+        </CModalBody>
+      </CModal>
 
     </div>
 

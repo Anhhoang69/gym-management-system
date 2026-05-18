@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react"
 
-import StatsCards from "../components/StatsCards"
-import PromotionTable from "../components/PromotionTable"
-import Pagination from "../components/Pagination"
-import EditPromotionModal from "../components/EditPromotionModal"
-import CreatePromotionModal from "../components/CreatePromotionModal"
-import ConfirmDeleteModal from "../components/ConfirmDeleteModal"
+import StatsCards from "../components/common/StatsCards"
+import PromotionTable from "../components/promotion-management/PromotionTable"
+import Pagination from "../components/common/Pagination"
+import EditPromotionModal from "../components/promotion-management/EditPromotionModal"
+import CreatePromotionModal from "../components/promotion-management/CreatePromotionModal"
+import ConfirmDeleteModal from "../components/common/ConfirmDeleteModal"
 
 import {
   CToast,
@@ -17,9 +17,12 @@ import {
   getPromotions,
   getPromotionStats,
   getPromotionById,
+  createPromotion,
   updatePromotion,
   deletePromotion
 } from "../services/promotionService"
+
+import { getBranches } from "../services/branchService"
 
 import {
   cilTag,
@@ -52,6 +55,8 @@ function PromotionManagementPage() {
     scheduled: 0,
     expired: 0
   })
+
+  const [branches, setBranches] = useState([])
 
   const loadStats = async () => {
 
@@ -149,6 +154,21 @@ function PromotionManagementPage() {
   useEffect(() => {
 
     loadStats()
+
+  }, [])
+
+  useEffect(() => {
+
+    const loadBranches = async () => {
+      try {
+        const data = await getBranches()
+        setBranches(data)
+      } catch (err) {
+        console.error("Load branches failed:", err)
+      }
+    }
+
+    loadBranches()
 
   }, [])
 
@@ -286,6 +306,33 @@ function PromotionManagementPage() {
 
   }
 
+  const handleCreatePromotion = async (payload) => {
+
+    try {
+
+      await createPromotion(payload)
+
+      setShowCreateModal(false)
+
+      setToast(
+        <CToast autohide delay={3000} color="success">
+          <CToastBody>
+            Tạo khuyến mãi mới thành công
+          </CToastBody>
+        </CToast>
+      )
+
+      await loadPromotions()
+      await loadStats()
+
+    } catch (err) {
+
+      console.error("Create promotion failed:", err)
+
+    }
+
+  }
+
   const handleDelete = (promo) => {
 
     setDeletingPromo(promo)
@@ -347,7 +394,12 @@ function PromotionManagementPage() {
 
       <StatsCards stats={stats} />
 
-      <div className="mt-4">
+      <div className="mt-3" style={{
+        maxHeight: "42vh",
+        overflowY: "auto",
+        border: "1px solid #eee",
+        borderRadius: "8px"
+      }}>
 
         <PromotionTable
           promotions={currentPromotions}
@@ -360,7 +412,12 @@ function PromotionManagementPage() {
 
       </div>
 
-      <div className="mt-4 d-flex justify-content-end">
+      <div className="d-flex justify-content-between align-items-center mt-3">
+
+        <small className="text-muted">
+          Hiển thị {promotions.length === 0 ? 0 : (page - 1) * pageSize + 1}–
+          {Math.min(page * pageSize, promotions.length)} của {promotions.length}
+        </small>
 
         <Pagination
           currentPage={page}
@@ -373,6 +430,8 @@ function PromotionManagementPage() {
       <CreatePromotionModal
         visible={showCreateModal}
         setVisible={setShowCreateModal}
+        onCreate={handleCreatePromotion}
+        branches={branches}
       />
 
       <EditPromotionModal

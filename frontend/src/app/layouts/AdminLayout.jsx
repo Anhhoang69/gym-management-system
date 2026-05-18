@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom"
-import Sidebar from "../../features/super-admin/components/Sidebar"
-import AdminHeader from "../../features/super-admin/components/AdminHeader"
+import Sidebar from "../../features/super-admin/components/common/Sidebar"
+import AdminHeader from "../../features/super-admin/components/common/AdminHeader"
 
 function AdminLayout() {
   return (
@@ -12,7 +12,7 @@ function AdminLayout() {
         flexDirection: "column"
       }}
     >
-      
+
       {/* HEADER */}
       <AdminHeader />
 

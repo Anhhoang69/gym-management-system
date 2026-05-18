@@ -2,16 +2,14 @@ import { Phone, Mail, MapPin } from 'lucide-react';
 
 export default function FAQContact() {
   return (
-    <div className="px-4 py-16" style={{ backgroundColor: 'var(--bg-four)' }}>
-      <div className="mx-auto max-w-6xl">
+    <div className="px-4 py-16" style={{ backgroundColor: 'var(--bg)' }}>
+      <div className="mx-auto w-[85%]">
         <div className="mb-12 text-center">
-          <h2 className="mb-4 text-4xl font-bold md:text-5xl" style={{ color: 'var(--brand)' }}>
+          <h2 style={{ color: 'var(--brand)' }} className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 uppercase">
             Vẫn còn thắc mắc?
           </h2>
-          <p className="text-lg text-white">
-            Đội ngũ hỗ trợ của chúng tôi luôn sẵn sàng giải đáp mọi câu hỏi của bạn.
-            <br />
-            Hãy liên hệ với chúng tôi!
+          <p style={{ color: 'var(--text-primary)' }} className="block text-lg md:text-xl italic max-w-5xl mx-auto">
+            Đội ngũ hỗ trợ của chúng tôi luôn sẵn sàng giải đáp mọi câu hỏi của bạn. Hãy liên hệ với chúng tôi!
           </p>
         </div>
 
@@ -35,7 +33,7 @@ export default function FAQContact() {
             <a
               href="tel:0901234567"
               className="text-lg font-bold transition-opacity hover:opacity-70"
-              style={{ color: 'var(--brand)' }}
+              style={{ color: 'var(--text-primary)' }}
             >
               0901 234 567
             </a>
@@ -60,7 +58,7 @@ export default function FAQContact() {
             <a
               href="mailto:support@energym.vn"
               className="text-lg font-bold break-all transition-opacity hover:opacity-70"
-              style={{ color: 'var(--brand)' }}
+              style={{ color: 'var(--text-primary)' }}
             >
               support@energym.vn
             </a>
@@ -85,7 +83,7 @@ export default function FAQContact() {
             <a
               href="#"
               className="text-lg font-bold transition-opacity hover:opacity-70"
-              style={{ color: 'var(--brand)' }}
+              style={{ color: 'var(--text-primary)' }}
             >
               Xem chi nhánh
             </a>
@@ -103,11 +101,11 @@ export default function FAQContact() {
             Đăng ký tập thử miễn phí
           </button>
           <button
-            className="rounded-lg border-2 px-8 py-3 font-semibold transition-all hover:scale-105 hover:brightness-95"
+            className="rounded-lg border px-8 py-3 font-semibold transition-all hover:scale-105 hover:brightness-95"
             style={{
-              backgroundColor: '#f5f5f5',
-              color: '#111111',
-              borderColor: '#e5e5e5',
+              backgroundColor: 'var(--bg-secondary)',
+              color: 'var(--text-primary)',
+              borderColor: 'var(--border)',
             }}
           >
             Tư vấn ngay

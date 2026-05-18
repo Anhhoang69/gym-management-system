@@ -1,47 +1,41 @@
-import FeatureItem from './FeatureItem';
-import { FaUserTie, FaBuilding, FaDumbbell, FaArrowRight } from 'react-icons/fa';
+import { FaArrowRight } from 'react-icons/fa';
 import Runner from "../../../../assets/runner.webp";
-import Brush from "../../../../assets/brush.svg";
 import { useNavigate } from "react-router-dom";
 
 export default function IntroSection() {
   const navigate = useNavigate();
 
   return (
-    <section className="relative bg-[var(--bg)] overflow-hidden">
-      <div className="relative mx-auto max-w-7xl px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2">
+    <section className="relative min-h-screen lg:h-screen bg-[var(--bg)] overflow-hidden flex items-center py-16 lg:py-0">
+      <div className="relative mx-auto max-w-7xl px-4 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-10 lg:gap-0">
 
           {/* LEFT */}
-          <div className="py-24 lg:py-32">
-            <div className="relative inline-block">
-              <img
-                src={Brush}
-                alt=""
-                aria-hidden="true"
-                className="block w-[260px] lg:w-[320px]"
-              />
-              <span className="absolute inset-0 flex items-center justify-center text-lg lg:text-3xl font-bold italic --text-secondary">
-                EnerGym là ai?
-              </span>
-            </div>
+          <div className="relative z-10">
+            <span className="inline-block text-sm font-bold tracking-[0.2em] text-yellow-500 uppercase mb-4 border-l-4 border-yellow-500 pl-3">
+              EnerGym là ai?
+            </span>
 
-            <h2 className="mt-8 text-4xl md:text-6xl font-bold leading-tight text-primary">
-              Nâng Tầm Sức Khoẻ <br /> Và Hình Thể Của Bạn
+            <h2
+              className="mt-4 text-4xl md:text-6xl font-extrabold leading-tight"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              Nâng Tầm Sức Khoẻ <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-yellow-300">
+                Và Hình Thể Của Bạn
+              </span>
             </h2>
 
-            <div className="mt-10 grid grid-cols-3">
-              <FeatureItem icon={<FaUserTie />} label="PT chuyên nghiệp" />
-              <FeatureItem icon={<FaBuilding />} label="Chi nhánh hiện đại" />
-              <FeatureItem icon={<FaDumbbell />} label="Thiết bị cao cấp" />
-            </div>
+            <p className="mt-6 text-lg text-[var(--text-secondary)] leading-relaxed max-w-xl font-light">
+              Chúng tôi không chỉ cung cấp một không gian tập luyện lý tưởng, mà còn mang đến một cộng đồng tràn đầy năng lượng. Với hệ thống trang thiết bị đẳng cấp và đội ngũ chuyên gia tận tâm, EnerGym cam kết đồng hành cùng bạn trên mọi bước đường chinh phục mục tiêu thể hình.
+            </p>
 
-            <div className="mt-16 flex">
+            <div className="mt-12 flex">
               <button
                 onClick={() => navigate("/branches")}
-                className="group flex items-center gap-3 rounded-xl bg-[var(--inverse)] px-8 py-4 text-base font-medium text-[var(--on-inverse)] transition hover:opacity-90"
+                className="group mt-1 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-500 to-yellow-400 px-6 py-3 text-sm font-bold text-black shadow-[0_0_20px_rgba(255,193,7,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_30px_rgba(255,193,7,0.6)]"
               >
-                <span>Xem các chi nhánh của EnerGym tại đây</span>
+                <span>Khám phá các chi nhánh</span>
                 <FaArrowRight className="transition-transform group-hover:translate-x-1" />
               </button>
             </div>
@@ -56,6 +50,7 @@ export default function IntroSection() {
           alt="EnerGym runner"
           className="h-full w-full object-cover object-right"
         />
+        <div className="absolute inset-0 bg-gradient-to-l from-transparent to-[var(--bg)]" />
       </div>
     </section>
   );

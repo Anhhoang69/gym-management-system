@@ -12,27 +12,26 @@ export default function LandingFooter() {
   ];
 
   return (
-    <footer className="bg-(--bg-secondary) px-6 py-28 text-(--text-primary) shadow-inner">
-      <div className="container mx-auto grid w-full gap-20 md:grid-cols-[1.4fr_1fr_1fr]">
+    <footer className="bg-(--bg-secondary) px-6 py-12 text-(--text-primary) shadow-inner">
+      <div className="container mx-auto grid w-full gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
         {/* LEFT */}
-        <div className="space-y-10">
+        <div className="space-y-6">
           <div className="space-y-5">
             <Link to="/" className="inline-block">
               <img
                 src={LogoWhite}
                 alt="Energym Logo Dark"
-                className="hidden h-20 w-auto in-[.dark]:block"
+                className="hidden h-14 w-auto in-[.dark]:block"
               />
               <img
                 src={LogoBlack}
                 alt="Energym Logo Light"
-                className="block h-20 w-auto in-[.dark]:hidden"
+                className="block h-14 w-auto in-[.dark]:hidden"
               />
             </Link>
 
             <p className="max-w-md text-sm leading-relaxed text-(--text-secondary)">
-              Take your health and body to the next level with our comprehensive program designed to
-              help you reach your fitness goals.
+              EnerGym mang đến không gian tập luyện chuyên nghiệp, hệ thống thiết bị hiện đại cùng đội ngũ chuyên gia tận tâm, đồng hành cùng bạn trên hành trình chinh phục sức khoẻ.
             </p>
           </div>
 
@@ -55,34 +54,27 @@ export default function LandingFooter() {
 
           {/* Copyright */}
           <div className="text-sm leading-relaxed text-(--text-secondary)">
-            <p>All Rights Reserved © {new Date().getFullYear()} Energym</p>
+            <p>Bản quyền © {new Date().getFullYear()} thuộc về EnerGym.</p>
             <p className="mt-1">
-              Designed by{' '}
-              <Link
-                to="https://sharjeel-siddiqui.vercel.app"
-                target="_blank"
-                className="font-medium text-(--brand) hover:underline"
-              >
-                ....
-              </Link>
+              Hệ thống quản lý phòng tập chuyên nghiệp.
             </p>
           </div>
         </div>
 
         {/* CLASSES */}
-        <div className="space-y-6">
-          <h4 className="relative pb-2 text-xl font-semibold">
-            Our classes
+        <div className="space-y-4">
+            <h4 className="relative pb-2 text-xl font-semibold">
+            Dịch vụ nổi bật
             <span className="absolute bottom-0 left-0 h-1 w-16 bg-(--brand)" />
           </h4>
 
           <ul className="space-y-4">
             {[
-              'Fitness classes',
-              'Aerobics classes',
-              'Meditation classes',
-              'Lean machines',
-              'Full-body strength',
+              'Gym / Thể hình',
+              'Yoga & Thiền',
+              'Zumba / Dance',
+              'Kickboxing',
+              'Huấn luyện viên cá nhân (PT)',
             ].map((item) => (
               <li key={item}>
                 <Link className="block font-medium text-(--text-secondary) transition-all duration-300 hover:translate-x-2 hover:text-(--brand)">
@@ -94,23 +86,21 @@ export default function LandingFooter() {
         </div>
 
         {/* HOURS */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           <h4 className="relative pb-2 text-xl font-semibold">
-            Working hours
+            Giờ hoạt động
             <span className="absolute bottom-0 left-0 h-1 w-16 bg-(--brand)" />
           </h4>
 
           <ul className="space-y-4 text-(--text-secondary)">
             <li>
-              <span className="font-semibold text-(--text-primary)">Monday – Friday:</span> 9:00 am
-              - 10 pm
+              <span className="font-semibold text-(--text-primary)">Thứ 2 - Thứ 6:</span> 05:00 - 22:00
             </li>
             <li>
-              <span className="font-semibold text-(--text-primary)">Saturday:</span> 10:00 am -
-              12:00 am
+              <span className="font-semibold text-(--text-primary)">Thứ 7 - Chủ Nhật:</span> 06:00 - 21:00
             </li>
             <li>
-              <span className="font-semibold text-(--text-primary)">Sunday:</span> Closed
+              <span className="font-semibold text-(--text-primary)">Ngày Lễ:</span> Cập nhật trên Fanpage
             </li>
           </ul>
         </div>

@@ -116,15 +116,14 @@ export default function AIChatPage() {
 
     // ================= RENDER =================
     const renderMessage = (msg, index) => {
-        // ❌ KHÔNG render plan trong chat nữa
-        return <ChatMessage key={index} {...msg} />
+        return <ChatMessage key={index} {...msg} onViewPlan={setSelectedPlan} />
     }
 
     return (
-        <div className="flex h-[calc(100vh-64px)] overflow-hidden">
+        <div className="flex h-[calc(100vh-64px)] overflow-hidden" style={{ backgroundColor: 'var(--bg)' }}>
 
             {/* ================= SIDEBAR ================= */}
-            <div className="w-64 flex-shrink-0 border-r border-[var(--border)] bg-[var(--bg-third)] flex flex-col min-h-0">
+            <div className="w-64 flex-shrink-0 border-r flex flex-col min-h-0" style={{ backgroundColor: 'var(--bg-third)', borderColor: 'var(--border)' }}>
 
                 <div className="p-4 space-y-6 overflow-y-auto flex-1">
 
@@ -139,7 +138,8 @@ export default function AIChatPage() {
                                 <button
                                     key={i}
                                     onClick={() => handleSend(q)}
-                                    className="text-sm px-3 py-2 rounded-md hover:bg-[var(--hover)] text-left"
+                                    className="text-sm px-3 py-2 rounded-md hover:bg-[var(--hover)] text-left transition-colors"
+                                    style={{ color: 'var(--text-primary)' }}
                                 >
                                     {q}
                                 </button>
@@ -162,7 +162,8 @@ export default function AIChatPage() {
                                 <div
                                     key={i}
                                     onClick={() => setSelectedPlan(plan)}
-                                    className="text-sm px-3 py-2 rounded-md cursor-pointer hover:bg-[var(--hover)]"
+                                    className="text-sm px-3 py-2 rounded-md cursor-pointer hover:bg-[var(--hover)] transition-colors"
+                                    style={{ color: 'var(--text-primary)' }}
                                 >
                                     🏋️ {plan.summary || "Workout Plan"}
                                 </div>
@@ -174,26 +175,35 @@ export default function AIChatPage() {
             </div>
 
             {/* ================= MAIN ================= */}
-            <div className="flex flex-1 relative">
+            <div className="flex flex-col flex-1 relative" style={{ backgroundColor: 'var(--bg)' }}>
 
                 {/* CHAT AREA */}
                 <div
                     ref={chatRef}
                     onScroll={handleScroll}
-                    className="flex-1 overflow-y-auto px-4 py-6 pb-32"
+                    className="flex-1 overflow-y-auto px-4 py-8 scroll-smooth"
                 >
-                    <div className="max-w-[680px] mx-auto space-y-4 bg-[var(--bg-third)]">
+                    <div className="max-w-[768px] mx-auto space-y-6">
 
                         {messages.length === 0 && (
-                            <div className="text-center text-gray-400 text-sm">
-                                👋 Xin chào! Hỏi mình về tập luyện, dinh dưỡng nhé.
+                            <div className="text-center mt-24">
+                                <div className="w-16 h-16 bg-[var(--brand)] rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-yellow-500/20 text-black">
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8V4H8" /><rect width="16" height="12" x="4" y="8" rx="2" /><path d="M2 14h2" /><path d="M20 14h2" /><path d="M15 13v2" /><path d="M9 13v2" /></svg>
+                                </div>
+                                <h3 className="text-2xl font-bold mb-3" style={{ color: 'var(--text-primary)' }}>Xin chào!</h3>
+                                <p className="text-[15px] max-w-md mx-auto leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                                    Hỏi mình bất cứ điều gì về lộ trình tập luyện, dinh dưỡng, hoặc cách đạt được mục tiêu thể hình của bạn.
+                                </p>
                             </div>
                         )}
 
                         {messages.map(renderMessage)}
 
                         {loading && (
-                            <p className="text-sm text-gray-400">AI đang trả lời...</p>
+                            <div className="flex gap-4 w-full mb-6 animate-pulse">
+                                <div className="flex-shrink-0 w-8 h-8 rounded-full" style={{ backgroundColor: 'var(--hover)' }}></div>
+                                <div className="h-12 w-24 rounded-2xl rounded-tl-sm" style={{ backgroundColor: 'var(--bg-secondary)' }}></div>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -202,15 +212,15 @@ export default function AIChatPage() {
                 {showScrollBtn && (
                     <button
                         onClick={scrollToBottom}
-                        className="absolute bottom-20 right-4 bg-[var(--brand)] text-black w-10 h-10 rounded-full shadow-lg flex items-center justify-center hover:opacity-80"
+                        className="absolute bottom-32 left-1/2 -translate-x-1/2 bg-white dark:bg-[#2f2f2f] text-gray-500 dark:text-gray-300 w-9 h-9 border border-gray-200 dark:border-gray-700 rounded-full shadow-md flex items-center justify-center hover:bg-gray-50 dark:hover:bg-[#333] transition-colors"
                     >
-                        ↓
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M19 12l-7 7-7-7" /></svg>
                     </button>
                 )}
 
                 {/* INPUT FIXED */}
-                <div className="absolute bottom-0 left-0 w-full border-t border-[var(--border)] bg-[var(--bg-third)]">
-                    <div className="max-w-[680px] mx-auto">
+                <div className="w-full shrink-0 px-4 pt-4 pb-6" style={{ backgroundColor: 'var(--bg)' }}>
+                    <div className="max-w-[768px] mx-auto">
                         <ChatInput onSend={handleSend} />
                     </div>
                 </div>

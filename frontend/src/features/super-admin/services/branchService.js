@@ -1,4 +1,4 @@
-import api from "../api/api"
+import api from "../../../shared/api/api"
 
 // GET /api/branches
 export const getBranches = async (search = "", status = "") => {
@@ -31,5 +31,10 @@ export const deleteBranch = async (id) => {
 
   const res = await api.delete(`/api/branches/${id}`)
 
+  return res.data.data
+}
+
+export const getBranchStats = async () => {
+  const res = await api.get("/api/branches/stats")
   return res.data.data
 }
