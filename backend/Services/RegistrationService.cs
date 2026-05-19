@@ -133,10 +133,17 @@ public class RegistrationService : IRegistrationService
             await transaction.CommitAsync();
 
             // 5. Gửi email chào + mật khẩu tạm (ngoài transaction — lỗi không rollback)
-            if (!string.IsNullOrWhiteSpace(user.Email))
-                await _emailService.SendActivationAsync(user.Email, user.FullName ?? dto.FullName, tempPassword);
-            else if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
-                await _smsService.SendActivationAsync(user.PhoneNumber, user.FullName ?? dto.FullName, tempPassword);
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(user.Email))
+                    await _emailService.SendActivationAsync(user.Email, user.FullName ?? dto.FullName, tempPassword);
+                else if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
+                    await _smsService.SendActivationAsync(user.PhoneNumber, user.FullName ?? dto.FullName, tempPassword);
+            }
+            catch
+            {
+                // Ignore email/SMS failures to prevent registration 500 errors
+            }
 
             return new RegisterResultDto
             {

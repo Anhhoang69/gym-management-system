@@ -651,9 +651,10 @@ public class LeadService : ILeadService
 
         // ── 5. Tạo Contract (Pending) ──────────────────────────────────────────
         var staffRecord = await _context.Staffs.AsNoTracking().FirstOrDefaultAsync(s => s.UserId == currentUserId);
-        var staffId = staffRecord?.UserId ?? currentUserId;
+        var isStaffExist = staffRecord != null;
+        var staffId = staffRecord?.UserId;
 
-        var startDate = dto.StartDate;
+        var startDate = DateTime.SpecifyKind(dto.StartDate, DateTimeKind.Utc);
         var endDate = startDate.AddMonths(pricing.DurationMonths);
 
         var contract = new Contract
@@ -661,7 +662,7 @@ public class LeadService : ILeadService
             ContractId = Guid.NewGuid(),
             MemberUserId = user.Id,
             PackageId = package.PackageId,
-            StaffId = staffId,
+            StaffId = isStaffExist ? staffId : null,
             OriginalPrice = originalPrice,
             DiscountAmount = discountAmount,
             DealPrice = dealPrice,
@@ -688,7 +689,7 @@ public class LeadService : ILeadService
             TaxAmount = dto.TaxAmount,
             TotalAmount = dealPrice + dto.TaxAmount,
             Status = InvoiceStatus.Pending,   // chưa thu tiền
-            CreatedByStaffId = staffId,
+            CreatedByStaffId = isStaffExist ? staffId : null,
             CreatedAt = DateTime.UtcNow
         };
         _context.Invoices.Add(invoice);

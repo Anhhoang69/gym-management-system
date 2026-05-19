@@ -1,0 +1,150 @@
+﻿newman
+
+Gym Management System API – Part 4 (Attendance + Class + Payroll + Notifications + AI)
+
+□ 00. Part 4 Setup
+└ Login - GymOwner (for Setup)
+  POST http://localhost:5294/api/auth/login [200 OK, 1.09kB, 1624ms]
+
+└ Login - Registered Member (for Setup)
+  POST http://localhost:5294/api/auth/login [200 OK, 1.1kB, 542ms]
+
+└ Get Receptionist / Staff Token
+  POST http://localhost:5294/api/auth/login [200 OK, 1.08kB, 460ms]
+
+└ Sync Member ID by Email
+  GET http://localhost:5294/api/users?search=nguyen.van.an@gmail.com [200 OK, 544B, 603ms]
+
+└ Get PT Staff
+  GET http://localhost:5294/api/users?page=1&pageSize=50&role=PT [200 OK, 781B, 435ms]
+
+└ Get Rooms
+  GET http://localhost:5294/api/rooms [200 OK, 3.98kB, 161ms]
+
+└ Ensure Member Has Card
+  GET http://localhost:5294/api/users/00000000-0004-0000-0000-000000000001 [200 OK, 1.4kB, 470ms]
+
+□ 14. Attendance
+└ Check-in by Card
+  POST http://localhost:5294/api/attendance/checkin [400 Bad Request, 309B, 351ms]
+  √  Status 200 or 400
+
+└ Manual Check-in
+  POST http://localhost:5294/api/attendance/checkin/manual [400 Bad Request, 299B, 181ms]
+  √  Status 200 or 400
+
+└ Get My Attendance (Member)
+  GET http://localhost:5294/api/attendance/my [200 OK, 2.71kB, 157ms]
+  √  Status 200
+
+└ Get Branch Attendance
+  GET http://localhost:5294/api/attendance/branch/aaaaaaaa-0001-0000-0000-000000000003 [200 OK, 251B, 103ms]
+  √  Status 200
+
+└ Check-out Attendance
+  POST http://localhost:5294/api/attendance/checkout [400 Bad Request, 293B, 238ms]
+  √  Status 200 or 400
+
+□ 15. Class Scheduling
+└ Get Class Schedule
+  GET http://localhost:5294/api/classes?branchId=aaaaaaaa-0001-0000-0000-000000000003 [200 OK, 251B, 485ms]
+  √  Status 200
+
+└ Create Class (Admin)
+  POST http://localhost:5294/api/classes [200 OK, 287B, 625ms]
+  √  Status 200 or 400
+
+└ Book Class (Member)
+  POST http://localhost:5294/api/classes/a1a230c9-1e2d-43a1-8c1a-25be99f3b2a2/book [500 Internal Server Error, 3kB, 229ms]
+  1. Status 200
+
+└ Get My Bookings (Member)
+  GET http://localhost:5294/api/classes/my-bookings [200 OK, 2kB, 175ms]
+  √  Status 200
+
+└ Class Check-in (Staff)
+  PATCH http://localhost:5294/api/classes/a1a230c9-1e2d-43a1-8c1a-25be99f3b2a2/class-checkin [400 Bad Request, 273B, 133ms]
+  √  Status 200 or 400
+
+└ Cancel Booking (Member)
+  PATCH http://localhost:5294/api/classes/a1a230c9-1e2d-43a1-8c1a-25be99f3b2a2/cancel-booking [400 Bad Request, 273B, 112ms]
+  √  Status 200 or 400
+
+□ 16. Payroll
+└ Get Payroll Formulas
+  GET http://localhost:5294/api/payroll/formula [200 OK, 987B, 127ms]
+  √  Status 200
+
+└ Calculate Payroll
+  POST http://localhost:5294/api/payroll/calculate [400 Bad Request, 273B, 139ms]
+  2. Status 200
+
+└ Approve Payroll Period (GymOwner)
+  POST http://localhost:5294/api/payroll/approve-period [200 OK, 270B, 153ms]
+  √  Status 200
+
+└ Get My Payroll (Staff)
+  GET http://localhost:5294/api/payroll/my?month=5&year=2026 [200 OK, 251B, 143ms]
+  √  Status 200
+
+□ 17. Notification & AI
+└ Send Notification
+  POST http://localhost:5294/api/notifications/send [200 OK, 276B, 229ms]
+  √  Status 200
+
+└ Get My Notifications
+  GET http://localhost:5294/api/notifications?page=1&pageSize=10 [200 OK, 1.77kB, 217ms]
+  √  Status 200
+
+└ Mark All Read
+  PATCH http://localhost:5294/api/notifications/read-all [200 OK, 278B, 209ms]
+  √  Status 200
+
+└ AI Chat
+  POST http://localhost:5294/api/ai/chat [200 OK, 1.04kB, 6s]
+  √  Status 200
+
+□ 18. Reports & Audits
+└ KPI Overview
+  GET http://localhost:5294/api/reports/overview [200 OK, 453B, 1181ms]
+  √  Status 200
+
+└ Revenue Report
+  GET http://localhost:5294/api/reports/revenue?year=2026 [200 OK, 1.17kB, 1068ms]
+  √  Status 200
+
+└ Get Audit Logs
+  GET http://localhost:5294/api/audit-logs?page=1&pageSize=10 [200 OK, 4.18kB, 674ms]
+  √  Status 200
+
+┌─────────────────────────┬────────────────────┬───────────────────┐
+│                         │           executed │            failed │
+├─────────────────────────┼────────────────────┼───────────────────┤
+│              iterations │                  1 │                 0 │
+├─────────────────────────┼────────────────────┼───────────────────┤
+│                requests │                 29 │                 0 │
+├─────────────────────────┼────────────────────┼───────────────────┤
+│            test-scripts │                 29 │                 0 │
+├─────────────────────────┼────────────────────┼───────────────────┤
+│      prerequest-scripts │                  0 │                 0 │
+├─────────────────────────┼────────────────────┼───────────────────┤
+│              assertions │                 22 │                 2 │
+├─────────────────────────┴────────────────────┴───────────────────┤
+│ total run duration: 22.1s                                        │
+├──────────────────────────────────────────────────────────────────┤
+│ total data received: 26.51kB (approx)                            │
+├──────────────────────────────────────────────────────────────────┤
+│ average response time: 596ms [min: 103ms, max: 6s, s.d.: 1096ms] │
+└──────────────────────────────────────────────────────────────────┘
+
+[31m  # [39m[31m failure        [39m[31m detail                                                [39m
+[90m    [39m[90m                [39m[90m                                                       [39m
+ 1.  AssertionError  Status 200                                            
+                     expected response to have status code 200 but got 500 
+                     at assertion:0 in test-script                         
+                     inside "15. Class Scheduling / Book Class (Member)"   
+[90m    [39m[90m                [39m[90m                                                       [39m
+ 2.  AssertionError  Status 200                                            
+                     expected response to have status code 200 but got 400 
+                     at assertion:0 in test-script                         
+                     inside "16. Payroll / Calculate Payroll"              

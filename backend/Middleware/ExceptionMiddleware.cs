@@ -39,9 +39,9 @@ public class ExceptionMiddleware
             var response = new ApiResponse<string>
             {
                 Success = false,
-                Message = ex.Message,
+                Message = ex.Message + (ex.InnerException != null ? " | INNER: " + ex.InnerException.Message : ""),
                 Errors = statusCode == StatusCodes.Status500InternalServerError
-                    ? ex.StackTrace   // only expose stack trace for true 500s
+                    ? ex.StackTrace
                     : null
             };
 

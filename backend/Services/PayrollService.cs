@@ -71,7 +71,10 @@ public class PayrollService : IPayrollService
 
     public async Task<int> CalculatePayrollAsync(CalculatePayrollDto dto)
     {
-        var formula = await _context.PayrollFormulas.FindAsync(dto.FormulaId);
+        var formula = dto.FormulaId == Guid.Empty
+            ? await _context.PayrollFormulas.FirstOrDefaultAsync(f => f.IsActive)
+            : await _context.PayrollFormulas.FindAsync(dto.FormulaId);
+
         if (formula == null) throw new Exception("Formula not found");
 
         var staffs = await _context.Staffs.Include(s => s.User).ToListAsync();
