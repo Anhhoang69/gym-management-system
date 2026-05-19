@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace backend.Services;
 
@@ -9,15 +10,18 @@ public class IntentService
     {
         ["membership"] = new[]
         {
-            "buoi", "session", "goi tap", "hop dong", "contract",
+            "buoi", "session", "hop dong", "contract",
             "con lai", "remaining", "het han", "expire", "gia han",
-            "membership", "the tap", "the thanh vien"
+            "membership", "the tap", "the thanh vien",
+            "cua toi", "cua minh", "da dang ky", "da dang ki", 
+            "dang dung", "dang dung", "dang tap", "da mua"
         },
         ["package"] = new[]
         {
-            "goi", "package", "bang gia", "price", "pricing",
-            "nang cap", "upgrade", "dang ky", "register",
-            "goi tap"
+            "goi tap hien co", "cac goi tap", "goi tap tai gym", 
+            "bang gia", "price", "pricing", "nang cap goi", 
+            "upgrade goi", "mua goi", "dang ky goi", "goi basic", 
+            "goi premium", "goi elite", "goi trial"
         },
         ["schedule"] = new[]
         {
@@ -72,6 +76,7 @@ public class IntentService
             return false;
 
         var normalized = RemoveDiacritics(message.ToLower().Trim());
+
         var planKeywords = new[]
         {
             // Lập lịch / kế hoạch tập
@@ -83,10 +88,26 @@ public class IntentService
             "thuc don", "menu an uong",
             // Gợi ý / tư vấn toàn diện
             "goi y lich", "tu van lich", "tu van ke hoach",
-            "xay dung chuong trinh", "chuong trinh tap"
+            "xay dung chuong trinh", "chuong trinh tap",
+            // Mục tiêu cụ thể → thường cần plan
+            "giam can", "tang co", "tang can", "giam mo",
+            "muon giam", "muon tang", "can giam", "can tang",
+            "giam beo", "dot mo", "can thep"
         };
 
-        return planKeywords.Any(k => normalized.Contains(k));
+        if (planKeywords.Any(k => normalized.Contains(k)))
+            return true;
+
+        // Regex: bắt "X kg" kèm động từ mục tiêu hoặc thời gian
+        // Ví dụ: "giảm 5kg trong 2 tháng", "tăng 3kg sau 1 tuần"
+        if (Regex.IsMatch(normalized, @"\d+\s*kg"))
+        {
+            var goalVerbs = new[] { "giam", "tang", "dat", "thang", "tuan" };
+            if (goalVerbs.Any(v => normalized.Contains(v)))
+                return true;
+        }
+
+        return false;
     }
 
     private static string RemoveDiacritics(string text)
