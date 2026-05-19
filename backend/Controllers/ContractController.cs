@@ -90,7 +90,7 @@ public class ContractController : ControllerBase
 
     [HttpGet]
     [SwaggerOperation(Summary = "Lấy danh sách hợp đồng", Description = "Lọc theo branchId, memberId, status, dateRange")]
-    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<PagedResult<ContractDto>>> GetContracts([FromQuery] ContractQueryDto query)
     {
         var result = await _service.GetContractsAsync(query, GetStaffId());
@@ -99,7 +99,7 @@ public class ContractController : ControllerBase
 
     [HttpPut("{id}")]
     [SwaggerOperation(Summary = "Cập nhật hợp đồng", Description = "Chỉ cho phép sửa StartDate khi hợp đồng Pending. Notes có thể sửa bất kỳ lúc nào.")]
-    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<ContractDto>> UpdateContract(Guid id, [FromBody] UpdateContractDto dto)
     {
         var result = await _service.UpdateContractAsync(id, dto, GetStaffId());
@@ -108,7 +108,7 @@ public class ContractController : ControllerBase
 
     [HttpPatch("{id}/cancel")]
     [SwaggerOperation(Summary = "Hủy hợp đồng", Description = "Chuyển trạng thái sang Cancelled, vô hiệu hóa thẻ, ghi AuditLog.")]
-    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<bool>> CancelContract(Guid id)
     {
         var result = await _service.CancelContractAsync(id, GetStaffId());
@@ -118,7 +118,7 @@ public class ContractController : ControllerBase
 
     [HttpGet("drafts")]
     [SwaggerOperation(Summary = "Lấy danh sách bản nháp", Description = "Actors: Sales, Receptionist, BranchAdmin, SuperAdmin.")]
-    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<PagedResult<ContractDraftPreviewDto>>> GetDrafts([FromQuery] ContractDraftQueryDto query)
     {
         var result = await _service.GetDraftsAsync(query, GetStaffId());
@@ -127,7 +127,7 @@ public class ContractController : ControllerBase
 
     [HttpPut("drafts/{id}")]
     [SwaggerOperation(Summary = "Cập nhật bản nháp", Description = "Chỉ cho sửa ngày bắt đầu và ghi chú.")]
-    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<ContractDraftPreviewDto>> UpdateDraft(Guid id, [FromBody] UpdateContractDraftDto dto)
     {
         var result = await _service.UpdateDraftAsync(id, dto, GetStaffId());
@@ -136,7 +136,7 @@ public class ContractController : ControllerBase
 
     [HttpDelete("drafts/{id}")]
     [SwaggerOperation(Summary = "Xóa bản nháp", Description = "Chỉ xóa khi bản nháp chưa được sử dụng.")]
-    [Authorize(Roles = AuthorizationRoles.AdminRoles + "," + AuthorizationRoles.StaffRoles)]
+    [Authorize(Roles = AuthorizationRoles.AdminRoles)]
     public async Task<ApiResponse<bool>> DeleteDraft(Guid id)
     {
         var result = await _service.DeleteDraftAsync(id, GetStaffId());
