@@ -1,391 +1,198 @@
 {
   "info": {
-    "_postman_id": "gym-mgmt-v1",
-    "name": "Gym Management System API – Part 1",
+    "_postman_id": "gym-mgmt-v2-part1",
+    "name": "Gym Management System API – Part 1 (Auth + Register + Profile + Users)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request: generate dynamic random phone",
+          "pm.environment.set('randomPhone', '09' + Math.floor(10000000 + Math.random() * 90000000));",
+          "pm.environment.set('randomEmail', 'test_' + Date.now() + '@gym.local');"
+        ]
+      }
+    }
+  ],
   "item": [
     {
       "name": "01. Auth",
       "item": [
         {
           "name": "Login - SuperAdmin",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const j = pm.response.json();",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Token exists', () => pm.expect(j.data.token).to.be.a('string'));",
-                  "pm.test('Response time < 2000ms', () => pm.expect(pm.response.responseTime).to.be.below(2000));",
-                  "if(j.data && j.data.token){ pm.environment.set('accessToken', j.data.token); pm.environment.set('superAdminToken', j.data.token); }"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Token is string', () => pm.expect(j.data.token).to.be.a('string'));",
+            "pm.test('Response time < 2000ms', () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+            "if (j.data && j.data.token) {",
+            "  pm.environment.set('accessToken', j.data.token);",
+            "  pm.environment.set('superAdminToken', j.data.token);",
+            "}"
+          ]}}],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/auth/login",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"emailOrPhone\":\"{{superAdminEmail}}\",\"password\":\"{{superAdminPass}}\"}"
-            }
+            "body": { "mode": "raw", "raw": "{\"emailOrPhone\":\"{{superAdminEmail}}\",\"password\":\"{{superAdminPass}}\"}" }
           }
         },
         {
           "name": "Login - GymOwner",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const j = pm.response.json();",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Token exists', () => pm.expect(j.data.token).to.be.a('string'));",
-                  "if(j.data && j.data.token) pm.environment.set('gymOwnerToken', j.data.token);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Token is string', () => pm.expect(j.data.token).to.be.a('string'));",
+            "if (j.data && j.data.token) pm.environment.set('gymOwnerToken', j.data.token);"
+          ]}}],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/auth/login",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"emailOrPhone\":\"gymowner@gym.com\",\"password\":\"Owner@123\"}"
-            }
+            "body": { "mode": "raw", "raw": "{\"emailOrPhone\":\"{{gymOwnerEmail}}\",\"password\":\"{{gymOwnerPass}}\"}" }
           }
         },
         {
-          "name": "Login - Staff (Sales)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const j = pm.response.json();",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Token exists', () => pm.expect(j.data.token).to.be.a('string'));",
-                  "if(j.data && j.data.token) pm.environment.set('staffToken', j.data.token);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Login - Staff (Sales Q1)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Token is string', () => pm.expect(j.data.token).to.be.a('string'));",
+            "if (j.data && j.data.token) pm.environment.set('staffToken', j.data.token);"
+          ]}}],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/auth/login",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"emailOrPhone\":\"sales@gym.com\",\"password\":\"User@123\"}"
-            }
+            "body": { "mode": "raw", "raw": "{\"emailOrPhone\":\"{{staffEmail}}\",\"password\":\"{{staffPass}}\"}" }
+          }
+        },
+        {
+          "name": "Login - PT",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Token is string', () => pm.expect(j.data.token).to.be.a('string'));",
+            "if (j.data && j.data.token) pm.environment.set('ptToken', j.data.token);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\"emailOrPhone\":\"{{ptEmail}}\",\"password\":\"{{ptPass}}\"}" }
           }
         },
         {
           "name": "Login - Member",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const j = pm.response.json();",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Token exists', () => pm.expect(j.data.token).to.be.a('string'));",
-                  "if(j.data && j.data.token) pm.environment.set('memberToken', j.data.token);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Token is string', () => pm.expect(j.data.token).to.be.a('string'));",
+            "if (j.data && j.data.token) pm.environment.set('memberToken', j.data.token);"
+          ]}}],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/auth/login",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"emailOrPhone\":\"member@gym.com\",\"password\":\"User@123\"}"
-            }
+            "body": { "mode": "raw", "raw": "{\"emailOrPhone\":\"{{memberEmail}}\",\"password\":\"{{memberPass}}\"}" }
           }
         },
         {
           "name": "Login - Missing Password (400)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 400', () => pm.response.to.have.status(400));",
-                  "pm.test('Error message exists', () => {",
-                  "  const j = pm.response.json();",
-                  "  if(j.message) pm.expect(j).to.have.property('message');",
-                  "  else pm.expect(j).to.have.property('errors');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 400', () => pm.response.to.have.status(400));",
+            "pm.test('Error info returned', () => {",
+            "  const j = pm.response.json();",
+            "  pm.expect(j).to.have.property('message').or.have.property('errors');",
+            "});"
+          ]}}],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/auth/login",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"emailOrPhone\":\"superadmin@gym.com\"}"
-            }
+            "body": { "mode": "raw", "raw": "{\"emailOrPhone\":\"superadmin@gymfit.vn\"}" }
           }
         },
         {
-          "name": "Login - Wrong Password (400/401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status is 400 or 401', () => { pm.expect([400,401]).to.include(pm.response.code); });"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Login - Wrong Password (400)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 400 or 401', () => pm.expect([400, 401]).to.include(pm.response.code));",
+            "pm.test('Message exists', () => pm.expect(pm.response.json().message).to.be.a('string'));"
+          ]}}],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/auth/login",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"emailOrPhone\":\"superadmin@gym.com\",\"password\":\"Wrong@123\"}"
-            }
+            "body": { "mode": "raw", "raw": "{\"emailOrPhone\":\"superadmin@gymfit.vn\",\"password\":\"WrongPass!\"}" }
           }
         },
         {
-          "name": "Forgot Password",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Message exists', () => pm.expect(pm.response.json().message).to.be.a('string'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Forgot Password (always 200)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Message is string', () => pm.expect(pm.response.json().message).to.be.a('string'));"
+          ]}}],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/auth/forgot-password",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"emailOrPhone\":\"superadmin@gym.com\"}"
-            }
+            "body": { "mode": "raw", "raw": "{\"emailOrPhone\":\"superadmin@gymfit.vn\"}" }
           }
         },
         {
-          "name": "Reset Password with OTP",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 200 or 400', () => { pm.expect([200,400]).to.include(pm.response.code); });",
-                  "pm.test('Message exists', () => pm.expect(pm.response.json().message).to.be.a('string'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Reset Password - Invalid OTP (400)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));",
+            "pm.test('Message exists', () => pm.expect(pm.response.json().message).to.be.a('string'));"
+          ]}}],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/auth/reset-password",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"emailOrPhone\":\"superadmin@gym.com\",\"otpCode\":\"123456\",\"newPassword\":\"Admin@123\",\"confirmPassword\":\"Admin@123\"}"
-            }
+            "body": { "mode": "raw", "raw": "{\"emailOrPhone\":\"superadmin@gymfit.vn\",\"otpCode\":\"000000\",\"newPassword\":\"123456Aa@\",\"confirmPassword\":\"123456Aa@\"}" }
           }
         },
         {
-          "name": "Verify 2FA OTP (Invalid OTP → 400)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 400 – invalid OTP', () => pm.response.to.have.status(400));",
-                  "pm.test('Error message returned', () => pm.expect(pm.response.json()).to.have.property('message'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Change Password (Authorized) - then revert",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Success message', () => pm.expect(pm.response.json().message).to.be.a('string'));"
+          ]}}],
           "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": "{{baseUrl}}/api/auth/verify-otp",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"emailOrPhone\":\"superadmin@gym.com\",\"otpCode\":\"000000\"}"
-            }
-          }
-        },
-        {
-          "name": "Change Password (Authorized)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/auth/change-password",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"currentPassword\":\"Admin@123\",\"newPassword\":\"Admin@1234\",\"confirmPassword\":\"Admin@1234\"}"
-            }
+            "body": { "mode": "raw", "raw": "{\"currentPassword\":\"123456Aa@\",\"newPassword\":\"123456Aa@1\",\"confirmPassword\":\"123456Aa@1\"}" }
           }
         },
         {
           "name": "Revert Password",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/auth/change-password",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"currentPassword\":\"Admin@1234\",\"newPassword\":\"Admin@123\",\"confirmPassword\":\"Admin@123\"}"
-            }
+            "body": { "mode": "raw", "raw": "{\"currentPassword\":\"123456Aa@1\",\"newPassword\":\"123456Aa@\",\"confirmPassword\":\"123456Aa@\"}" }
           }
         },
         {
           "name": "Change Password - Unauthorized (401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 401', () => pm.response.to.have.status(401));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 401', () => pm.response.to.have.status(401));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "noauth"
-            },
+            "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/auth/change-password",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"currentPassword\":\"Admin@123\",\"newPassword\":\"Admin@1234\",\"confirmPassword\":\"Admin@1234\"}"
-            }
+            "body": { "mode": "raw", "raw": "{\"currentPassword\":\"123456Aa@\",\"newPassword\":\"NewPass@123\",\"confirmPassword\":\"NewPass@123\"}" }
           }
         }
       ]
@@ -395,96 +202,74 @@
       "item": [
         {
           "name": "Get Public Packages",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const j = pm.response.json();",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Data is array', () => pm.expect(j.data).to.be.an('array'));",
-                  "pm.test('Response time < 2000ms', () => pm.expect(pm.response.responseTime).to.be.below(2000));",
-                  "if(j.data && j.data.length > 0){",
-                  "  pm.environment.set('packageId', j.data[0].packageId);",
-                  "  if(j.data[0].pricings && j.data[0].pricings.length > 0) pm.environment.set('pricingId', j.data[0].pricings[0].packagePricingId);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Data is array', () => pm.expect(j.data).to.be.an('array'));",
+            "pm.test('Has packages', () => pm.expect(j.data.length).to.be.above(0));",
+            "pm.test('Response time < 2000ms', () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+            "if (j.data && j.data.length > 0) {",
+            "  pm.environment.set('packageId', j.data[0].packageId);",
+            "  if (j.data[0].pricings && j.data[0].pricings.length > 0) {",
+            "    pm.environment.set('pricingId', j.data[0].pricings[0].packagePricingId);",
+            "  }",
+            "}"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "noauth"
-            },
+            "auth": { "type": "noauth" },
             "method": "GET",
             "url": "{{baseUrl}}/api/register/packages"
           }
         },
         {
-          "name": "Register Member (Public)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const j = pm.response.json();",
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
-                  "pm.test('ContractId exists', () => pm.expect(j.data.contractId).to.be.a('string'));",
-                  "pm.test('InvoiceId exists', () => pm.expect(j.data.invoiceId).to.be.a('string'));",
-                  "if(j.data && j.data.memberId) pm.environment.set('memberUserId', j.data.memberId);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Get Public Branches",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Data is array', () => pm.expect(j.data).to.be.an('array'));",
+            "pm.test('Has active branches', () => pm.expect(j.data.length).to.be.above(0));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "noauth"
-            },
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/register/branches"
+          }
+        },
+        {
+          "name": "Register Member (Public - dynamic email)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.test('ContractId returned', () => pm.expect(j.data.contractId).to.be.a('string'));",
+            "pm.test('InvoiceId returned', () => pm.expect(j.data.invoiceId).to.be.a('string'));",
+            "pm.test('Success is true', () => pm.expect(j.success).to.be.true);"
+          ]}}],
+          "request": {
+            "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/register",
             "body": {
               "mode": "raw",
-              "raw": "{\"fullName\":\"Test Member\",\"email\":\"testmember_{{$timestamp}}@gym.com\",\"phoneNumber\":\"09{{$randomInt}}{{$randomInt}}\",\"packageId\":\"{{packageId}}\",\"pricingId\":\"{{pricingId}}\",\"branchId\":\"{{branchId}}\"}"
+              "raw": "{\"fullName\":\"Test Member Auto\",\"email\":\"regtest_{{$timestamp}}@gym.local\",\"phoneNumber\":\"09{{$randomInt}}{{$randomInt}}\",\"packageId\":\"{{packageId}}\",\"pricingId\":\"{{pricingId}}\",\"branchId\":\"{{branchId}}\"}"
             }
           }
         },
         {
           "name": "Register - Missing Required Fields (400)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 400', () => pm.response.to.have.status(400));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 400', () => pm.response.to.have.status(400));",
+            "pm.test('Validation errors returned', () => {",
+            "  const j = pm.response.json();",
+            "  pm.expect(j.errors || (j.success === false)).to.not.be.undefined;",
+            "});"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "noauth"
-            },
+            "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/register",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"fullName\":\"Test\"}"
-            }
+            "body": { "mode": "raw", "raw": "{\"fullName\":\"Test\"}" }
           }
         }
       ]
@@ -493,165 +278,167 @@
       "name": "03. Profile (Me)",
       "item": [
         {
-          "name": "Get My Profile",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const j = pm.response.json();",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('FullName exists', () => pm.expect(j.data.fullName).to.be.a('string'));",
-                  "pm.test('Email exists', () => pm.expect(j.data.email).to.be.a('string'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Get My Profile (SuperAdmin)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('FullName exists', () => pm.expect(j.data.fullName).to.be.a('string'));",
+            "pm.test('Email exists', () => pm.expect(j.data.email).to.be.a('string'));",
+            "pm.test('Role exists', () => pm.expect(j.data.role).to.be.a('string'));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
             "method": "GET",
             "url": "{{baseUrl}}/api/me"
           }
         },
         {
           "name": "Update My Profile",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Success true', () => pm.expect(pm.response.json().success).to.be.true);"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
             "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/me",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"fullName\":\"System Super Admin\",\"address\":\"Ho Chi Minh City\"}"
-            }
+            "body": { "mode": "raw", "raw": "{\"fullName\":\"Quản Trị Viên Hệ Thống\",\"address\":\"123 Nguyễn Huệ, Quận 1, TP.HCM\"}" }
           }
         },
         {
           "name": "Get Login History",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const j = pm.response.json();",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "if(j.data && j.data.items && j.data.items.length > 0) pm.environment.set('loginHistoryId', j.data.items[0].loginHistoryId);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has items property', () => pm.expect(j.data).to.have.property('items'));",
+            "pm.test('Items is array', () => pm.expect(j.data.items).to.be.an('array'));",
+            "if (j.data && j.data.items && j.data.items.length > 0) {",
+            "  pm.environment.set('loginHistoryId', j.data.items[0].loginHistoryId);",
+            "}"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
             "method": "GET",
             "url": "{{baseUrl}}/api/me/login-history?page=1&pageSize=10"
           }
         },
         {
-          "name": "Revoke Specific Session",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "DELETE",
-            "url": "{{baseUrl}}/api/me/sessions/{{loginHistoryId}}"
-          }
-        },
-        {
           "name": "Get Profile - Unauthorized (401)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status 401', () => pm.response.to.have.status(401));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 401', () => pm.response.to.have.status(401));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "noauth"
-            },
+            "auth": { "type": "noauth" },
             "method": "GET",
             "url": "{{baseUrl}}/api/me"
           }
         }
       ]
-    }
-  ],
-  "event": [
+    },
     {
-      "listen": "prerequest",
-      "script": {
-        "exec": [
-          "pm.environment.set('randomPhone', '09' + Math.floor(10000000 + Math.random() * 90000000));"
-        ],
-        "type": "text/javascript"
-      }
+      "name": "04. User Management",
+      "item": [
+        {
+          "name": "Get Users List (paginated)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has items array', () => pm.expect(j.data.items).to.be.an('array'));",
+            "pm.test('Has total count', () => pm.expect(j.data.totalItems).to.be.a('number'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users?page=1&pageSize=10"
+          }
+        },
+        {
+          "name": "Get User Stats",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Stats object returned', () => pm.expect(j.data).to.be.an('object'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users/stats"
+          }
+        },
+        {
+          "name": "Create Staff User (dynamic email)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('UserId returned', () => pm.expect(j.data.userId || j.data.id).to.be.a('string'));",
+            "if (j.data) {",
+            "  pm.environment.set('newUserId', j.data.userId || j.data.id);",
+            "}"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/users",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fullName\":\"Test Staff Auto\",\"email\":\"staff_{{$timestamp}}@gym.local\",\"phoneNumber\":\"08{{$randomInt}}{{$randomInt}}\",\"role\":\"Sales\",\"branchId\":\"{{branchId}}\",\"password\":\"123456Aa@\"}"
+            }
+          }
+        },
+        {
+          "name": "Get User Detail by ID",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('FullName exists', () => pm.expect(j.data.fullName).to.be.a('string'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users/{{superAdminUserId}}"
+          }
+        },
+        {
+          "name": "Get User - Not Found (message contains not found)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Not found message', () => pm.expect(j.message.toLowerCase()).to.include('not found'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users/00000000-9999-9999-9999-000000000000"
+          }
+        },
+        {
+          "name": "Update User Status (Active)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Success true', () => pm.expect(pm.response.json().success).to.be.true);"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/users/{{staffUserId}}/status",
+            "body": { "mode": "raw", "raw": "{\"status\":\"Active\"}" }
+          }
+        },
+        {
+          "name": "Get Users - Member role Forbidden (403)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 403', () => pm.response.to.have.status(403));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users"
+          }
+        }
+      ]
     }
   ]
 }

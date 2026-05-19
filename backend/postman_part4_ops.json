@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "gym-part4",
-    "name": "GMS Part4 - Attendance/Class/Payroll/Notif/Reports/AI",
+    "name": "Gym Management System API – Part 4 (Attendance + Class + Payroll + Notifications + AI)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -10,230 +10,98 @@
       "item": [
         {
           "name": "Login - GymOwner (for Setup)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "const j = pm.response.json();",
-                  "if(j.data && j.data.token) pm.environment.set('gymOwnerToken', j.data.token);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
+            "const j = pm.response.json();",
+            "if(j.data && j.data.token) pm.environment.set('gymOwnerToken', j.data.token);"
+          ]}}],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"emailOrPhone\": \"gymowner@gym.com\",\n  \"password\": \"Owner@123\"\n}"
-            },
-            "url": "{{baseUrl}}/api/auth/login"
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\"emailOrPhone\":\"{{gymOwnerEmail}}\",\"password\":\"{{gymOwnerPass}}\"}" }
           }
         },
         {
           "name": "Login - Registered Member (for Setup)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "const j = pm.response.json();",
-                  "if(j.data && j.data.token) pm.environment.set('memberToken', j.data.token);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
+            "const j = pm.response.json();",
+            "if(j.data && j.data.token) pm.environment.set('memberToken', j.data.token);"
+          ]}}],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"emailOrPhone\": \"{{memberEmail}}\",\n  \"password\": \"User@123\"\n}"
-            },
-            "url": "{{baseUrl}}/api/auth/login"
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\"emailOrPhone\":\"{{memberEmail}}\",\"password\":\"{{memberPass}}\"}" }
+          }
+        },
+        {
+          "name": "Get Receptionist / Staff Token",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "if(j.data && j.data.token) pm.environment.set('receptionistToken', j.data.token);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\"emailOrPhone\":\"{{staffEmail}}\",\"password\":\"{{staffPass}}\"}" }
           }
         },
         {
           "name": "Sync Member ID by Email",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const j = pm.response.json();",
-                  "if(j.data && j.data.items && j.data.items.length > 0) {",
-                  "  const user = j.data.items.find(i => i.email === pm.environment.get('memberEmail'));",
-                  "  if(user) {",
-                  "    pm.environment.set('memberUserId', user.userId);",
-                  "    console.log('Synced memberUserId:', user.userId);",
-                  "  } else {",
-                  "    console.log('User not found in search results for:', pm.environment.get('memberEmail'));",
-                  "  }",
-                  "} else {",
-                  "  console.log('No users returned in search for sync');",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "if(j.data && j.data.items && j.data.items.length > 0) {",
+            "  const user = j.data.items.find(i => i.email === pm.environment.get('memberEmail'));",
+            "  if(user) {",
+            "    pm.environment.set('memberUserId', user.userId);",
+            "  }",
+            "}"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
             "method": "GET",
             "url": "{{baseUrl}}/api/users?search={{memberEmail}}"
           }
         },
         {
           "name": "Get PT Staff",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "const j = pm.response.json();",
-                  "if(j.data && j.data.items && j.data.items.length > 0) {",
-                  "  pm.environment.set('ptStaffUserId', j.data.items[0].userId);",
-                  "} else {",
-                  "  console.log('No PT found, using staffUserId as fallback');",
-                  "  pm.environment.set('ptStaffUserId', pm.environment.get('staffUserId'));",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "if(j.data && j.data.items && j.data.items.length > 0) {",
+            "  pm.environment.set('ptStaffUserId', j.data.items[0].userId);",
+            "}"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
             "method": "GET",
             "url": "{{baseUrl}}/api/users?page=1&pageSize=50&role=PT"
           }
         },
         {
           "name": "Get Rooms",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "const j = pm.response.json();",
-                  "if(j.data && j.data.length > 0) {",
-                  "  const bigRoom = j.data.find(r => r.capacity >= 5) || j.data[0];",
-                  "  pm.environment.set('roomId', bigRoom.roomId);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "if(j.data && j.data.length > 0) pm.environment.set('roomId', j.data[0].roomId);"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{staffToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
             "method": "GET",
             "url": "{{baseUrl}}/api/rooms"
           }
         },
         {
-          "name": "Get Payroll Formula",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "const j = pm.response.json();",
-                  "if(j.data && j.data.length > 0) pm.environment.set('payrollFormulaId', j.data[0].formulaId);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/api/payroll/formula"
-          }
-        },
-        {
           "name": "Ensure Member Has Card",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const j = pm.response.json();",
-                  "if(j.data && j.data.memberInfo && j.data.memberInfo.accessCard) {",
-                  "  pm.environment.set('cardCode', j.data.memberInfo.accessCard.cardCode);",
-                  "} else if (j.message && j.message.includes('not found')) {",
-                  "  console.log('Member not found, environment might be stale. Try running Part 3 again.');",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "if(j.data && j.data.memberInfo && j.data.memberInfo.accessCard) {",
+            "  pm.environment.set('cardCode', j.data.memberInfo.accessCard.cardCode);",
+            "}"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{receptionistToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{receptionistToken}}", "type": "string" }] },
             "method": "GET",
             "url": "{{baseUrl}}/api/users/{{memberUserId}}"
           }
@@ -245,181 +113,63 @@
       "item": [
         {
           "name": "Check-in by Card",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));",
-                  "const j = pm.response.json();",
-                  "if(j.data && j.data.checkedInAt) pm.test('CheckedInAt exists', () => pm.expect(j.data.checkedInAt).to.be.a('string'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{staffToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{receptionistToken}}", "type": "string" }] },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/attendance/checkin",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"cardNumber\": \"{{cardCode}}\",\n  \"branchId\": \"{{branchId}}\"\n}"
-            }
+            "body": { "mode": "raw", "raw": "{\"cardNumber\":\"{{cardCode}}\",\"branchId\":\"{{branchId}}\"}" }
           }
         },
         {
           "name": "Manual Check-in",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{staffToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{receptionistToken}}", "type": "string" }] },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/attendance/checkin/manual",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"memberUserId\":\"{{memberUserId}}\",\"branchId\":\"{{branchId}}\",\"note\":\"Quên thẻ\"}"
-            }
+            "body": { "mode": "raw", "raw": "{\"memberUserId\":\"{{memberUserId}}\",\"branchId\":\"{{branchId}}\",\"note\":\"Quên thẻ\"}" }
           }
         },
         {
           "name": "Get My Attendance (Member)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Array returned', () => pm.expect(pm.response.json().data).to.be.an('array'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{memberToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
             "method": "GET",
             "url": "{{baseUrl}}/api/attendance/my"
           }
         },
         {
           "name": "Get Branch Attendance",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Array returned', () => pm.expect(pm.response.json().data).to.be.an('array'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{staffToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{receptionistToken}}", "type": "string" }] },
             "method": "GET",
             "url": "{{baseUrl}}/api/attendance/branch/{{branchId}}"
           }
         },
         {
           "name": "Check-out Attendance",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{staffToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{receptionistToken}}", "type": "string" }] },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/attendance/checkout",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"cardNumber\": \"{{cardCode}}\",\n  \"branchId\": \"{{branchId}}\"\n}"
-            }
+            "body": { "mode": "raw", "raw": "{\"cardNumber\":\"{{cardCode}}\",\"branchId\":\"{{branchId}}\"}" }
           }
         }
       ]
@@ -429,242 +179,81 @@
       "item": [
         {
           "name": "Get Class Schedule",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "const j = pm.response.json();",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Array returned', () => pm.expect(j.data).to.be.an('array'));",
-                  "if(j.data && j.data.length > 0) pm.environment.set('classId', j.data[0].classId);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "if(j.data && j.data.length > 0) pm.environment.set('classId', j.data[0].classId);"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
             "method": "GET",
             "url": "{{baseUrl}}/api/classes?branchId={{branchId}}"
           }
         },
         {
           "name": "Create Class (Admin)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "const j = pm.response.json();",
-                  "pm.test('Status 200 or 400', () => pm.expect(pm.response.code).to.be.oneOf([200, 400]));",
-                  "if(j.data) pm.environment.set('classId', j.data);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));",
+            "if(j.data) pm.environment.set('classId', j.data);"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/classes",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Yoga Morning {{$timestamp}}\",\n  \"description\": \"Fresh start for the day\",\n  \"date\": \"2027-12-30\",\n  \"startTime\": \"10:00:00\",\n  \"endTime\": \"11:00:00\",\n  \"classType\": \"Yoga\",\n  \"capacity\": 2,\n  \"minCapacity\": 1,\n  \"trainerStaffId\": \"{{ptStaffUserId}}\",\n  \"roomId\": \"{{roomId}}\"\n}"
+              "raw": "{\"title\":\"Yoga Morning {{$timestamp}}\",\"description\":\"Fresh start\",\"date\":\"2026-12-30\",\"startTime\":\"10:00:00\",\"endTime\":\"11:00:00\",\"classType\":\"Yoga\",\"capacity\":2,\"minCapacity\":1,\"trainerStaffId\":\"{{ptStaffUserId}}\",\"roomId\":\"{{roomId}}\"}"
             }
           }
         },
         {
           "name": "Book Class (Member)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{memberToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
             "method": "POST",
             "url": "{{baseUrl}}/api/classes/{{classId}}/book"
           }
         },
         {
           "name": "Get My Bookings (Member)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Array returned', () => pm.expect(pm.response.json().data).to.be.an('array'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{memberToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
             "method": "GET",
             "url": "{{baseUrl}}/api/classes/my-bookings"
           }
         },
         {
           "name": "Class Check-in (Staff)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{staffToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{receptionistToken}}", "type": "string" }] },
             "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/classes/{{classId}}/class-checkin",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"memberUserId\":\"{{memberUserId}}\"}"
-            }
+            "body": { "mode": "raw", "raw": "{\"memberUserId\":\"{{memberUserId}}\"}" }
           }
         },
         {
           "name": "Cancel Booking (Member)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200 or 400', () => pm.expect(pm.response.code).to.be.oneOf([200, 400]));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{memberToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
             "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/classes/{{classId}}/cancel-booking",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"cancelReason\":\"Bận việc đột xuất\"}"
-            }
-          }
-        },
-        {
-          "name": "Get Class Detail by ID",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('ClassId exists', () => pm.expect(pm.response.json().data.classId).to.be.a('string'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/api/classes/{{classId}}"
+            "body": { "mode": "raw", "raw": "{\"cancelReason\":\"Bận việc đột xuất\"}" }
           }
         }
       ]
@@ -674,920 +263,144 @@
       "item": [
         {
           "name": "Get Payroll Formulas",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Array returned', () => pm.expect(pm.response.json().data).to.be.an('array'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
             "method": "GET",
             "url": "{{baseUrl}}/api/payroll/formula"
           }
         },
         {
-          "name": "Create Payroll Formula",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "const j = pm.response.json();",
-                  "if (pm.response.code >= 400) { console.log('Error Body:', JSON.stringify(j)); }",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "if(j.data) pm.environment.set('payrollFormulaId', j.data);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": "{{baseUrl}}/api/payroll/formula",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"name\":\"Standard 2026\",\"baseSalary\":5000000,\"commissionRate\":0.05,\"sessionRate\":200000}"
-            }
-          }
-        },
-        {
           "name": "Calculate Payroll",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Count >= 0', () => pm.expect(pm.response.json().data).to.be.a('number'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/payroll/calculate",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"month\": 5,\n  \"year\": 2026,\n  \"branchId\": \"{{branchId}}\",\n  \"formulaId\": \"{{payrollFormulaId}}\"\n}"
-            }
+            "body": { "mode": "raw", "raw": "{\"month\":5,\"year\":2026,\"branchId\":\"{{branchId}}\"}" }
           }
         },
         {
           "name": "Approve Payroll Period (GymOwner)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{gymOwnerToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{gymOwnerToken}}", "type": "string" }] },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": "{{baseUrl}}/api/payroll/approve-period",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"month\":5,\"year\":2026}"
-            }
+            "body": { "mode": "raw", "raw": "{\"month\":5,\"year\":2026}" }
           }
         },
         {
           "name": "Get My Payroll (Staff)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Array returned', () => pm.expect(pm.response.json().data).to.be.an('array'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{staffToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
             "method": "GET",
             "url": "{{baseUrl}}/api/payroll/my?month=5&year=2026"
-          }
-        },
-        {
-          "name": "Get All Branch Payrolls (Admin)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Array returned', () => pm.expect(pm.response.json().data).to.be.an('array'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{gymOwnerToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/api/payroll/report?month=5&year=2026&branchId={{branchId}}"
-          }
-        },
-        {
-          "name": "Set Active Payroll Formula",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": "{{baseUrl}}/api/payroll/formula/{{payrollFormulaId}}/active",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"baseSalary\":5500000,\"commissionRate\":0.06,\"sessionRate\":220000}"
-            }
           }
         }
       ]
     },
     {
-      "name": "17. Notification",
+      "name": "17. Notification & AI",
       "item": [
         {
-          "name": "Get My Notifications",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "const j = pm.response.json();",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Paged result', () => pm.expect(j.data).to.have.property('items'));",
-                  "if(j.data.items && j.data.items.length > 0) pm.environment.set('notificationId', j.data.items[0].id);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Send Notification",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/notifications/send",
+            "body": { "mode": "raw", "raw": "{\"title\":\"Test Notification\",\"message\":\"Hello from Postman!\",\"userIds\":[\"{{memberUserId}}\"],\"type\":\"Info\"}" }
+          }
+        },
+        {
+          "name": "Get My Notifications",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
             "method": "GET",
             "url": "{{baseUrl}}/api/notifications?page=1&pageSize=10"
           }
         },
         {
-          "name": "Get Unread Count",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Count is number', () => pm.expect(pm.response.json().data).to.be.a('number'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/api/notifications/unread-count"
-          }
-        },
-        {
           "name": "Mark All Read",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
             "method": "PATCH",
             "url": "{{baseUrl}}/api/notifications/read-all"
           }
         },
         {
-          "name": "Send Notification (SuperAdmin/GymOwner)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "AI Chat",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": "{{baseUrl}}/api/notifications/send",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"title\":\"Thông báo kiểm thử\",\"message\":\"Đây là tin nhắn kiểm thử\",\"userIds\":[\"{{memberUserId}}\"],\"type\":\"Info\"}"
-            }
-          }
-        },
-        {
-          "name": "Broadcast Notification to All Members",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": "{{baseUrl}}/api/notifications/broadcast",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"title\":\"Thông báo toàn chi nhánh\",\"message\":\"Hệ thống sẽ bảo trì lúc 23:00 tối nay\",\"type\":\"Info\"}"
-            }
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/ai/chat",
+            "body": { "mode": "raw", "raw": "{\"message\":\"Chào bạn, mình mới tập gym!\"}" }
           }
         }
       ]
     },
     {
-      "name": "18. Branch Requests",
-      "item": [
-        {
-          "name": "Get My Requests",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "const j = pm.response.json();",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Array returned', () => pm.expect(j.data).to.be.an('array'));",
-                  "if(j.data && j.data.length > 0) pm.environment.set('requestId', j.data[0].requestId);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/api/requests/my"
-          }
-        },
-        {
-          "name": "Get All Requests (GymOwner)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Array returned', () => pm.expect(pm.response.json().data).to.be.an('array'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{gymOwnerToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/api/requests"
-          }
-        },
-        {
-          "name": "Approve Request (GymOwner)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{gymOwnerToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "url": "{{baseUrl}}/api/requests/{{requestId}}/approve"
-          }
-        },
-        {
-          "name": "Approve Request - Forbidden (Staff, 403)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 403', () => pm.response.to.have.status(403));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{staffToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "url": "{{baseUrl}}/api/requests/{{requestId}}/approve"
-          }
-        },
-        {
-          "name": "Reject Request (GymOwner)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{gymOwnerToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": "{{baseUrl}}/api/requests/{{requestId}}/reject",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"message\": \"Rejected by automation\"\n}"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "19. Reports",
+      "name": "18. Reports & Audits",
       "item": [
         {
           "name": "KPI Overview",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Data not null', () => pm.expect(pm.response.json().data).to.not.be.null);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
             "method": "GET",
             "url": "{{baseUrl}}/api/reports/overview"
           }
         },
         {
           "name": "Revenue Report",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
             "method": "GET",
             "url": "{{baseUrl}}/api/reports/revenue?year=2026"
           }
         },
         {
-          "name": "Sales Funnel Report",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/api/reports/sales-funnel?year=2026"
-          }
-        },
-        {
-          "name": "Revenue Report - Forbidden (Member, 403)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 403', () => pm.response.to.have.status(403));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{memberToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/api/reports/revenue"
-          }
-        },
-        {
-          "name": "PT Performance Report",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Data not null', () => pm.expect(pm.response.json().data).to.not.be.null);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/api/reports/pt-performance?year=2026"
-          }
-        },
-        {
-          "name": "Check-in Statistics Report",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/api/reports/check-in?branchId={{branchId}}&year=2026"
-          }
-        }
-      ]
-    },
-    {
-      "name": "20. Audit Log & Commission & AI",
-      "item": [
-        {
           "name": "Get Audit Logs",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Paged result', () => pm.expect(pm.response.json().data).to.have.property('items'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{superAdminToken}}",
-                  "type": "string"
-                }
-              ]
-            },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
             "method": "GET",
-            "url": "{{baseUrl}}/api/audit-logs?page=1&pageSize=20"
-          }
-        },
-        {
-          "name": "Get My Commissions",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Paged result', () => pm.expect(pm.response.json().data).to.have.property('items'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{staffToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/api/commissions/my?month=5&year=2026"
-          }
-        },
-        {
-          "name": "AI Chat",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Response exists', () => pm.expect(pm.response.json().data).to.not.be.null);"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{memberToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": "{{baseUrl}}/api/ai/chat",
-            "body": {
-              "mode": "raw",
-              "raw": "{\"message\":\"Tôi muốn tăng cơ bắp, bạn gợi ý gì?\"}"
-            }
-          }
-        },
-        {
-          "name": "Get AI Chat History",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "if(pm.response.code >= 400) console.log(pm.info.itemName + ' Error:', pm.response.text());",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Array returned', () => pm.expect(pm.response.json().data).to.be.an('array'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{memberToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/api/ai/history?limit=20"
+            "url": "{{baseUrl}}/api/audit-logs?page=1&pageSize=10"
           }
         }
       ]
-    }
-  ],
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "exec": [
-          "pm.environment.set('randomPhone', '09' + Math.floor(10000000 + Math.random() * 90000000));"
-        ],
-        "type": "text/javascript"
-      }
     }
   ]
 }

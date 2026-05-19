@@ -365,12 +365,13 @@ public class ContractService : IContractService
         if (hasPermission)
             return;
 
-        var isSuperAdmin = await _context.UserRoles
+        var isAdmin = await _context.UserRoles
             .AsNoTracking()
             .AnyAsync(ur => ur.UserId == staffUserId &&
-                           _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == "SuperAdmin"));
+                           _context.Roles.Any(r => r.Id == ur.RoleId && 
+                               (r.Name == "SuperAdmin" || r.Name == "GymOwner")));
 
-        if (!isSuperAdmin)
+        if (!isAdmin)
             throw new Exception("You do not have permission to manage contracts (requires Sales, Receptionist, BranchAdmin or SuperAdmin)");
     }
 
