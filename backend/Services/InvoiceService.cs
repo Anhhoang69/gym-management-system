@@ -36,6 +36,7 @@ public class InvoiceService : IInvoiceService
         var suffix = Convert.ToHexString(RandomNumberGenerator.GetBytes(3));
         string invoiceCode = $"INV-{DateTime.UtcNow:yyyyMMdd}-{suffix}";
 
+        var isStaffExist = await _context.Staffs.AnyAsync(s => s.UserId == staffId);
         var invoice = new Invoice
         {
             InvoiceId = Guid.NewGuid(),
@@ -47,7 +48,7 @@ public class InvoiceService : IInvoiceService
             TaxAmount = dto.TaxAmount,
             TotalAmount = contract.DealPrice + dto.TaxAmount,
             Status = InvoiceStatus.Pending,
-            CreatedByStaffId = staffId,
+            CreatedByStaffId = isStaffExist ? staffId : null,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -110,6 +111,17 @@ public class InvoiceService : IInvoiceService
         if (dto.Amount < invoice.TotalAmount)
             throw new Exception($"Payment amount must be at least {invoice.TotalAmount} (Partial payments not supported)");
 
+        var isStaffExist = await _context.Staffs.AnyAsync(s => s.UserId == staffId);
+        var resolvedStaffId = staffId;
+        if (!isStaffExist)
+        {
+            var firstStaff = await _context.Staffs.FirstOrDefaultAsync();
+            if (firstStaff != null)
+            {
+                resolvedStaffId = firstStaff.UserId;
+            }
+        }
+
         var payment = new Payment
         {
             PaymentId = Guid.NewGuid(),
@@ -118,8 +130,8 @@ public class InvoiceService : IInvoiceService
             RefNo = dto.RefNo,
             Amount = dto.Amount,
             Status = PaymentStatus.Completed,
-            ProcessedBy = staffId,
-            ProcessedByStaffId = staffId,
+            ProcessedBy = resolvedStaffId,
+            ProcessedByStaffId = resolvedStaffId,
             CreatedAt = DateTime.UtcNow
         };
 

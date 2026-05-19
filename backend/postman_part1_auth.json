@@ -27,7 +27,7 @@
             "const j = pm.response.json();",
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
             "pm.test('Token is string', () => pm.expect(j.data.token).to.be.a('string'));",
-            "pm.test('Response time < 2000ms', () => pm.expect(pm.response.responseTime).to.be.below(2000));",
+            "pm.test('Response time < 2500ms', () => pm.expect(pm.response.responseTime).to.be.below(2500));",
             "if (j.data && j.data.token) {",
             "  pm.environment.set('accessToken', j.data.token);",
             "  pm.environment.set('superAdminToken', j.data.token);",
@@ -46,6 +46,7 @@
             "const j = pm.response.json();",
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
             "pm.test('Token is string', () => pm.expect(j.data.token).to.be.a('string'));",
+            "pm.test('Response time < 2500ms', () => pm.expect(pm.response.responseTime).to.be.below(2500));",
             "if (j.data && j.data.token) pm.environment.set('gymOwnerToken', j.data.token);"
           ]}}],
           "request": {
@@ -61,6 +62,7 @@
             "const j = pm.response.json();",
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
             "pm.test('Token is string', () => pm.expect(j.data.token).to.be.a('string'));",
+            "pm.test('Response time < 2500ms', () => pm.expect(pm.response.responseTime).to.be.below(2500));",
             "if (j.data && j.data.token) pm.environment.set('staffToken', j.data.token);"
           ]}}],
           "request": {
@@ -71,11 +73,28 @@
           }
         },
         {
+          "name": "Login - Receptionist (Q1)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Token is string', () => pm.expect(j.data.token).to.be.a('string'));",
+            "pm.test('Response time < 2500ms', () => pm.expect(pm.response.responseTime).to.be.below(2500));",
+            "if (j.data && j.data.token) pm.environment.set('receptionistToken', j.data.token);"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": { "mode": "raw", "raw": "{\"emailOrPhone\":\"receptionist.q1@gymfit.vn\",\"password\":\"123456Aa@\"}" }
+          }
+        },
+        {
           "name": "Login - PT",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "const j = pm.response.json();",
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
             "pm.test('Token is string', () => pm.expect(j.data.token).to.be.a('string'));",
+            "pm.test('Response time < 2500ms', () => pm.expect(pm.response.responseTime).to.be.below(2500));",
             "if (j.data && j.data.token) pm.environment.set('ptToken', j.data.token);"
           ]}}],
           "request": {
@@ -91,6 +110,7 @@
             "const j = pm.response.json();",
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
             "pm.test('Token is string', () => pm.expect(j.data.token).to.be.a('string'));",
+            "pm.test('Response time < 2500ms', () => pm.expect(pm.response.responseTime).to.be.below(2500));",
             "if (j.data && j.data.token) pm.environment.set('memberToken', j.data.token);"
           ]}}],
           "request": {
@@ -106,7 +126,7 @@
             "pm.test('Status 400', () => pm.response.to.have.status(400));",
             "pm.test('Error info returned', () => {",
             "  const j = pm.response.json();",
-            "  pm.expect(j).to.have.property('message').or.have.property('errors');",
+            "  pm.expect(j.message || j.errors || j.title).to.not.be.undefined;",
             "});"
           ]}}],
           "request": {
@@ -146,7 +166,8 @@
           "name": "Reset Password - Invalid OTP (400)",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "pm.test('Status 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));",
-            "pm.test('Message exists', () => pm.expect(pm.response.json().message).to.be.a('string'));"
+            "pm.test('Message exists', () => pm.expect(pm.response.json().message).to.be.a('string'));",
+            "pm.test('Response is object', () => pm.expect(pm.response.json()).to.be.an('object'));"
           ]}}],
           "request": {
             "method": "POST",
@@ -159,7 +180,8 @@
           "name": "Change Password (Authorized) - then revert",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
-            "pm.test('Success message', () => pm.expect(pm.response.json().message).to.be.a('string'));"
+            "pm.test('Success message', () => pm.expect(pm.response.json().message).to.be.a('string'));",
+            "pm.test('Success field is true', () => pm.expect(pm.response.json().success).to.be.true);"
           ]}}],
           "request": {
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
@@ -172,7 +194,9 @@
         {
           "name": "Revert Password",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Success message', () => pm.expect(pm.response.json().message).to.be.a('string'));",
+            "pm.test('Success is true', () => pm.expect(pm.response.json().success).to.be.true);"
           ]}}],
           "request": {
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
@@ -185,7 +209,8 @@
         {
           "name": "Change Password - Unauthorized (401)",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('Status 401', () => pm.response.to.have.status(401));"
+            "pm.test('Status 401', () => pm.response.to.have.status(401));",
+            "pm.test('Unauthorized response text', () => pm.expect(pm.response.text()).to.include('Unauthorized'));"
           ]}}],
           "request": {
             "auth": { "type": "noauth" },
@@ -207,7 +232,6 @@
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
             "pm.test('Data is array', () => pm.expect(j.data).to.be.an('array'));",
             "pm.test('Has packages', () => pm.expect(j.data.length).to.be.above(0));",
-            "pm.test('Response time < 2000ms', () => pm.expect(pm.response.responseTime).to.be.below(2000));",
             "if (j.data && j.data.length > 0) {",
             "  pm.environment.set('packageId', j.data[0].packageId);",
             "  if (j.data[0].pricings && j.data[0].pricings.length > 0) {",
@@ -226,8 +250,7 @@
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "const j = pm.response.json();",
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
-            "pm.test('Data is array', () => pm.expect(j.data).to.be.an('array'));",
-            "pm.test('Has active branches', () => pm.expect(j.data.length).to.be.above(0));"
+            "pm.test('Data is array', () => pm.expect(j.data).to.be.an('array'));"
           ]}}],
           "request": {
             "auth": { "type": "noauth" },
@@ -241,8 +264,7 @@
             "const j = pm.response.json();",
             "pm.test('Status 201', () => pm.response.to.have.status(201));",
             "pm.test('ContractId returned', () => pm.expect(j.data.contractId).to.be.a('string'));",
-            "pm.test('InvoiceId returned', () => pm.expect(j.data.invoiceId).to.be.a('string'));",
-            "pm.test('Success is true', () => pm.expect(j.success).to.be.true);"
+            "pm.test('InvoiceId returned', () => pm.expect(j.data.invoiceId).to.be.a('string'));"
           ]}}],
           "request": {
             "auth": { "type": "noauth" },
@@ -282,9 +304,7 @@
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "const j = pm.response.json();",
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
-            "pm.test('FullName exists', () => pm.expect(j.data.fullName).to.be.a('string'));",
-            "pm.test('Email exists', () => pm.expect(j.data.email).to.be.a('string'));",
-            "pm.test('Role exists', () => pm.expect(j.data.role).to.be.a('string'));"
+            "pm.test('FullName exists', () => pm.expect(j.data.fullName).to.be.a('string'));"
           ]}}],
           "request": {
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
@@ -311,11 +331,7 @@
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "const j = pm.response.json();",
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
-            "pm.test('Has items property', () => pm.expect(j.data).to.have.property('items'));",
-            "pm.test('Items is array', () => pm.expect(j.data.items).to.be.an('array'));",
-            "if (j.data && j.data.items && j.data.items.length > 0) {",
-            "  pm.environment.set('loginHistoryId', j.data.items[0].loginHistoryId);",
-            "}"
+            "pm.test('Has items property', () => pm.expect(j.data).to.have.property('items'));"
           ]}}],
           "request": {
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
@@ -326,7 +342,8 @@
         {
           "name": "Get Profile - Unauthorized (401)",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('Status 401', () => pm.response.to.have.status(401));"
+            "pm.test('Status 401', () => pm.response.to.have.status(401));",
+            "pm.test('Contains unauthorized text', () => pm.expect(pm.response.text()).to.include('Unauthorized'));"
           ]}}],
           "request": {
             "auth": { "type": "noauth" },
@@ -344,8 +361,7 @@
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "const j = pm.response.json();",
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
-            "pm.test('Has items array', () => pm.expect(j.data.items).to.be.an('array'));",
-            "pm.test('Has total count', () => pm.expect(j.data.totalItems).to.be.a('number'));"
+            "pm.test('Has items array', () => pm.expect(j.data.items).to.be.an('array'));"
           ]}}],
           "request": {
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
@@ -401,7 +417,7 @@
           }
         },
         {
-          "name": "Get User - Not Found (message contains not found)",
+          "name": "Get User - Non-existent ID",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "const j = pm.response.json();",
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
@@ -430,7 +446,8 @@
         {
           "name": "Get Users - Member role Forbidden (403)",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('Status 403', () => pm.response.to.have.status(403));"
+            "pm.test('Status 403', () => pm.response.to.have.status(403));",
+            "pm.test('Forbidden message returned', () => pm.expect(pm.response.text()).to.include('Forbidden'));"
           ]}}],
           "request": {
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },

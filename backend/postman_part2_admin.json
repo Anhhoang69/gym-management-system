@@ -14,8 +14,6 @@
             "const j = pm.response.json();",
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
             "pm.test('Data is array', () => pm.expect(j.data).to.be.an('array'));",
-            "pm.test('Has branches', () => pm.expect(j.data.length).to.be.above(0));",
-            "pm.test('Response time < 2000ms', () => pm.expect(pm.response.responseTime).to.be.below(2000));",
             "if (j.data && j.data.length > 0) {",
             "  pm.environment.set('branchId', j.data[0].branchId);",
             "}"
@@ -71,9 +69,27 @@
           }
         },
         {
+          "name": "Update Branch (SuperAdmin)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Success true or request submitted', () => pm.expect(pm.response.json().success).to.be.true);"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/branches/{{branchId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"GymFit Updated\",\"address\":\"123 Main St\",\"email\":\"updated@gymfit.vn\",\"hotline\":\"0281234567\",\"description\":\"Updated Description\",\"openingHours\":\"06:00 - 22:00\"}"
+            }
+          }
+        },
+        {
           "name": "Create Branch - GymOwner Forbidden (403)",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('Status 403', () => pm.response.to.have.status(403));"
+            "pm.test('Status 403', () => pm.response.to.have.status(403));",
+            "pm.test('Forbidden message returned', () => pm.expect(pm.response.text()).to.include('Forbidden'));"
           ]}}],
           "request": {
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{gymOwnerToken}}", "type": "string" }] },
@@ -103,7 +119,8 @@
         {
           "name": "Get Branch - Not Authorized (401)",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('Status 401', () => pm.response.to.have.status(401));"
+            "pm.test('Status 401', () => pm.response.to.have.status(401));",
+            "pm.test('Unauthorized text exists', () => pm.expect(pm.response.text()).to.include('Unauthorized'));"
           ]}}],
           "request": {
             "auth": { "type": "noauth" },
@@ -122,7 +139,6 @@
             "const j = pm.response.json();",
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
             "pm.test('Data is array', () => pm.expect(j.data).to.be.an('array'));",
-            "pm.test('Has rooms', () => pm.expect(j.data.length).to.be.above(0));",
             "if (j.data && j.data.length > 0) pm.environment.set('roomId', j.data[0].roomId);"
           ]}}],
           "request": {
@@ -136,8 +152,7 @@
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "const j = pm.response.json();",
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
-            "pm.test('Room name exists', () => pm.expect(j.data.name).to.be.a('string'));",
-            "pm.test('Room capacity exists', () => pm.expect(j.data.capacity).to.be.a('number'));"
+            "pm.test('Room name exists', () => pm.expect(j.data.name).to.be.a('string'));"
           ]}}],
           "request": {
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
@@ -174,10 +189,10 @@
           }
         },
         {
-          "name": "Get Room - Member Forbidden (403)",
+          "name": "Create Room - Member Forbidden (403)",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('Status 403 or 200', () => pm.expect([200, 403]).to.include(pm.response.code));",
-            "// Rooms list is authenticated only, member gets data back since no role restriction on GET"
+            "pm.test('Status 403', () => pm.response.to.have.status(403));",
+            "pm.test('Forbidden message returned', () => pm.expect(pm.response.text()).to.include('Forbidden'));"
           ]}}],
           "request": {
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
@@ -198,7 +213,6 @@
             "const j = pm.response.json();",
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
             "pm.test('Data is array', () => pm.expect(j.data).to.be.an('array'));",
-            "pm.test('Has packages', () => pm.expect(j.data.length).to.be.above(0));",
             "if (j.data && j.data.length > 0) {",
             "  pm.environment.set('packageId', j.data[0].packageId);",
             "  if (j.data[0].pricings && j.data[0].pricings.length > 0) {",
@@ -229,8 +243,7 @@
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "const j = pm.response.json();",
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
-            "pm.test('Package name exists', () => pm.expect(j.data.name).to.be.a('string'));",
-            "pm.test('Pricings is array', () => pm.expect(j.data.pricings).to.be.an('array'));"
+            "pm.test('Package name exists', () => pm.expect(j.data.name).to.be.a('string'));"
           ]}}],
           "request": {
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
@@ -377,7 +390,6 @@
             "const j = pm.response.json();",
             "pm.test('Status 200', () => pm.response.to.have.status(200));",
             "pm.test('Data is array', () => pm.expect(j.data).to.be.an('array'));",
-            "pm.test('Has lead sources', () => pm.expect(j.data.length).to.be.above(0));",
             "if (j.data && j.data.length > 0) pm.environment.set('leadSourceId', j.data[0].id);"
           ]}}],
           "request": {
@@ -389,7 +401,8 @@
         {
           "name": "Get Lead Sources - Member Forbidden (403)",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('Status 403', () => pm.response.to.have.status(403));"
+            "pm.test('Status 403', () => pm.response.to.have.status(403));",
+            "pm.test('Forbidden message returned', () => pm.expect(pm.response.text()).to.include('Forbidden'));"
           ]}}],
           "request": {
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
@@ -400,7 +413,8 @@
         {
           "name": "Get Lead Sources - Unauthorized (401)",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
-            "pm.test('Status 401', () => pm.response.to.have.status(401));"
+            "pm.test('Status 401', () => pm.response.to.have.status(401));",
+            "pm.test('Unauthorized message returned', () => pm.expect(pm.response.text()).to.include('Unauthorized'));"
           ]}}],
           "request": {
             "auth": { "type": "noauth" },

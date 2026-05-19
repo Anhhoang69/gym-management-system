@@ -116,7 +116,7 @@ public class MemberService : IMemberService
         });
 
         // ── 5. Tạo Contract(Pending) ──────────────────────────────────────────
-        var startDate = dto.StartDate;
+        var startDate = DateTime.SpecifyKind(dto.StartDate, DateTimeKind.Utc);
         var endDate = startDate.AddMonths(pricing.DurationMonths);
 
         var contract = new Contract

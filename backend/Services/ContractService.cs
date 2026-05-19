@@ -77,14 +77,15 @@ public class ContractService : IContractService
         if (discountAmount > originalPrice) discountAmount = originalPrice;
         decimal dealPrice = originalPrice - discountAmount;
 
+        var isStaffExist = await _context.Staffs.AnyAsync(s => s.UserId == staffId);
         var draft = new ContractDraft
         {
             DraftId = Guid.NewGuid(),
-            CreatedByStaffId = staffId,
+            CreatedByStaffId = isStaffExist ? staffId : null,
             MemberUserId = dto.MemberUserId,
             PackageId = dto.PackageId,
             PricingId = dto.PricingId,
-            StartDate = dto.StartDate,
+            StartDate = DateTime.SpecifyKind(dto.StartDate, DateTimeKind.Utc),
             OriginalPrice = originalPrice,
             DiscountAmount = discountAmount,
             DealPrice = dealPrice,
@@ -162,12 +163,13 @@ public class ContractService : IContractService
         var memberUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == draft.MemberUserId)
             ?? throw new Exception("Member not found");
 
+        var isStaffExist = await _context.Staffs.AnyAsync(s => s.UserId == staffId);
         var contract = new Contract
         {
             ContractId = Guid.NewGuid(),
             MemberUserId = draft.MemberUserId.Value,
             PackageId = draft.PackageId,
-            StaffId = staffId,
+            StaffId = isStaffExist ? staffId : null,
             OriginalPrice = draft.OriginalPrice,
             DiscountAmount = draft.DiscountAmount,
             DealPrice = draft.DealPrice,
@@ -440,7 +442,7 @@ public class ContractService : IContractService
             .FirstOrDefaultAsync(d => d.DraftId == draftId && !d.IsUsed)
             ?? throw new Exception("Draft not found or already used");
 
-        draft.StartDate = dto.StartDate;
+        draft.StartDate = DateTime.SpecifyKind(dto.StartDate, DateTimeKind.Utc);
         draft.Note = dto.Note;
         draft.ExpiresAt = DateTime.UtcNow.AddHours(24);
 
@@ -552,9 +554,9 @@ public class ContractService : IContractService
         if (contract.Status == ContractStatus.Pending)
         {
             var oldStartDate = contract.StartDate;
-            contract.StartDate = dto.StartDate;
+            contract.StartDate = DateTime.SpecifyKind(dto.StartDate, DateTimeKind.Utc);
             var duration = contract.EndDate - oldStartDate; 
-            contract.EndDate = dto.StartDate.Add(duration);
+            contract.EndDate = DateTime.SpecifyKind(dto.StartDate, DateTimeKind.Utc).Add(duration);
         }
 
         contract.Note = dto.Note;

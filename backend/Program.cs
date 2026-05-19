@@ -84,6 +84,23 @@ builder.Services
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
             ClockSkew = TimeSpan.Zero
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                context.HandleResponse();
+                context.Response.StatusCode = 401;
+                context.Response.ContentType = "text/plain";
+                await context.Response.WriteAsync("Unauthorized");
+            },
+            OnForbidden = async context =>
+            {
+                context.Response.StatusCode = 403;
+                context.Response.ContentType = "text/plain";
+                await context.Response.WriteAsync("Forbidden");
+            }
+        };
     });
 
 builder.Services.AddAuthorization();

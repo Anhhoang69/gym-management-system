@@ -271,7 +271,7 @@ public class ClassService : IClassService
         if (activeContract == null)
             throw new Exception("No active membership found. Please renew your package.");
 
-        if (activeContract.UsedGroupSessions >= activeContract.TotalGroupSessions)
+        if (activeContract.TotalGroupSessions > 0 && activeContract.UsedGroupSessions >= activeContract.TotalGroupSessions)
             throw new Exception("Group session quota exceeded for your current package.");
 
         // Check for schedule conflict
@@ -303,7 +303,7 @@ public class ClassService : IClassService
             }
             else
             {
-                throw new Exception("You have already booked this class");
+                return true; // Idempotent
             }
         }
         else
