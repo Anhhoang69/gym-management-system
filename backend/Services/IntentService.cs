@@ -17,7 +17,7 @@ public class IntentService
         {
             "goi", "package", "bang gia", "price", "pricing",
             "nang cap", "upgrade", "dang ky", "register",
-            "goi tap", "plan"
+            "goi tap"
         },
         ["schedule"] = new[]
         {
@@ -37,8 +37,8 @@ public class IntentService
             "co bap", "muscle", "giam can", "lose weight",
             "tang co", "build muscle", "cardio", "strength",
             "fitness", "gym", "diet", "nutrition", "dinh duong",
-            "che do an", "protein", "calories", "plan",
-            "lich tap", "training"
+            "che do an", "protein", "calories", "training",
+            "lap lich", "ke hoach", "tu van", "goi y"
         }
     };
 
@@ -74,9 +74,16 @@ public class IntentService
         var normalized = RemoveDiacritics(message.ToLower().Trim());
         var planKeywords = new[]
         {
-            "lap lich", "tao plan", "workout plan", "ke hoach tap",
-            "lich tap", "plan tap", "che do an", "nutrition plan",
-            "full plan", "toan bo", "generate plan"
+            // Lập lịch / kế hoạch tập
+            "lap lich", "tao lich", "xay dung lich", "ke hoach tap",
+            "tao plan", "plan tap", "workout plan", "full plan",
+            "generate plan", "toan bo lich",
+            // Dinh dưỡng / chế độ ăn
+            "che do an", "nutrition plan", "ke hoach dinh duong",
+            "thuc don", "menu an uong",
+            // Gợi ý / tư vấn toàn diện
+            "goi y lich", "tu van lich", "tu van ke hoach",
+            "xay dung chuong trinh", "chuong trinh tap"
         };
 
         return planKeywords.Any(k => normalized.Contains(k));

@@ -70,15 +70,25 @@ public class AIService : IAIService
                 break;
 
             case "schedule":
-                responseMessage = await _gymDataService.GetScheduleInfoAsync(memberId);
-                break;
+                // Nếu là plan request → bỏ qua schedule, đưa thẳng qua OpenAI
+                if (!isPlanRequest)
+                {
+                    responseMessage = await _gymDataService.GetScheduleInfoAsync(memberId);
+                    break;
+                }
+                goto case "fitness";
+
+            case "package":
+                // Nếu là plan request → bỏ qua package info, đưa thẳng qua OpenAI
+                if (!isPlanRequest)
+                {
+                    responseMessage = await _gymDataService.GetPackageInfoAsync();
+                    break;
+                }
+                goto case "fitness";
 
             case "attendance":
                 responseMessage = await _gymDataService.GetAttendanceInfoAsync(memberId);
-                break;
-
-            case "package":
-                responseMessage = await _gymDataService.GetPackageInfoAsync();
                 break;
 
             case "fitness":
