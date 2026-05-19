@@ -7,6 +7,7 @@ import {
   CBadge
 } from "@coreui/react"
 import { useState, useEffect } from "react"
+import { updateCardStatus } from "../../services/cardService"
 
 function EditUserModal({ visible, setVisible, user, onUpdate }) {
 
@@ -40,6 +41,32 @@ function EditUserModal({ visible, setVisible, user, onUpdate }) {
   const handleSubmit = () => {
     onUpdate(form)
     setVisible(false)
+  }
+
+  const handleUpdateCardStatus = async (cardId, newStatus) => {
+    try {
+      const reason = window.prompt("Nhập lý do đổi trạng thái thẻ (tùy chọn):", "")
+      if (reason === null) return // User cancelled
+      
+      await updateCardStatus(cardId, newStatus, reason)
+      
+      // Update local state to reflect change immediately
+      setForm(prev => ({
+        ...prev,
+        memberInfo: {
+          ...prev.memberInfo,
+          accessCard: {
+            ...prev.memberInfo.accessCard,
+            status: newStatus
+          }
+        }
+      }))
+      
+      alert("Cập nhật trạng thái thẻ thành công!")
+    } catch (err) {
+      console.error(err)
+      alert("Cập nhật trạng thái thẻ thất bại: " + (err.response?.data?.message || err.message))
+    }
   }
 
   if (!user) return null
@@ -225,6 +252,39 @@ function EditUserModal({ visible, setVisible, user, onUpdate }) {
                   />
                 </CCol>
 
+              </CRow>
+            </>
+          )}
+
+          {/* ===== ACCESS CARD ===== */}
+          {form.isMember && (
+            <>
+              <h6 className="fw-bold mt-4 mb-2">Thông tin Thẻ Thành Viên</h6>
+              <CRow className="g-2">
+                {!form.memberInfo?.accessCard ? (
+                  <CCol md={12}>
+                    <div className="text-muted small">Hội viên chưa được cấp thẻ.</div>
+                  </CCol>
+                ) : (
+                  <>
+                    <CCol md={6}>
+                      <CFormInput label="Mã thẻ" value={form.memberInfo.accessCard.cardNumber || "—"} disabled />
+                    </CCol>
+                    <CCol md={6}>
+                      <CFormSelect 
+                        label="Trạng thái thẻ" 
+                        value={form.memberInfo.accessCard.status || ""}
+                        onChange={(e) => handleUpdateCardStatus(form.memberInfo.accessCard.accessCardId || form.memberInfo.accessCard.id, e.target.value)}
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="Lost">Lost</option>
+                        <option value="Disabled">Disabled</option>
+                        <option value="Expired">Expired</option>
+                      </CFormSelect>
+                    </CCol>
+                  </>
+                )}
               </CRow>
             </>
           )}

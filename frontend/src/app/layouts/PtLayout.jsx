@@ -1,4 +1,5 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, NavLink } from "react-router-dom";
+import PtHeader from "../../features/pt/components/common/PtHeader";
 
 function PtLayout() {
   return (
@@ -10,10 +11,7 @@ function PtLayout() {
         flexDirection: "column"
       }}
     >
-      {/* TODO: Add PtHeader */}
-      <header style={{ background: '#fff', padding: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-        <h2 style={{ margin: 0, color: '#333' }}>PT Portal (Head PT & Trainers)</h2>
-      </header>
+      <PtHeader />
 
       <div
         style={{
@@ -25,8 +23,26 @@ function PtLayout() {
         <aside style={{ width: '250px', background: '#34495e', color: '#fff', padding: '16px' }}>
           <nav>
             <ul style={{ listStyle: 'none', padding: 0 }}>
-              <li style={{ marginBottom: '12px' }}>Dashboard</li>
-              {/* Add more PT routes here */}
+              <li style={{ marginBottom: '12px' }}>
+                <NavLink to="/pt" end style={{ color: "#fff", textDecoration: "none", fontWeight: "bold" }}>
+                  Tổng Quan (Dashboard)
+                </NavLink>
+              </li>
+              <li style={{ marginBottom: '12px' }}>
+                <NavLink to="/pt/payroll" style={{ color: "#fff", textDecoration: "none", fontWeight: "bold" }}>
+                  Lương Cá Nhân (Payroll)
+                </NavLink>
+              </li>
+              <li style={{ marginBottom: '12px' }}>
+                <NavLink to="/pt/classes" style={{ color: "#fff", textDecoration: "none", fontWeight: "bold" }}>
+                  Lớp Học (Classes)
+                </NavLink>
+              </li>
+              <li style={{ marginBottom: '12px' }}>
+                <NavLink to="/pt/leads" style={{ color: "#fff", textDecoration: "none", fontWeight: "bold" }}>
+                  Quản lý Leads
+                </NavLink>
+              </li>
             </ul>
           </nav>
         </aside>

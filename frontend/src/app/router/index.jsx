@@ -12,7 +12,7 @@ import PtPage from '../../features/landing/pages/PtPage.jsx';
 import PackagePage from '../../features/landing/pages/PackagePage.jsx';
 import ContactPage from '../../features/landing/pages/ContactPage.jsx';
 import NotFoundPage from '../../shared/components/NotFoundPage.jsx';
-import FAQPage from '../../features/landing/pages/FaqPage.jsx';
+import FAQPage from '../../features/landing/pages/FAQPage.jsx';
 import AIChatPage from '../../features/landing/pages/AIChatPage.jsx';
 import MemberProfilePage from '../../features/landing/pages/MemberProfilePage.jsx';
 import ClassSchedulePage from '../../features/landing/pages/ClassSchedulePage.jsx';
@@ -36,8 +36,20 @@ import ProfilePage from "../../features/super-admin/pages/ProfilePage.jsx"
 
 import StaffDashboardPage from '../../features/staff/pages/StaffDashboardPage.jsx';
 import StaffProfilePage from '../../features/staff/pages/StaffProfilePage.jsx';
+import StaffAttendancePage from '../../features/staff/pages/StaffAttendancePage.jsx';
+import StaffPaymentPage from '../../features/staff/pages/StaffPaymentPage.jsx';
 import PtDashboardPage from '../../features/pt/pages/PtDashboardPage.jsx';
 import PtProfilePage from '../../features/pt/pages/PtProfilePage.jsx';
+import PtClassManagementPage from '../../features/pt/pages/PtClassManagementPage.jsx';
+
+import OwnerLayout from '../layouts/OwnerLayout.jsx';
+import OwnerDashboardPage from '../../features/gym-owner/pages/OwnerDashboardPage.jsx';
+import OwnerFinancialReportsPage from '../../features/gym-owner/pages/OwnerFinancialReportsPage.jsx';
+import OwnerProfilePage from '../../features/gym-owner/pages/OwnerProfilePage.jsx';
+import OwnerRequestPage from '../../features/gym-owner/pages/OwnerRequestPage.jsx';
+import OwnerPayrollPage from '../../features/gym-owner/pages/OwnerPayrollPage.jsx';
+import AdminPayrollPage from '../../features/super-admin/pages/AdminPayrollPage.jsx';
+import PtPayrollPage from '../../features/pt/pages/PtPayrollPage.jsx';
 export default function AppRouter() {
   return (
     <Router>
@@ -66,12 +78,19 @@ export default function AppRouter() {
         <Route path="/staff" element={<StaffLayout />}>
           <Route index element={<StaffDashboardPage />} />
           <Route path="profile" element={<StaffProfilePage />} />
+          <Route path="attendance" element={<StaffAttendancePage />} />
+          <Route path="contracts" element={<ContractsPage />} />
+          <Route path="leads" element={<LeadManagementPage />} />
+          <Route path="payments" element={<StaffPaymentPage />} />
         </Route>
 
         {/* PT Dashboard */}
         <Route path="/pt" element={<PtLayout />}>
           <Route index element={<PtDashboardPage />} />
           <Route path="profile" element={<PtProfilePage />} />
+          <Route path="payroll" element={<PtPayrollPage />} />
+          <Route path="classes" element={<PtClassManagementPage />} />
+          <Route path="leads" element={<LeadManagementPage />} />
         </Route>
 
         {/* Admin Dashboard */}
@@ -89,6 +108,17 @@ export default function AppRouter() {
           <Route path="sales" element={<RevenueSalesPage />} />
           <Route path="contracts" element={<ContractsPage />} />
           <Route path="reports" element={<FinancialReportsPage />} />
+          <Route path="payroll" element={<AdminPayrollPage />} />
+        </Route>
+
+        {/* GymOwner Dashboard */}
+        <Route path="/owner" element={<OwnerLayout />}>
+          <Route index element={<OwnerDashboardPage />} />
+          <Route path="profile" element={<OwnerProfilePage />} />
+          <Route path="reports" element={<OwnerFinancialReportsPage />} />
+          <Route path="requests" element={<OwnerRequestPage />} />
+          <Route path="payroll" element={<OwnerPayrollPage />} />
+          <Route path="contracts" element={<ContractsPage />} />
         </Route>
 
         {/* Fallback */}

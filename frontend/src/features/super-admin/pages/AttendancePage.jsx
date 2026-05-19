@@ -1,10 +1,69 @@
+import { useState, useEffect } from "react"
 import AttendanceFilters from "../components/attendance/AttendanceFilters.jsx"
 import AttendanceTable from "../components/attendance/AttendanceTable.jsx"
+import { getBranches } from "../services/branchService"
+import { getBranchAttendance } from "../../../shared/services/attendanceService"
 
 function AttendancePage() {
+  const [branches, setBranches] = useState([])
+  const [selectedBranch, setSelectedBranch] = useState("")
+  
+  // Default to today
+  const today = new Date().toISOString().split('T')[0]
+  const [selectedDate, setSelectedDate] = useState(today)
+  const [searchName, setSearchName] = useState("")
+  
+  const [attendanceData, setAttendanceData] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  
+  const itemsPerPage = 10
+
+  useEffect(() => {
+    fetchBranches()
+  }, [])
+
+  useEffect(() => {
+    if (selectedBranch) {
+      fetchAttendance()
+    } else {
+      setAttendanceData([])
+    }
+  }, [selectedBranch, selectedDate])
+
+  const fetchBranches = async () => {
+    try {
+      const data = await getBranches()
+      setBranches(data || [])
+      if (data && data.length > 0) {
+        setSelectedBranch(data[0].branchId)
+      }
+    } catch (e) {
+      console.error("Failed to fetch branches", e)
+    }
+  }
+
+  const fetchAttendance = async () => {
+    setLoading(true)
+    try {
+      const data = await getBranchAttendance(selectedBranch, selectedDate)
+      setAttendanceData(data || [])
+      setCurrentPage(1)
+    } catch (e) {
+      console.error("Failed to fetch attendance", e)
+      setAttendanceData([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Filter local by name
+  const filteredData = attendanceData.filter(item => 
+    !searchName || (item.memberName || "").toLowerCase().includes(searchName.toLowerCase())
+  )
+
   return (
     <div>
-
       <div className="mb-4">
         <h3 className="fw-bold mb-1">Điểm Danh Hội Viên</h3>
         <p className="text-muted mb-0">
@@ -12,12 +71,25 @@ function AttendancePage() {
         </p>
       </div>
 
-      <AttendanceFilters />
+      <AttendanceFilters 
+        branches={branches}
+        selectedBranch={selectedBranch}
+        onBranchChange={setSelectedBranch}
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+        searchName={searchName}
+        onSearchChange={setSearchName}
+      />
 
       <div className="mt-4">
-        <AttendanceTable />
+        <AttendanceTable 
+          data={filteredData}
+          loading={loading}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          itemsPerPage={itemsPerPage}
+        />
       </div>
-
     </div>
   )
 }

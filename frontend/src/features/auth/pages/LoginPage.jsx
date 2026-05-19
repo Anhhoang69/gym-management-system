@@ -64,13 +64,22 @@ function LoginPage() {
       // 👉 SAVE TOKEN
       localStorage.setItem("token", data.token)
 
-      // 👉 NORMALIZE ROLE (QUAN TRỌNG)
-      const roles = (data.roles || []).map(r => r.toUpperCase())
+      // 👉 NORMALIZE ROLE & STAFF POSITION (QUAN TRỌNG)
+      const roles = (data.roles || []).map(r => {
+        let roleStr = r.toUpperCase()
+        if (roleStr.startsWith("ROLE_")) {
+          roleStr = roleStr.substring(5)
+        }
+        return roleStr
+      })
+
+      const staffPosition = data.staffPosition ? data.staffPosition.trim() : null
 
       const user = {
         userId: data.userId,
         email: data.email,
-        roles
+        roles,
+        staffPosition
       }
 
       localStorage.setItem("user", JSON.stringify(user))
@@ -78,21 +87,45 @@ function LoginPage() {
       // 👉 TRIGGER NAVBAR UPDATE
       window.dispatchEvent(new Event("loginSuccess"))
 
-      // 👉 ROUTE THEO ROLE
+      // 👉 ROUTE THEO ROLE & STAFF POSITION
       if (roles.includes("SUPERADMIN")) {
         navigate("/admin")
       }
       else if (roles.includes("GYMOWNER")) {
         navigate("/owner")
       }
-      else if (roles.includes("STAFF")) {
-        navigate("/staff")
-      }
       else if (roles.includes("MEMBER")) {
         navigate("/")
       }
       else {
-        navigate("/login")
+        // Có thể là STAFF hoặc PT
+        // Vì /api/auth/login đôi khi không trả về chuẩn xác staffPosition, ta gọi /api/me để chắc chắn
+        try {
+          const meRes = await api.get("/api/me")
+          const meData = meRes.data.data || {}
+
+          const meRole = meData.role ? meData.role.toUpperCase() : ""
+          const mePos = meData.staffPosition ? meData.staffPosition.toUpperCase() : ""
+          const loginPos = staffPosition ? staffPosition.toUpperCase() : ""
+
+          if (meRole === "PT" || meRole === "HEADPT" || mePos === "PT" || mePos === "HEADPT" || loginPos === "PT" || loginPos === "HEADPT" || roles.includes("PT") || roles.includes("HEADPT")) {
+            navigate("/pt")
+          } else if (roles.includes("STAFF") || meRole === "STAFF" || mePos === "RECEPTIONIST" || mePos === "SALES" || mePos === "BRANCHADMIN") {
+            navigate("/staff")
+          } else {
+            navigate("/login")
+          }
+        } catch (e) {
+          console.error("Failed to verify exact role, fallback to login data", e)
+          const loginPos = staffPosition ? staffPosition.toUpperCase() : ""
+          if (roles.includes("PT") || roles.includes("HEADPT") || loginPos === "PT" || loginPos === "HEADPT") {
+            navigate("/pt")
+          } else if (roles.includes("STAFF")) {
+            navigate("/staff")
+          } else {
+            navigate("/login")
+          }
+        }
       }
 
     } catch (err) {

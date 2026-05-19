@@ -96,6 +96,12 @@ function Sidebar() {
                     </NavLink>
                 </CNavItem>
 
+                <CNavItem>
+                    <NavLink to="/admin/payroll" className="nav-link">
+                        Quản Lý Lương
+                    </NavLink>
+                </CNavItem>
+
             </CSidebarNav>
 
         </CSidebar>

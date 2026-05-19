@@ -15,7 +15,7 @@ import CIcon from "@coreui/icons-react"
 
 import logo from "../../../../assets/LogoBlackText.svg"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 
 import { FaSun, FaMoon, FaUserPlus } from "react-icons/fa"
@@ -23,6 +23,10 @@ import { CButton } from "@coreui/react"
 
 import MembershipOnboardingModal from "./MembershipOnboardingModal"
 import UnifiedPaymentDrawer from "./UnifiedPaymentDrawer"
+import { getMyProfile } from "../../services/profileService"
+import NotificationDropdown from "../../../../shared/components/NotificationDropdown"
+import CreateNotificationModal from "./CreateNotificationModal"
+
 
 
 function AdminHeader() {
@@ -33,18 +37,59 @@ function AdminHeader() {
     document.documentElement.classList.contains("dark")
   )
 
+  const [userProfile, setUserProfile] = useState(null)
+
+  const fetchHeaderProfile = () => {
+    // Get basic info from localStorage first as fallback
+    const stored = localStorage.getItem("user")
+    let defaultRole = "Admin"
+    let defaultName = "Quản Trị Viên"
+    let defaultAvatar = ""
+    
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored)
+        if (parsed.email) defaultName = parsed.email.split("@")[0]
+        if (parsed.avatarUrl) defaultAvatar = parsed.avatarUrl
+      } catch (e) {}
+    }
+    
+    setUserProfile(prev => ({
+      fullName: prev?.fullName || defaultName,
+      role: prev?.role || defaultRole,
+      avatarUrl: prev?.avatarUrl || defaultAvatar
+    }))
+
+    getMyProfile().then(data => {
+      if (data) {
+        setUserProfile(prev => ({
+          ...prev,
+          fullName: data.fullName || prev.fullName,
+          role: data.role || prev.role,
+          avatarUrl: data.avatarUrl || data.avatar
+        }))
+      }
+    }).catch(e => console.error("Error fetching profile", e))
+  }
+
+  useEffect(() => {
+    fetchHeaderProfile()
+    window.addEventListener('userProfileUpdated', fetchHeaderProfile)
+    return () => {
+      window.removeEventListener('userProfileUpdated', fetchHeaderProfile)
+    }
+  }, [])
+
   const toggleTheme = () => {
-
     document.documentElement.classList.toggle("dark")
-
     setIsDark(!isDark)
-
   }
 
   // Modals state
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showPayment, setShowPayment] = useState(false)
   const [paymentData, setPaymentData] = useState({})
+  const [showCreateNotification, setShowCreateNotification] = useState(false)
 
 
   const handleLogout = () => {
@@ -104,15 +149,15 @@ function AdminHeader() {
 
           </div>
 
-          {/* QUICK REGISTER */}
+          {/* CREATE NOTIFICATION */}
           <CButton 
             color="primary" 
             className="d-flex align-items-center gap-2 fw-medium text-white shadow-sm"
             style={{ borderRadius: '8px' }}
-            onClick={() => setShowOnboarding(true)}
+            onClick={() => setShowCreateNotification(true)}
           >
-            <FaUserPlus />
-            <span className="d-none d-md-inline">Đăng Ký Nhanh</span>
+            <CIcon icon={cilBell} />
+            <span className="d-none d-md-inline">Notification</span>
           </CButton>
 
           {/* THEME TOGGLE */}
@@ -138,68 +183,39 @@ function AdminHeader() {
 
           </button>
 
-          {/* NOTIFICATIONS */}
-
-          <CDropdown alignment="end">
-
-            <CDropdownToggle caret={false}>
-
-              <CIcon icon={cilBell} size="lg" />
-
-            </CDropdownToggle>
-
-            <CDropdownMenu style={{ width: 300 }}>
-
-              <CDropdownItem>
-
-                Thành viên mới đăng ký
-                <br />
-                <small>2 phút trước</small>
-
-              </CDropdownItem>
-
-              <CDropdownItem>
-
-                Thanh toán đã nhận
-                <br />
-                <small>15 phút trước</small>
-
-              </CDropdownItem>
-
-              <CDropdownItem>
-
-                PT session đã đặt
-                <br />
-                <small>32 phút trước</small>
-
-              </CDropdownItem>
-
-            </CDropdownMenu>
-
-          </CDropdown>
+          {/* REUSABLE NOTIFICATION DROPDOWN */}
+          <NotificationDropdown />
 
           {/* AVATAR */}
 
-          <CDropdown alignment="end">
+          <CDropdown alignment="end" popper={false}>
 
             <CDropdownToggle caret={false}>
 
               <div className="d-flex align-items-center">
 
-                <CAvatar
-                  src="https://i.pravatar.cc/40"
-                  size="md"
+                <img
+                  src={userProfile?.avatarUrl || "https://i.pravatar.cc/40"}
+                  alt="Avatar"
                   className="me-2"
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    backgroundColor: "white",
+                    border: "1px solid #dee2e6"
+                  }}
                 />
 
                 <div style={{ textAlign: "left" }}>
 
                   <div style={{ fontWeight: 500 }}>
-                    Quản Trị Viên
+                    {userProfile?.fullName || "Quản Trị Viên"}
                   </div>
 
                   <small style={{ color: "#888" }}>
-                    Administrator
+                    {userProfile?.role || "Administrator"}
                   </small>
 
                 </div>
@@ -208,26 +224,42 @@ function AdminHeader() {
 
             </CDropdownToggle>
 
-            <CDropdownMenu className="p-1" style={{ minWidth: "100%", borderRadius: "8px", overflow: "hidden", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", marginTop: "8px" }}>
+            <CDropdownMenu
+              className="p-1 dropdown-menu-end"
+              style={{
+                position: "absolute",
+                top: "100%",
+                right: 0,
+                marginTop: "12px",
+                minWidth: "180px",
+                borderRadius: "0px", // sharp corners
+                overflow: "hidden",
+                boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                border: "1px solid var(--border, #dee2e6)",
+                borderTop: "0px",
+                backgroundColor: "var(--bg-secondary, #f5f5f5)",
+                zIndex: 1050
+              }}
+            >
               <div>
                 <CDropdownItem 
                   onClick={() => navigate("/admin/profile")}
-                  className="d-flex align-items-center rounded py-2"
-                  style={{ cursor: "pointer", transition: "all 0.2s" }}
+                  className="d-flex align-items-center py-2 px-3"
+                  style={{ cursor: "pointer", transition: "all 0.2s", borderRadius: "0" }}
                 >
                   <CIcon icon={cilUser} className="me-3 text-secondary" size="lg" />
-                  <span className="fw-medium">Hồ sơ cá nhân</span>
+                  <span className="fw-semibold text-xs" style={{ color: "var(--text-primary)" }}>Hồ sơ cá nhân</span>
                 </CDropdownItem>
                 
-                <div className="dropdown-divider my-1"></div>
+                <div className="my-1 border-t border-(--border)" style={{ borderColor: "var(--border, #dee2e6)" }}></div>
 
                 <CDropdownItem 
                   onClick={handleLogout}
-                  className="d-flex align-items-center rounded py-2 text-danger"
-                  style={{ cursor: "pointer", transition: "all 0.2s" }}
+                  className="d-flex align-items-center py-2 px-3 text-danger"
+                  style={{ cursor: "pointer", transition: "all 0.2s", borderRadius: "0" }}
                 >
                   <CIcon icon={cilAccountLogout} className="me-3" size="lg" />
-                  <span className="fw-medium">Đăng xuất</span>
+                  <span className="fw-semibold text-xs">Đăng xuất</span>
                 </CDropdownItem>
               </div>
             </CDropdownMenu>
@@ -257,6 +289,11 @@ function AdminHeader() {
         contractId={paymentData.contractId}
         totalAmountDue={paymentData.totalAmountDue}
         invoiceCode={paymentData.invoiceCode}
+      />
+
+      <CreateNotificationModal
+        visible={showCreateNotification}
+        setVisible={setShowCreateNotification}
       />
 
     </CHeader>
