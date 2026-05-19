@@ -120,9 +120,9 @@ public class UserService : IUserService
                 {
                     AccessCardId = Guid.NewGuid(),
                     MemberUserId = user.Id,
-                    CardCode     = RegistrationService.GenerateCardCode(user.Id),
-                    Status       = AccessCardStatus.Inactive,
-                    IssueDate    = DateTime.UtcNow
+                    CardCode = RegistrationService.GenerateCardCode(user.Id),
+                    Status = AccessCardStatus.Inactive,
+                    IssueDate = DateTime.UtcNow
                 });
             }
 
@@ -292,7 +292,7 @@ public class UserService : IUserService
         if (user.Member != null)
         {
             var totalContracts = await _context.Contracts.CountAsync(c => c.MemberUserId == user.Id);
-            
+
             dto.MemberInfo = new MemberDetailDto
             {
                 TotalContracts = totalContracts,
@@ -365,15 +365,15 @@ public class UserService : IUserService
                 }
                 else if (user.Staff == null && dto.Role == "SuperAdmin")
                 {
-                     await _userManager.RemoveFromRolesAsync(user, currentRole);
-                     await _userManager.AddToRoleAsync(user, "SuperAdmin");
-                     changedFields.Add("Role:SuperAdmin");
+                    await _userManager.RemoveFromRolesAsync(user, currentRole);
+                    await _userManager.AddToRoleAsync(user, "SuperAdmin");
+                    changedFields.Add("Role:SuperAdmin");
                 }
                 else if (user.Staff == null && dto.Role == "GymOwner")
                 {
-                     await _userManager.RemoveFromRolesAsync(user, currentRole);
-                     await _userManager.AddToRoleAsync(user, "GymOwner");
-                     changedFields.Add("Role:GymOwner");
+                    await _userManager.RemoveFromRolesAsync(user, currentRole);
+                    await _userManager.AddToRoleAsync(user, "GymOwner");
+                    changedFields.Add("Role:GymOwner");
                 }
             }
         }
@@ -449,17 +449,17 @@ public class UserService : IUserService
 
                     var newContract = new Contract
                     {
-                        ContractId           = Guid.NewGuid(),
-                        MemberUserId         = id,
-                        PackageId            = package.PackageId,
-                        StaffId              = adminId,
-                        DealPrice            = pricing.Price,
-                        Status               = ContractStatus.Pending,
-                        StartDate            = DateTime.UtcNow,
-                        EndDate              = DateTime.UtcNow.AddMonths(pricing.DurationMonths),
+                        ContractId = Guid.NewGuid(),
+                        MemberUserId = id,
+                        PackageId = package.PackageId,
+                        StaffId = adminId,
+                        DealPrice = pricing.Price,
+                        Status = ContractStatus.Pending,
+                        StartDate = DateTime.UtcNow,
+                        EndDate = DateTime.UtcNow.AddMonths(pricing.DurationMonths),
                         TotalPrivateSessions = package.PrivatePtLimit,
-                        TotalGroupSessions   = package.GroupPtLimit,
-                        CreatedAt            = DateTime.UtcNow
+                        TotalGroupSessions = package.GroupPtLimit,
+                        CreatedAt = DateTime.UtcNow
                     };
                     _context.Contracts.Add(newContract);
                     changedFields.Add($"NewContract:Pending,Package:{package.Name}");

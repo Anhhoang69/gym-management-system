@@ -4,10 +4,7 @@ using System.Text.Json;
 
 namespace backend.Services;
 
-/// <summary>
-/// Handles all communication with OpenAI API.
-/// Separated from AIService for clean architecture.
-/// </summary>
+
 public class OpenAIService
 {
     private readonly HttpClient _httpClient;
@@ -23,9 +20,6 @@ public class OpenAIService
         _logger = logger;
     }
 
-    /// <summary>
-    /// System prompt for the fitness assistant
-    /// </summary>
     private static string SystemPrompt => @"You are an AI fitness assistant integrated into a gym management system.
 
 Capabilities:
@@ -67,9 +61,6 @@ If the user asks for a full plan, return a structured JSON response:
 
 Otherwise, respond conversationally in plain text.";
 
-    /// <summary>
-    /// Call OpenAI Chat Completion API
-    /// </summary>
     public async Task<string> ChatAsync(string userMessage, string userContext, List<ChatMessage>? history = null, bool isPlanRequest = false)
     {
         var apiKey = _configuration["OpenAI:ApiKey"];
@@ -171,9 +162,6 @@ Otherwise, respond conversationally in plain text.";
         }
     }
 
-    /// <summary>
-    /// Simple message model for chat history
-    /// </summary>
     public class ChatMessage
     {
         public string Role { get; set; } = null!;

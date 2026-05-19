@@ -1068,11 +1068,9 @@ public class LeadService : ILeadService
     {
         int score = sourceScore;
 
-        // completeness
         if (!string.IsNullOrEmpty(phone)) score += 20;
         if (!string.IsNullOrEmpty(email)) score += 10;
 
-        // behavior (initial = 0)
         score += contactCount * 10;
 
         return score;

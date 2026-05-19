@@ -42,10 +42,6 @@ public class IntentService
         }
     };
 
-    /// <summary>
-    /// Detect intent from user message using keyword matching.
-    /// Returns: membership, package, schedule, attendance, fitness, general
-    /// </summary>
     public string Detect(string message)
     {
         if (string.IsNullOrWhiteSpace(message))
@@ -70,9 +66,6 @@ public class IntentService
         return scores.OrderByDescending(x => x.Value).First().Key;
     }
 
-    /// <summary>
-    /// Check if the message is requesting a full plan (workout/nutrition)
-    /// </summary>
     public bool IsPlanRequest(string message)
     {
         if (string.IsNullOrWhiteSpace(message))
@@ -89,9 +82,6 @@ public class IntentService
         return planKeywords.Any(k => normalized.Contains(k));
     }
 
-    /// <summary>
-    /// Remove Vietnamese diacritics for normalized keyword matching
-    /// </summary>
     private static string RemoveDiacritics(string text)
     {
         var normalized = text.Normalize(NormalizationForm.FormD);
