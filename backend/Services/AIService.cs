@@ -8,9 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace backend.Services;
 
-/// <summary>
-/// Core AI service – orchestrates IntentService + GymDataService + OpenAIService.
-/// </summary>
+
 public class AIService : IAIService
 {
     private readonly ApplicationDbContext _context;
@@ -35,12 +33,10 @@ public class AIService : IAIService
         _logger = logger;
     }
 
-    /// <summary>
-    /// Handle incoming chat message from a member
-    /// </summary>
+
     public async Task<ChatResponseDto> HandleChatAsync(Guid memberId, ChatRequestDto request)
     {
-        // Input validation
+
         if (string.IsNullOrWhiteSpace(request.Message))
         {
             return new ChatResponseDto
@@ -54,17 +50,14 @@ public class AIService : IAIService
 
         _logger.LogInformation("AI Chat | Member: {MemberId} | Message: {Message}", memberId, message);
 
-        // Save user message to history
+
         await SaveChatMessageAsync(memberId, "user", message);
 
-        // Detect intent
         var intent = _intentService.Detect(message);
         var isPlanRequest = _intentService.IsPlanRequest(message);
 
         _logger.LogInformation("AI Chat | Intent: {Intent} | IsPlanRequest: {IsPlan}", intent, isPlanRequest);
 
-        // Build (or serve from cache) user context BEFORE intent switch.
-        // This ensures AIContextCache is populated for every chat, regardless of intent.
         var userContext = await _gymDataService.GetCachedOrBuildContextAsync(memberId);
 
         string responseMessage;
@@ -90,12 +83,10 @@ public class AIService : IAIService
 
             case "fitness":
             default:
-                // Load recent chat history for context
                 var history = await GetRecentChatHistory(memberId);
 
                 responseMessage = await _openAIService.ChatAsync(message, userContext, history, isPlanRequest);
 
-                // If it's a plan request, try to save the recommendation
                 if (isPlanRequest)
                 {
                     await TrySaveRecommendationAsync(memberId, intent, responseMessage);
@@ -104,7 +95,6 @@ public class AIService : IAIService
                 break;
         }
 
-        // Save assistant response to history
         await SaveChatMessageAsync(memberId, "assistant", responseMessage);
 
         _logger.LogInformation("AI Chat | Response sent | Type: {Type} | Length: {Length}",
@@ -117,9 +107,7 @@ public class AIService : IAIService
         };
     }
 
-    /// <summary>
-    /// Get chat history for a member
-    /// </summary>
+
     public async Task<List<ChatResponseDto>> GetChatHistoryAsync(Guid memberId, int limit = 20)
     {
         var messages = await _context.Set<ChatHistory>()
@@ -137,9 +125,7 @@ public class AIService : IAIService
         return messages;
     }
 
-    /// <summary>
-    /// Get saved AI recommendations for a member
-    /// </summary>
+
     public async Task<List<AIPlanResultDto>> GetRecommendationsAsync(Guid memberId)
     {
         var recommendations = await _context.Set<AIRecommendation>()
@@ -148,7 +134,7 @@ public class AIService : IAIService
             .Take(10)
             .ToListAsync();
 
-        // Map to DTO, attempting to parse stored JSON strings into objects
+
         return recommendations.Select(r => new AIPlanResultDto
         {
             WorkoutPlan = TryParseJsonObject(r.WorkoutPlan),
@@ -160,11 +146,9 @@ public class AIService : IAIService
         }).ToList();
     }
 
-    // ================= PRIVATE HELPERS =================
 
-    /// <summary>
-    /// Save a chat message to history
-    /// </summary>
+
+
     private async Task SaveChatMessageAsync(Guid memberId, string role, string message)
     {
         _context.Set<ChatHistory>().Add(new ChatHistory
@@ -179,9 +163,7 @@ public class AIService : IAIService
         await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Load recent chat history for AI context
-    /// </summary>
+
     private async Task<List<OpenAIService.ChatMessage>> GetRecentChatHistory(Guid memberId)
     {
         var messages = await _context.Set<ChatHistory>()
@@ -199,10 +181,7 @@ public class AIService : IAIService
         return messages;
     }
 
-    /// <summary>
-    /// Try to parse and save AI recommendation from response.
-    /// Handles: pure JSON, markdown-fenced JSON (```json ... ```), and text-mixed JSON.
-    /// </summary>
+
     private async Task TrySaveRecommendationAsync(Guid memberId, string intent, string aiResponse)
     {
         string? workoutPlan = null;
@@ -248,7 +227,7 @@ public class AIService : IAIService
             _logger.LogError(ex, "Unexpected error parsing AI recommendation");
         }
 
-        // Always save — even if parsing failed, we keep RawJson
+
         try
         {
             _context.Set<AIRecommendation>().Add(new AIRecommendation
@@ -273,12 +252,7 @@ public class AIService : IAIService
         }
     }
 
-    /// <summary>
-    /// Extract JSON from AI response, handling:
-    /// 1. Pure JSON: starts with {
-    /// 2. Markdown fenced: ```json { ... } ```
-    /// 3. Text mixed: "some text { ... } more text"
-    /// </summary>
+
     private static string? ExtractJson(string response)
     {
         if (string.IsNullOrWhiteSpace(response))
@@ -286,20 +260,20 @@ public class AIService : IAIService
 
         var trimmed = response.Trim();
 
-        // Case 1: Pure JSON
+
         if (trimmed.StartsWith('{') && trimmed.EndsWith('}'))
         {
             return trimmed;
         }
 
-        // Case 2: Markdown code fence ```json ... ``` or ``` ... ```
+
         var fenceMatch = Regex.Match(trimmed, @"```(?:json)?\s*(\{[\s\S]*\})\s*```");
         if (fenceMatch.Success)
         {
             return fenceMatch.Groups[1].Value.Trim();
         }
 
-        // Case 3: Find the outermost balanced { } block
+
         var firstBrace = trimmed.IndexOf('{');
         if (firstBrace < 0) return null;
 
@@ -316,8 +290,6 @@ public class AIService : IAIService
                     if (depth == 0)
                     {
                         lastBrace = i;
-                        // Don't break — keep going to find the last complete top-level block
-                        // Actually we want the first complete block
                         goto done;
                     }
                     break;
@@ -333,10 +305,7 @@ public class AIService : IAIService
         return null;
     }
 
-    /// <summary>
-    /// Try to parse a JSON string into a deserialized object for API response.
-    /// Returns null if input is null or not valid JSON.
-    /// </summary>
+
     private static object? TryParseJsonObject(string? jsonString)
     {
         if (string.IsNullOrWhiteSpace(jsonString))
@@ -348,7 +317,7 @@ public class AIService : IAIService
         }
         catch
         {
-            return jsonString; // Return as raw string if not valid JSON
+            return jsonString;
         }
     }
 }

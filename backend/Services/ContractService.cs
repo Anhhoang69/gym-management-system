@@ -41,7 +41,6 @@ public class ContractService : IContractService
         decimal discountAmount = 0;
         var appliedPromotions = new List<string>();
 
-        // Calculate discounts
         if (dto.PromotionIds != null && dto.PromotionIds.Any())
         {
             var promotions = await _context.Promotions
@@ -139,7 +138,7 @@ public class ContractService : IContractService
             OriginalPrice = draft.OriginalPrice,
             DiscountAmount = draft.DiscountAmount,
             DealPrice = draft.DealPrice,
-            AppliedPromotions = new List<string>(), // Simplification
+            AppliedPromotions = new List<string>(),
             ExpiresAt = draft.ExpiresAt
         };
     }
@@ -274,10 +273,8 @@ public class ContractService : IContractService
         if (contract.Invoice == null || contract.Invoice.Status != InvoiceStatus.Paid)
             throw new Exception("Invoice is not Paid. Cannot activate membership.");
 
-        // Activate contract
         contract.Status = ContractStatus.Active;
 
-        // Activate AccessCard
         var card = contract.Member.AccessCard;
         string code = "";
         if (card == null)
@@ -300,14 +297,6 @@ public class ContractService : IContractService
             code = card.CardCode;
             card.Status = AccessCardStatus.Active;
             
-            // Extends logic: only extend if current expire is older than new end date, 
-            // but for simplicity, we set to contract.EndDate (which is StartDate + duration).
-            // Proper extension logic would be:
-            // if (card.ExpireDate.HasValue && card.ExpireDate.Value > DateTime.UtcNow)
-            //     card.ExpireDate = card.ExpireDate.Value.AddMonths(duration);
-            // else card.ExpireDate = contract.EndDate;
-            
-            // But per specs, setting to contract.EndDate is accepted
             card.ExpireDate = contract.EndDate;
             if (card.IssueDate == default)
                 card.IssueDate = DateTime.UtcNow;
@@ -315,15 +304,11 @@ public class ContractService : IContractService
 
         await _context.SaveChangesAsync();
 
-        // Commission auto-record
         try
         {
             await _commissionService.RecordAsync(contract.ContractId, staffId);
         }
-        catch
-        {
-            // Fire and forget — ignore commission errors during activation
-        }
+        catch { }
 
         // Gửi email thông báo kích hoạt (ngoài transaction — lỗi email không ảnh hưởng activation)
         try
@@ -347,10 +332,7 @@ public class ContractService : IContractService
                     contract.Invoice!.TotalAmount);
             }
         }
-        catch
-        {
-            // Fire and forget — log only, do not fail activation
-        }
+        catch { }
 
         return code;
     }

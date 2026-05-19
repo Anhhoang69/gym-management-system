@@ -14,9 +14,6 @@ public class GymDataService
         _context = context;
     }
 
-    /// <summary>
-    /// Get active membership/contract info for a member
-    /// </summary>
     public async Task<string> GetMembershipInfoAsync(Guid memberId)
     {
         var contract = await _context.Contracts
@@ -41,9 +38,6 @@ public class GymDataService
 - Giá: {contract.DealPrice:N0} VNĐ";
     }
 
-    /// <summary>
-    /// Get upcoming class schedule for a member
-    /// </summary>
     public async Task<string> GetScheduleInfoAsync(Guid memberId)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -71,9 +65,6 @@ public class GymDataService
         return $"📅 Lịch học sắp tới:\n{string.Join("\n", lines)}";
     }
 
-    /// <summary>
-    /// Get attendance stats for a member
-    /// </summary>
     public async Task<string> GetAttendanceInfoAsync(Guid memberId)
     {
         var now = DateTime.UtcNow;
@@ -95,9 +86,6 @@ public class GymDataService
 - Tổng cộng: {totalCount} lần";
     }
 
-    /// <summary>
-    /// Get available packages info
-    /// </summary>
     public async Task<string> GetPackageInfoAsync()
     {
         var packages = await _context.Packages
@@ -124,14 +112,8 @@ public class GymDataService
         return $"💪 Các gói tập hiện có:\n{string.Join("\n", lines)}";
     }
 
-    /// <summary>
-    /// Cache TTL: rebuild user context after 6 hours
-    /// </summary>
     private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(6);
 
-    /// <summary>
-    /// Get user context from AIContextCache if fresh, otherwise rebuild from DB and update cache.
-    /// </summary>
     public async Task<string> GetCachedOrBuildContextAsync(Guid memberId)
     {
         var cache = await _context.AIContextCaches
@@ -166,9 +148,6 @@ public class GymDataService
         return freshContext;
     }
 
-    /// <summary>
-    /// Invalidate cache for a member (call this after check-in, contract change, etc.)
-    /// </summary>
     public async Task InvalidateCacheAsync(Guid memberId)
     {
         var cache = await _context.AIContextCaches
@@ -182,9 +161,6 @@ public class GymDataService
         }
     }
 
-    /// <summary>
-    /// Build complete user context for AI prompt injection (always queries DB fresh)
-    /// </summary>
     public async Task<string> BuildUserContextAsync(Guid memberId)
     {
         var user = await _context.Users

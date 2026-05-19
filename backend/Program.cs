@@ -152,8 +152,6 @@ builder.Services.AddScoped<GymDataService>();
 builder.Services.AddHttpClient<OpenAIService>();
 builder.Services.AddScoped<IAIService, AIService>();
 
-// ================= SWAGGER =================
-// ================= SWAGGER =================
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -185,38 +183,26 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
-// ==========================================
-// ============================================
-// ================= APP =================
-
 var app = builder.Build();
 
-// Global Exception Middleware
 app.UseGlobalException();
 
-// Enable Swagger in all environments (including Production on Railway)
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// ===== FIX NGROK HTTPS =====
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.All
 });
-// ===========================
 
 //app.UseHttpsRedirection();
 
-// ================= ENABLE CORS =================
 app.UseCors("AllowAll");
-// ===============================================
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-// ================= RUN SEEDER (OPTIONAL) =================
 
 if (Environment.GetEnvironmentVariable("RUN_MIGRATIONS") == "true" || app.Environment.IsDevelopment())
 {

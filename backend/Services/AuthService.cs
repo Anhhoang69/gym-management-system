@@ -39,7 +39,7 @@ public class AuthService : IAuthService
         _smsService = smsService;
     }
 
-    // ===================== UC-2: LOGIN =====================
+
 
     public async Task<AuthResultDto> LoginAsync(LoginDto dto, string? ipAddress)
     {
@@ -82,17 +82,13 @@ public class AuthService : IAuthService
                     await _smsService.SendPasswordResetAsync(user.PhoneNumber, otp.Code);
                 else
                 {
-                    // Fallback in case of missing info
                     if (!string.IsNullOrWhiteSpace(user.Email))
                         await _emailService.SendPasswordResetAsync(user.Email, otp.Code);
                     else if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
                         await _smsService.SendPasswordResetAsync(user.PhoneNumber, otp.Code);
                 }
             }
-            catch
-            {
-                // Ignore email/sms failures in mock environment
-            }
+            catch { }
 
             return new AuthResultDto
             {
@@ -127,13 +123,12 @@ public class AuthService : IAuthService
         return await CompleteLoginAsync(user, roles, ipAddress);
     }
 
-    // ===================== UC-3: RESET & CHANGE PASSWORD =====================
+
 
     public async Task ForgotPasswordAsync(ForgotPasswordDto dto)
     {
         var user = await FindUserByIdentifierAsync(dto.EmailOrPhone);
 
-        // Always return success to avoid user enumeration
         if (user == null) return;
 
         await InvalidateOtpsByPurposeAsync(user.Id, "PasswordReset");
@@ -161,17 +156,13 @@ public class AuthService : IAuthService
                 await _smsService.SendPasswordResetAsync(user.PhoneNumber, otp.Code);
             else
             {
-                // Fallback in case of missing info
                 if (!string.IsNullOrWhiteSpace(user.Email))
                     await _emailService.SendPasswordResetAsync(user.Email, otp.Code);
                 else if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
                     await _smsService.SendPasswordResetAsync(user.PhoneNumber, otp.Code);
             }
         }
-        catch
-        {
-            // Ignore email/sms failures in mock environment
-        }
+        catch { }
     }
 
     public async Task ResetPasswordAsync(ResetPasswordDto dto)
@@ -229,7 +220,7 @@ public class AuthService : IAuthService
             throw new Exception(string.Join("; ", result.Errors.Select(e => e.Description)));
     }
 
-    // ===================== UC-5: 2FA MANAGEMENT =====================
+
 
     public async Task SendTwoFactorSetupOtpAsync(Guid userId)
     {
@@ -259,10 +250,7 @@ public class AuthService : IAuthService
             else if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
                 await _smsService.SendPasswordResetAsync(user.PhoneNumber, otp.Code);
         }
-        catch
-        {
-            // Ignore email/sms failures in mock environment
-        }
+        catch { }
     }
 
     public async Task EnableTwoFactorAsync(Guid userId, TwoFactorOtpDto dto)
@@ -283,7 +271,7 @@ public class AuthService : IAuthService
         await _userManager.SetTwoFactorEnabledAsync(user, false);
     }
 
-    // ===================== PRIVATE HELPERS =====================
+
 
     private async Task<AuthResultDto> CompleteLoginAsync(User user, IList<string> roles, string? ipAddress)
     {
