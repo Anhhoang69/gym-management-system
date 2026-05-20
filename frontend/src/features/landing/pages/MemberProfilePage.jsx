@@ -246,7 +246,7 @@ export default function MemberProfilePage() {
         alert("Mã OTP đã được gửi. Vui lòng nhập để xác nhận TẮT 2FA.");
       } else {
         try {
-          await disable2FA({ otp });
+          await disable2FA({ otpCode: otp });
           setIs2FAEnabled(false);
           setShowOtpInput(false);
           setOtp("");
@@ -261,7 +261,7 @@ export default function MemberProfilePage() {
         alert("Mã OTP đã được gửi. Vui lòng nhập để xác nhận BẬT 2FA.");
       } else {
         try {
-          await enable2FA({ otp });
+          await enable2FA({ otpCode: otp });
           setIs2FAEnabled(true);
           setShowOtpInput(false);
           setOtp("");

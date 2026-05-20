@@ -11,17 +11,17 @@ test.describe('Role-Based Access Control', () => {
 
   // TC_39
   test('should login successfully as Sales', async ({ page }) => {
-    await loginPage.login('Sales10@gmail.com', 'Sales10@gmail.com');
-    await expect(page).toHaveURL(/\/admin/);
-    await expect(page.locator('.sidebar')).toContainText('Bán Hàng');
+    await loginPage.login('sales.q1@gymfit.vn', '123456Aa@');
+    await expect(page).toHaveURL(/\/staff/);
+    await expect(page.locator('.sidebar')).toContainText('Thanh Toán');
     await expect(page.locator('.sidebar')).toContainText('Leads');
   });
 
   // TC_40
   test('should login successfully as PT', async ({ page }) => {
-    await loginPage.login('Pt10@gmail.com', 'Pt10@gmail.com');
-    await expect(page).toHaveURL(/\/admin/);
-    await expect(page.locator('.sidebar')).toContainText('Lịch Dạy');
-    await expect(page.locator('.sidebar')).toContainText('Hội Viên');
+    await loginPage.login('pt.nguyen@gymfit.vn', '123456Aa@');
+    await expect(page).toHaveURL(/\/pt/);
+    await expect(page.locator('.sidebar')).toContainText('Lớp Của Tôi');
+    await expect(page.locator('.sidebar')).toContainText('Khách Hàng Tiềm Năng');
   });
 });

@@ -19,7 +19,7 @@ export class AdminPage {
   get menuSales() { return this.page.locator('.sidebar, nav').getByText('Quản Lý Bán Hàng', { exact: false }); }
   get menuContracts() { return this.page.locator('.sidebar, nav').getByText('Quản Lý Hợp Đồng', { exact: false }); }
   get menuAttendance() { return this.page.locator('.sidebar, nav').getByText('Quản Lý Điểm Danh', { exact: false }); }
-  get menuReports() { return this.page.locator('.sidebar, nav').getByText('Báo Cáo Tài Chính', { exact: false }); }
+  get menuReports() { return this.page.locator('.sidebar, nav').getByText('Báo Cáo', { exact: false }); }
   // Packages management elements
   get createPackageBtn() { return this.page.locator('button:has-text("Tạo Gói Mới"), button:has-text("Thêm mới")'); }
   get packageGrid() { return this.page.locator('.grid, table'); }

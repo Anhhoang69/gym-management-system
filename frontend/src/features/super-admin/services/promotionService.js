@@ -64,3 +64,9 @@ export const updatePromotionStatus = async (id, status) => {
     const res = await api.patch(`/api/promotions/${id}/status`, { status })
     return res.data.data
 }
+
+export const validatePromotion = async (payload) => {
+    const res = await api.post("/api/promotions/validate", payload)
+    return res.data.data
+}
+

@@ -6,17 +6,23 @@ import {
   CModalFooter,
   CButton,
   CFormInput,
-  CFormSelect
+  CFormSelect,
+  CAlert
 } from "@coreui/react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { validatePromotion } from "../../services/promotionService"
 
 function CreatePromotionModal({
   visible,
   setVisible,
   onCreate,
-  branches = []
+  branches = [],
+  fixedBranchId = ""
 }) {
+
+  const [validationErrors, setValidationErrors] = useState([])
+  const [validationWarnings, setValidationWarnings] = useState([])
 
   const [form, setForm] = useState({
 
@@ -27,7 +33,7 @@ function CreatePromotionModal({
     discountValue: "",
 
     contractType: "NewContract",
-    applicableBranchId: "",
+    applicableBranchId: fixedBranchId || "",
 
     startDate: "",
     endDate: "",
@@ -35,6 +41,24 @@ function CreatePromotionModal({
     maxUsage: ""
 
   })
+
+  useEffect(() => {
+    if (visible) {
+      setValidationErrors([])
+      setValidationWarnings([])
+      setForm({
+        name: "",
+        code: "",
+        discountType: "Percentage",
+        discountValue: "",
+        contractType: "NewContract",
+        applicableBranchId: fixedBranchId || "",
+        startDate: "",
+        endDate: "",
+        maxUsage: ""
+      })
+    }
+  }, [visible, fixedBranchId])
 
   const handleChange = (e) => {
 
@@ -47,40 +71,60 @@ function CreatePromotionModal({
 
   }
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
+    setValidationErrors([])
+    setValidationWarnings([])
 
     const payload = {
       name: form.name,
       code: form.code,
-      discountType: form.discountType === "Percentage" ? 0 : 1,
+      discountType: form.discountType,
       discountValue: Number(form.discountValue),
-      contractType:
-        form.contractType === "NewContract"
-          ? 0
-          : form.contractType === "Renewal"
-            ? 1
-            : 2,
+      applicablePackageId: null,
       applicableBranchId: form.applicableBranchId || null,
-      startDate: form.startDate,
-      endDate: form.endDate,
-      maxUsage: Number(form.maxUsage)
+      contractType: form.contractType || null,
+      startDate: form.startDate ? `${form.startDate}T00:00:00Z` : null,
+      endDate: form.endDate ? `${form.endDate}T23:59:59Z` : null,
+      maxUsage: Number(form.maxUsage),
+      minContractValue: 0,
+      applicationRule: "BestDiscount",
+      priority: 10
     }
 
-    onCreate(payload)
+    try {
+      const check = await validatePromotion({
+        code: payload.code,
+        discountType: payload.discountType,
+        discountValue: payload.discountValue,
+        startDate: payload.startDate,
+        endDate: payload.endDate,
+        applicableBranchId: payload.applicableBranchId
+      })
 
-    setVisible(false)
+      if (!check.isValid) {
+        setValidationErrors(check.errors || ["Thông tin khuyến mãi không hợp lệ"])
+        setValidationWarnings(check.warnings || [])
+        return
+      }
 
-    setForm({
-      name: "",
-      code: "",
-      discountType: "Percentage",
-      discountValue: "",
-      contractType: "NewContract",
-      applicableBranchId: "",
-      startDate: "",
-      endDate: "",
-      maxUsage: ""
-    })
+      await onCreate(payload)
+      setVisible(false)
+      setForm({
+        name: "",
+        code: "",
+        discountType: "Percentage",
+        discountValue: "",
+        contractType: "NewContract",
+        applicableBranchId: fixedBranchId || "",
+        startDate: "",
+        endDate: "",
+        maxUsage: ""
+      })
+    } catch (err) {
+      console.error("Validation/Creation failed:", err)
+      const errorMsg = err.response?.data?.errors || err.response?.data?.message || err.message || "Lỗi hệ thống khi tạo khuyến mãi"
+      setValidationErrors(Array.isArray(errorMsg) ? errorMsg : [errorMsg])
+    }
 
   }
 
@@ -99,6 +143,24 @@ function CreatePromotionModal({
       </CModalHeader>
 
       <CModalBody>
+        {validationErrors.length > 0 && (
+          <CAlert color="danger" className="mb-3">
+            <ul className="mb-0">
+              {validationErrors.map((err, idx) => (
+                <li key={idx}>{err}</li>
+              ))}
+            </ul>
+          </CAlert>
+        )}
+        {validationWarnings.length > 0 && (
+          <CAlert color="warning" className="mb-3">
+            <ul className="mb-0">
+              {validationWarnings.map((warn, idx) => (
+                <li key={idx}>{warn}</li>
+              ))}
+            </ul>
+          </CAlert>
+        )}
 
         <div className="row">
 
@@ -181,6 +243,7 @@ function CreatePromotionModal({
               value={form.applicableBranchId}
               onChange={handleChange}
               className="mb-3"
+              disabled={!!fixedBranchId}
             >
 
               <option value="">

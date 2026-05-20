@@ -19,9 +19,11 @@ import {
   getPromotionById,
   createPromotion,
   updatePromotion,
-  deletePromotion
+  deletePromotion,
+  updatePromotionStatus
 } from "../services/promotionService"
 
+import PromotionFilters from "../components/promotion-management/PromotionFilters"
 import { getBranches } from "../services/branchService"
 
 import {
@@ -48,6 +50,10 @@ function PromotionManagementPage() {
 
   const pageSize = 10
   const [page, setPage] = useState(1)
+
+  const [search, setSearch] = useState("")
+  const [status, setStatus] = useState("")
+  const [type, setType] = useState("")
 
   const [statsData, setStatsData] = useState({
     total: 0,
@@ -78,7 +84,7 @@ function PromotionManagementPage() {
 
     try {
 
-      const data = await getPromotions()
+      const data = await getPromotions(search, status, type)
 
       const mapped = data.map((p) => {
 
@@ -146,10 +152,11 @@ function PromotionManagementPage() {
   }
 
   useEffect(() => {
-
-    loadPromotions()
-
-  }, [])
+    const timeout = setTimeout(() => {
+      loadPromotions()
+    }, 300)
+    return () => clearTimeout(timeout)
+  }, [search, status, type])
 
   useEffect(() => {
 
@@ -280,13 +287,9 @@ function PromotionManagementPage() {
   }
 
   const handleUpdate = async (id, payload) => {
-
     try {
-
       await updatePromotion(id, payload)
-
       setShowEditModal(false)
-
       setToast(
         <CToast autohide delay={3000} color="success">
           <CToastBody>
@@ -294,26 +297,18 @@ function PromotionManagementPage() {
           </CToastBody>
         </CToast>
       )
-
       await loadPromotions()
       await loadStats()
-
     } catch (err) {
-
       console.error("Update promotion failed:", err)
-
+      throw err
     }
-
   }
 
   const handleCreatePromotion = async (payload) => {
-
     try {
-
       await createPromotion(payload)
-
       setShowCreateModal(false)
-
       setToast(
         <CToast autohide delay={3000} color="success">
           <CToastBody>
@@ -321,16 +316,36 @@ function PromotionManagementPage() {
           </CToastBody>
         </CToast>
       )
-
       await loadPromotions()
       await loadStats()
-
     } catch (err) {
-
       console.error("Create promotion failed:", err)
-
+      throw err
     }
+  }
 
+  const handleToggleStatus = async (id, newStatus) => {
+    try {
+      await updatePromotionStatus(id, newStatus)
+      setToast(
+        <CToast autohide delay={3000} color="success">
+          <CToastBody>
+            Cập nhật trạng thái khuyến mãi thành công
+          </CToastBody>
+        </CToast>
+      )
+      await loadPromotions()
+      await loadStats()
+    } catch (err) {
+      console.error("Update promotion status failed:", err)
+      setToast(
+        <CToast autohide delay={3000} color="danger">
+          <CToastBody>
+            Cập nhật trạng thái thất bại: {err.response?.data?.message || err.message}
+          </CToastBody>
+        </CToast>
+      )
+    }
   }
 
   const handleDelete = (promo) => {
@@ -394,6 +409,17 @@ function PromotionManagementPage() {
 
       <StatsCards stats={stats} />
 
+      <div className="mt-3">
+        <PromotionFilters
+          search={search}
+          setSearch={setSearch}
+          status={status}
+          setStatus={setStatus}
+          type={type}
+          setType={setType}
+        />
+      </div>
+
       <div className="mt-3" style={{
         maxHeight: "42vh",
         overflowY: "auto",
@@ -408,6 +434,7 @@ function PromotionManagementPage() {
           onToggleSelectAll={toggleSelectAll}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onToggleStatus={handleToggleStatus}
         />
 
       </div>

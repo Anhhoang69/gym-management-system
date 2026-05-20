@@ -9,7 +9,8 @@ function RoomFilters({
   setStatus,
   branch,
   setBranch,
-  branches
+  branches,
+  hideBranchFilter = false
 }) {
   return (
     <div className="d-flex flex-wrap gap-3 align-items-center mb-3">
@@ -27,16 +28,18 @@ function RoomFilters({
         />
       </div>
 
-      <div style={{ width: 200 }}>
-        <CFormSelect value={branch} onChange={(e) => setBranch(e.target.value)}>
-          <option value="">Tất cả chi nhánh</option>
-          {branches.map((b) => (
-            <option key={b.branchId} value={b.branchId}>
-              {b.name}
-            </option>
-          ))}
-        </CFormSelect>
-      </div>
+      {!hideBranchFilter && (
+        <div style={{ width: 200 }}>
+          <CFormSelect value={branch} onChange={(e) => setBranch(e.target.value)}>
+            <option value="">Tất cả chi nhánh</option>
+            {branches.map((b) => (
+              <option key={b.branchId} value={b.branchId}>
+                {b.name}
+              </option>
+            ))}
+          </CFormSelect>
+        </div>
+      )}
 
       <div style={{ width: 180 }}>
         <CFormSelect value={status} onChange={(e) => setStatus(e.target.value)}>

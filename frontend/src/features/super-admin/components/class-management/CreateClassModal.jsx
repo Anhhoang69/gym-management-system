@@ -14,7 +14,7 @@ import moment from "moment"
 import { createClass } from "../../services/classService"
 import { getBranches, getBranchById } from "../../services/branchService"
 
-function CreateClassModal({ visible, setVisible, selectedSlot, onRefresh }) {
+function CreateClassModal({ visible, setVisible, selectedSlot, onRefresh, fixedBranchId }) {
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -35,9 +35,13 @@ function CreateClassModal({ visible, setVisible, selectedSlot, onRefresh }) {
 
     useEffect(() => {
         if (visible) {
-            loadBranches()
+            if (fixedBranchId) {
+                setSelectedBranchId(fixedBranchId)
+            } else {
+                loadBranches()
+            }
         }
-    }, [visible])
+    }, [visible, fixedBranchId])
 
     const loadBranches = async () => {
         try {
@@ -89,9 +93,9 @@ function CreateClassModal({ visible, setVisible, selectedSlot, onRefresh }) {
                 trainerStaffId: "",
                 roomId: ""
             })
-            setSelectedBranchId("")
+            setSelectedBranchId(fixedBranchId || "")
         }
-    }, [selectedSlot, visible])
+    }, [selectedSlot, visible, fixedBranchId])
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -151,6 +155,7 @@ function CreateClassModal({ visible, setVisible, selectedSlot, onRefresh }) {
                             label="Chi nhánh" 
                             value={selectedBranchId} 
                             onChange={(e) => setSelectedBranchId(e.target.value)}
+                            disabled={!!fixedBranchId}
                         >
                             <option value="">-- Chọn chi nhánh --</option>
                             {branches.map(b => (

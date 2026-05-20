@@ -348,6 +348,7 @@ export default function LandingHeader() {
           {/* THEME */}
           <button
             onClick={toggleTheme}
+            aria-label="Toggle theme"
             className="
               flex
               h-9

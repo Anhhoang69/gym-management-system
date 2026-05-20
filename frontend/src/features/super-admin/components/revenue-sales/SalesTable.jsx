@@ -19,7 +19,7 @@ import { getPayments } from "../../services/paymentService"
 import { getBranches } from "../../services/branchService"
 import Pagination from "../common/Pagination"
 
-function SalesTable() {
+function SalesTable({ fixedBranchId = "", hideBranchFilter = false }) {
   const [payments, setPayments] = useState([])
   const [loading, setLoading] = useState(false)
   const [branches, setBranches] = useState([])
@@ -27,7 +27,7 @@ function SalesTable() {
   // Local filter inputs (applied only on Search click)
   const [localFilters, setLocalFilters] = useState({
     method: "",
-    branchId: "",
+    branchId: fixedBranchId || "",
     fromDate: "",
     toDate: ""
   })
@@ -35,7 +35,7 @@ function SalesTable() {
   // Active filter params that trigger useEffect API call
   const [activeFilters, setActiveFilters] = useState({
     method: "",
-    branchId: "",
+    branchId: fixedBranchId || "",
     fromDate: "",
     toDate: "",
     page: 1,
@@ -118,7 +118,7 @@ function SalesTable() {
   const handleReset = () => {
     const defaultFilters = {
       method: "",
-      branchId: "",
+      branchId: fixedBranchId || "",
       fromDate: "",
       toDate: ""
     }
@@ -199,20 +199,22 @@ function SalesTable() {
         </div>
 
         {/* Branch */}
-        <div style={{ width: 220 }}>
-          <CFormSelect
-            name="branchId"
-            value={localFilters.branchId}
-            onChange={handleInputChange}
-          >
-            <option value="">Tất cả chi nhánh</option>
-            {branches.map(b => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
-          </CFormSelect>
-        </div>
+        {!hideBranchFilter && (
+          <div style={{ width: 220 }}>
+            <CFormSelect
+              name="branchId"
+              value={localFilters.branchId}
+              onChange={handleInputChange}
+            >
+              <option value="">Tất cả chi nhánh</option>
+              {branches.map(b => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </CFormSelect>
+          </div>
+        )}
 
         {/* From Date */}
         <div className="d-flex align-items-center gap-2">

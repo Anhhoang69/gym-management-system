@@ -75,11 +75,12 @@ function LoginPage() {
 
       const staffPosition = data.staffPosition ? data.staffPosition.trim() : null
 
-      const user = {
+      let user = {
         userId: data.userId,
         email: data.email,
         roles,
-        staffPosition
+        staffPosition,
+        branchId: data.branchId || ""
       }
 
       localStorage.setItem("user", JSON.stringify(user))
@@ -98,7 +99,7 @@ function LoginPage() {
         navigate("/")
       }
       else {
-        // Có thể là STAFF hoặc PT
+        // Có thể là STAFF hoặc PT hoặc BRANCHADMIN
         // Vì /api/auth/login đôi khi không trả về chuẩn xác staffPosition, ta gọi /api/me để chắc chắn
         try {
           const meRes = await api.get("/api/me")
@@ -108,9 +109,18 @@ function LoginPage() {
           const mePos = meData.staffPosition ? meData.staffPosition.toUpperCase() : ""
           const loginPos = staffPosition ? staffPosition.toUpperCase() : ""
 
+          user = {
+            ...user,
+            branchId: meData.branchId || user.branchId || "",
+            fullName: meData.fullName || meData.name || ""
+          }
+          localStorage.setItem("user", JSON.stringify(user))
+
           if (meRole === "PT" || meRole === "HEADPT" || mePos === "PT" || mePos === "HEADPT" || loginPos === "PT" || loginPos === "HEADPT" || roles.includes("PT") || roles.includes("HEADPT")) {
             navigate("/pt")
-          } else if (roles.includes("STAFF") || meRole === "STAFF" || mePos === "RECEPTIONIST" || mePos === "SALES" || mePos === "BRANCHADMIN") {
+          } else if (mePos === "BRANCHADMIN" || loginPos === "BRANCHADMIN" || roles.includes("BRANCHADMIN") || meRole === "BRANCHADMIN") {
+            navigate("/branch-admin")
+          } else if (roles.includes("STAFF") || meRole === "STAFF" || mePos === "RECEPTIONIST" || mePos === "SALES") {
             navigate("/staff")
           } else {
             navigate("/login")
@@ -120,6 +130,8 @@ function LoginPage() {
           const loginPos = staffPosition ? staffPosition.toUpperCase() : ""
           if (roles.includes("PT") || roles.includes("HEADPT") || loginPos === "PT" || loginPos === "HEADPT") {
             navigate("/pt")
+          } else if (loginPos === "BRANCHADMIN" || roles.includes("BRANCHADMIN")) {
+            navigate("/branch-admin")
           } else if (roles.includes("STAFF")) {
             navigate("/staff")
           } else {
@@ -274,10 +286,11 @@ function LoginPage() {
                     {/* OPTIONS */}
                     <div className="d-flex justify-content-between mt-4">
                       <CFormCheck label={<span style={{ color: "var(--text-primary)" }}>Ghi nhớ đăng nhập</span>} />
-                      <a href="#" style={{
+                      <a onClick={() => navigate('/forgot-password')} style={{
                         fontSize: 14,
                         color: "var(--text-primary)",
-                        textDecoration: "none"
+                        textDecoration: "none",
+                        cursor: "pointer"
                       }}>
                         Quên mật khẩu?
                       </a>

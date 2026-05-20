@@ -19,7 +19,8 @@ import moment from 'moment';
 const CreateContractModal = ({
   visible,
   onClose,
-  onSuccess 
+  onSuccess,
+  fixedBranchId = ""
 }) => {
   const [step, setStep] = useState(1);
   const [packages, setPackages] = useState([]);
@@ -64,13 +65,15 @@ const CreateContractModal = ({
       fetchMembers();
       fetchPromotions();
     }
-  }, [visible]);
+  }, [visible, fixedBranchId]);
 
   const fetchPromotions = async () => {
     setLoadingPromotions(true);
     try {
       const data = await getPromotions("", "Active", "");
-      setPromotions(data?.items || data || []);
+      const items = data?.items || data || [];
+      const filtered = fixedBranchId ? items.filter(p => !p.applicableBranchId || p.applicableBranchId === fixedBranchId) : items;
+      setPromotions(filtered);
     } catch (err) {
       console.error("Failed to fetch promotions", err);
     } finally {
@@ -93,7 +96,7 @@ const CreateContractModal = ({
   const fetchMembers = async () => {
     setLoadingMembers(true);
     try {
-      const data = await getUsers(1, 1000, "", "Member", "");
+      const data = await getUsers(1, 1000, "", "Member", fixedBranchId);
       setMembers(data?.items || []);
     } catch (err) {
       console.error("Failed to fetch members", err);

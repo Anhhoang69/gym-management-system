@@ -13,7 +13,7 @@ import {
 
 import { createRoom } from "../../services/roomService"
 
-function CreateRoomModal({ visible, setVisible, branches, onCreated }) {
+function CreateRoomModal({ visible, setVisible, branches, onCreated, fixedBranchId }) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     branchId: "",
@@ -24,6 +24,13 @@ function CreateRoomModal({ visible, setVisible, branches, onCreated }) {
   })
 
   const [imageUrl, setImageUrl] = useState("")
+
+  // ================= SET FIXED BRANCH ID =================
+  useState(() => {
+    if (fixedBranchId) {
+      setFormData(prev => ({ ...prev, branchId: fixedBranchId }))
+    }
+  })
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -65,7 +72,7 @@ function CreateRoomModal({ visible, setVisible, branches, onCreated }) {
       onCreated()
       setVisible(false)
       setFormData({
-        branchId: "",
+        branchId: fixedBranchId || "",
         name: "",
         roomNumber: "",
         capacity: 0,
@@ -93,6 +100,7 @@ function CreateRoomModal({ visible, setVisible, branches, onCreated }) {
               value={formData.branchId}
               onChange={handleChange}
               required
+              disabled={!!fixedBranchId}
             >
               <option value="">-- Chọn chi nhánh --</option>
               {branches.map(b => (

@@ -12,7 +12,7 @@ import { createInvoice } from "../../services/invoiceService"
 import moment from "moment"
 import { Banknote, FilePlus, Loader2 } from "lucide-react"
 
-function ContractsTable({ onPayClick, onRefresh }) {
+function ContractsTable({ onPayClick, onRefresh, fixedBranchId = "" }) {
   const [contracts, setContracts] = useState([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -20,13 +20,13 @@ function ContractsTable({ onPayClick, onRefresh }) {
 
   useEffect(() => {
     fetchContracts()
-  }, [page])
+  }, [page, fixedBranchId])
 
   const fetchContracts = async () => {
     setLoading(true)
     try {
       // Assuming getContracts supports pagination
-      const data = await getContracts({ page, pageSize: 10 })
+      const data = await getContracts({ page, pageSize: 10, branchId: fixedBranchId })
       setContracts(data.items || [])
       setTotalPages(data.totalPages || 1)
     } catch (error) {

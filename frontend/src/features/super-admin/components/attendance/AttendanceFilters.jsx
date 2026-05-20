@@ -7,7 +7,8 @@ function AttendanceFilters({
   selectedDate,
   onDateChange,
   searchName,
-  onSearchChange
+  onSearchChange,
+  hideBranchSelect = false
 }) {
   return (
     <div className="d-flex gap-3 flex-wrap">
@@ -19,18 +20,20 @@ function AttendanceFilters({
         onChange={(e) => onSearchChange(e.target.value)}
       />
 
-      <CFormSelect 
-        style={{ width: 200 }} 
-        value={selectedBranch} 
-        onChange={(e) => onBranchChange(e.target.value)}
-      >
-        <option value="">Tất cả chi nhánh</option>
-        {branches.map(branch => (
-          <option key={branch.branchId} value={branch.branchId}>
-            {branch.name}
-          </option>
-        ))}
-      </CFormSelect>
+      {!hideBranchSelect && (
+        <CFormSelect 
+          style={{ width: 200 }} 
+          value={selectedBranch} 
+          onChange={(e) => onBranchChange(e.target.value)}
+        >
+          <option value="">Tất cả chi nhánh</option>
+          {branches.map(branch => (
+            <option key={branch.branchId} value={branch.branchId}>
+              {branch.name}
+            </option>
+          ))}
+        </CFormSelect>
+      )}
 
       <CFormInput
         type="date"

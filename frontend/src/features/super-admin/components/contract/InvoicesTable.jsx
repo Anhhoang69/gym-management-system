@@ -11,7 +11,7 @@ import { getInvoices } from "../../services/invoiceService"
 import moment from "moment"
 import { Banknote, ReceiptText } from "lucide-react"
 
-function InvoicesTable({ onPayClick }) {
+function InvoicesTable({ onPayClick, fixedBranchId = "" }) {
   const [invoices, setInvoices] = useState([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -19,12 +19,12 @@ function InvoicesTable({ onPayClick }) {
 
   useEffect(() => {
     fetchInvoices()
-  }, [page])
+  }, [page, fixedBranchId])
 
   const fetchInvoices = async () => {
     setLoading(true)
     try {
-      const data = await getInvoices({ page, pageSize: 10 })
+      const data = await getInvoices({ page, pageSize: 10, branchId: fixedBranchId })
       setInvoices(data.items || data || [])
       setTotalPages(data.totalPages || 1)
     } catch (error) {

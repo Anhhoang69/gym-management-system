@@ -29,9 +29,9 @@ test.describe('Super Admin Dashboard & CRUD', () => {
   // TC_21
   test('should search users by name or email', async ({ adminPage, page }) => {
     await adminPage.navigateTo('Users');
-    await page.getByPlaceholder('Tìm theo tên, email...').fill('Nguyen Van Test');
+    await page.getByPlaceholder('Tìm theo tên, email...').fill('anh');
     await page.waitForTimeout(600);
-    await expect(page.locator('table')).toContainText('Nguyen Van Test');
+    await expect(page.locator('table')).toContainText('Anh');
   });
 
   // --- PROMOTION MANAGEMENT ---
@@ -116,12 +116,18 @@ test.describe('Super Admin Dashboard & CRUD', () => {
     await adminPage.openCreateForm();
     await page.fill('input[name="fullName"]', 'Nguyen Member Test');
     await page.fill('input[name="email"]', `member_${Date.now()}@test.com`);
-    await page.fill('input[name="password"]', 'Member@123');
+    await page.fill('input[name="password"]', '123456Aa@');
+    const randomPhone = '0' + Math.floor(100000000 + Math.random() * 900000000).toString();
+    await page.fill('input[name="phoneNumber"]', randomPhone);
+    await page.selectOption('select[name="gender"]', 'Female');
+    await page.fill('input[name="birthday"]', '2004-02-02');
+    await page.fill('input[name="address"]', 'KTX Khu B ĐHQG HCM');
     await page.selectOption('select[name="role"]', 'Member');
     await page.selectOption('select[name="branchId"]', { index: 1 });
     await page.getByRole('button', { name: 'Tạo', exact: true }).click();
     await expect(page.locator('table')).toContainText('Nguyen Member Test');
   });
+
 
   // TC_33
   test('should create a new Sales staff', async ({ adminPage, page }) => {
@@ -129,7 +135,12 @@ test.describe('Super Admin Dashboard & CRUD', () => {
     await adminPage.openCreateForm();
     await page.fill('input[name="fullName"]', 'Nguyen Sales Test');
     await page.fill('input[name="email"]', `sales_${Date.now()}@test.com`);
-    await page.fill('input[name="password"]', 'Sales@123');
+    await page.fill('input[name="password"]', '123456Aa@');
+    const randomPhone = '0' + Math.floor(100000000 + Math.random() * 900000000).toString();
+    await page.fill('input[name="phoneNumber"]', randomPhone);
+    await page.selectOption('select[name="gender"]', 'Male');
+    await page.fill('input[name="birthday"]', '1995-05-15');
+    await page.fill('input[name="address"]', 'Hồ Chí Minh');
     await page.selectOption('select[name="role"]', 'Staff');
     await page.selectOption('select[name="staffPosition"]', 'Sales');
     await page.selectOption('select[name="branchId"]', { index: 1 });
@@ -143,7 +154,12 @@ test.describe('Super Admin Dashboard & CRUD', () => {
     await adminPage.openCreateForm();
     await page.fill('input[name="fullName"]', 'Nguyen PT Test');
     await page.fill('input[name="email"]', `pt_${Date.now()}@test.com`);
-    await page.fill('input[name="password"]', 'PT@123');
+    await page.fill('input[name="password"]', '123456Aa@');
+    const randomPhone = '0' + Math.floor(100000000 + Math.random() * 900000000).toString();
+    await page.fill('input[name="phoneNumber"]', randomPhone);
+    await page.selectOption('select[name="gender"]', 'Male');
+    await page.fill('input[name="birthday"]', '1993-08-20');
+    await page.fill('input[name="address"]', 'Hà Nội');
     await page.selectOption('select[name="role"]', 'Staff');
     await page.selectOption('select[name="staffPosition"]', 'PT');
     await page.selectOption('select[name="branchId"]', { index: 1 });
@@ -157,7 +173,12 @@ test.describe('Super Admin Dashboard & CRUD', () => {
     await adminPage.openCreateForm();
     await page.fill('input[name="fullName"]', 'Nguyen Recep Test');
     await page.fill('input[name="email"]', `recep_${Date.now()}@test.com`);
-    await page.fill('input[name="password"]', 'Recep@123');
+    await page.fill('input[name="password"]', '123456Aa@');
+    const randomPhone = '0' + Math.floor(100000000 + Math.random() * 900000000).toString();
+    await page.fill('input[name="phoneNumber"]', randomPhone);
+    await page.selectOption('select[name="gender"]', 'Female');
+    await page.fill('input[name="birthday"]', '1998-12-10');
+    await page.fill('input[name="address"]', 'Đà Nẵng');
     await page.selectOption('select[name="role"]', 'Staff');
     await page.selectOption('select[name="staffPosition"]', 'Receptionist');
     await page.selectOption('select[name="branchId"]', { index: 1 });
@@ -171,9 +192,12 @@ test.describe('Super Admin Dashboard & CRUD', () => {
     await adminPage.openCreateForm();
     await page.fill('input[name="title"]', 'Lớp Yoga Buổi Sáng');
     await page.selectOption('select[name="classType"]', 'Yoga');
-    // Chọn chi nhánh đầu tiên có sẵn
-    await page.locator('label:has-text("Chi nhánh") + select').selectOption({ index: 1 });
-    await page.waitForTimeout(500); // Đợi load HLV/Phòng
+    // Chọn chi nhánh Quận 1 để đảm bảo có phòng và HLV
+    await page.locator('label:has-text("Chi nhánh") + select').selectOption({ label: 'GymFit Quận 1' });
+
+    // Đợi cho đến khi dropdown Phòng tập load xong options
+    await page.locator('select[name="roomId"] option').nth(1).waitFor({ state: 'attached' });
+
     await page.selectOption('select[name="trainerStaffId"]', { index: 1 });
     await page.selectOption('select[name="roomId"]', { index: 1 });
     await page.getByRole('button', { name: 'Tạo Lớp', exact: true }).click();
@@ -181,15 +205,15 @@ test.describe('Super Admin Dashboard & CRUD', () => {
   });
 
   // TC_37
-  test('should create a new Lead', async ({ adminPage, page }) => {
-    await adminPage.navigateTo('Leads');
+  test('should create a new Room', async ({ adminPage, page }) => {
+    await adminPage.navigateTo('Rooms');
     await adminPage.openCreateForm();
-    await page.fill('input[name="name"]', 'Khách hàng tiềm năng');
-    await page.fill('input[name="phone"]', '0987654321');
-    await page.selectOption('select[name="sourceId"]', { index: 1 });
-    await page.locator('label:has-text("Chi nhánh quan tâm") + select').selectOption({ index: 1 });
-    await page.getByRole('button', { name: 'Tạo Lead', exact: true }).click();
-    await expect(page.locator('table')).toContainText('Khách hàng tiềm năng');
+    await page.selectOption('select[name="branchId"]', { label: 'GymFit Quận 1' });
+    await page.fill('input[name="name"]', 'Phòng Yoga Pro');
+    await page.fill('input[name="roomNumber"]', `YOGA_${Date.now().toString().slice(-4)}`);
+    await page.fill('input[name="capacity"]', '25');
+    await page.getByRole('button', { name: 'Lưu', exact: true }).click();
+    await expect(page.locator('table')).toContainText('Phòng Yoga Pro');
   });
 
   // TC_38

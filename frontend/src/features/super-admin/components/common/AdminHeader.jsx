@@ -101,9 +101,8 @@ function AdminHeader() {
   }
 
   const goHome = () => {
-
-    navigate("/admin")
-
+    const prefix = window.location.pathname.startsWith("/branch-admin") ? "/branch-admin" : "/admin"
+    navigate(prefix)
   }
 
   return (
@@ -243,7 +242,10 @@ function AdminHeader() {
             >
               <div>
                 <CDropdownItem 
-                  onClick={() => navigate("/admin/profile")}
+                  onClick={() => {
+                    const prefix = window.location.pathname.startsWith("/branch-admin") ? "/branch-admin" : "/admin"
+                    navigate(`${prefix}/profile`)
+                  }}
                   className="d-flex align-items-center py-2 px-3"
                   style={{ cursor: "pointer", transition: "all 0.2s", borderRadius: "0" }}
                 >

@@ -51,6 +51,12 @@ function StaffSidebar() {
                   </NavLink>
               </CNavItem>
 
+              <CNavItem>
+                  <NavLink to="/staff/commissions" className="nav-link">
+                      Hoa Hồng
+                  </NavLink>
+              </CNavItem>
+
           </CSidebarNav>
 
       </CSidebar>

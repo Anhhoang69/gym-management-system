@@ -12,7 +12,7 @@ import { createInvoice } from "../../services/invoiceService"
 import moment from "moment"
 import { Trash2, FileCheck, Loader2 } from "lucide-react"
 
-function DraftContractsTable({ onContractCreated }) {
+function DraftContractsTable({ onContractCreated, fixedBranchId = "" }) {
   const [drafts, setDrafts] = useState([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -21,12 +21,12 @@ function DraftContractsTable({ onContractCreated }) {
 
   useEffect(() => {
     fetchDrafts()
-  }, [page])
+  }, [page, fixedBranchId])
 
   const fetchDrafts = async () => {
     setLoading(true)
     try {
-      const data = await getDraftContracts({ page, pageSize: 10 })
+      const data = await getDraftContracts({ page, pageSize: 10, branchId: fixedBranchId })
       setDrafts(data.items || [])
       setTotalPages(data.totalPages || 1)
     } catch (error) {
