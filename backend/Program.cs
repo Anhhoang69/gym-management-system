@@ -145,12 +145,67 @@ builder.Services.AddScoped<IRequestService, RequestService>();
 builder.Services.AddHttpContextAccessor();
 
 
-// ================= AI SERVICES =================
+// ================= HYBRID MCP ARCHITECTURE: AI SERVICES =================
 
-builder.Services.AddScoped<IntentService>();
+// LLM Providers
+builder.Services.AddHttpClient<backend.AI.Providers.OpenAIProvider>();
+builder.Services.AddHttpClient<backend.AI.Providers.OllamaProvider>();
+builder.Services.AddScoped<backend.AI.Providers.LLMProviderFactory>();
+
+// Resolve active provider via factory (switches on AI:Provider config)
+builder.Services.AddScoped<backend.AI.Core.ILLMProvider>(sp =>
+    sp.GetRequiredService<backend.AI.Providers.LLMProviderFactory>().GetProvider());
+
+// AI Tool Registry
+builder.Services.AddScoped<backend.AI.AIToolRegistry>();
 builder.Services.AddScoped<GymDataService>();
-builder.Services.AddHttpClient<OpenAIService>();
+
+// ── Member Tools ──────────────────────────────────────────────────────
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Membership.GetMembershipTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Membership.GetAvailablePackagesTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Booking.GetMyScheduleTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Booking.BookClassTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Booking.CancelBookingTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Attendance.GetAttendanceSummaryTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Training.GenerateFitnessPlanTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Training.AskFitnessCoachTool>();
+
+// ── Staff Booking Tools ───────────────────────────────────────────────
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Booking.ClassRosterTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Booking.BookingLookupTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Booking.MyTeachingScheduleTool>();
+
+// ── Attendance Tools ──────────────────────────────────────────────────
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Attendance.CheckinLookupTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Attendance.CheckInReportTool>();
+
+// ── Training Tools ────────────────────────────────────────────────────
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Training.MemberTrainingOverviewTool>();
+
+// ── Lead/Sales Tools ─────────────────────────────────────────────────
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Lead.GetLeadSummaryTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Lead.GetLeadPipelineTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Lead.SalesFunnelTool>();
+
+// ── Analytics Tools ───────────────────────────────────────────────────
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Analytics.PTPerformanceTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Analytics.MemberLookupTool>();
+
+// ── Revenue Tools ─────────────────────────────────────────────────────
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Revenue.BranchRevenueTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Revenue.GlobalRevenueTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Revenue.SystemDashboardTool>();
+
+// ── Payroll Tools ─────────────────────────────────────────────────────
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Payroll.BranchPayrollTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Payroll.PayrollOverviewTool>();
+
+// ── Contract Tools ────────────────────────────────────────────────────
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Contract.ContractLookupTool>();
+
+// AIService (orchestrator)
 builder.Services.AddScoped<IAIService, AIService>();
+
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>

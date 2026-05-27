@@ -1,3 +1,4 @@
+using backend.AI;
 using backend.DTOs.AI;
 using backend.Extensions;
 using backend.Helpers;
@@ -14,45 +15,74 @@ namespace backend.Controllers;
 public class AIController : ControllerBase
 {
     private readonly IAIService _aiService;
+    private readonly AIToolRegistry _toolRegistry;
 
-    public AIController(IAIService aiService)
+    public AIController(IAIService aiService, AIToolRegistry toolRegistry)
     {
         _aiService = aiService;
+        _toolRegistry = toolRegistry;
     }
 
     [HttpPost("chat")]
     [SwaggerOperation(
         Summary = "Chat với AI Assistant",
-        Description = "Gửi tin nhắn đến AI fitness assistant. AI sẽ tự động phân loại intent (membership, schedule, fitness, ...) và trả lời phù hợp."
+        Description = "Gửi tin nhắn đến AI Assistant. Hỗ trợ mọi role: Member, Staff, GymOwner, SuperAdmin. " +
+                      "Tools được lọc theo role của người dùng — LLM tự quyết định dùng tool nào."
     )]
     public async Task<ApiResponse<ChatResponseDto>> Chat([FromBody] ChatRequestDto request)
     {
-        var memberId = User.GetRequiredUserId();
-        var result = await _aiService.HandleChatAsync(memberId, request);
+        var userId = User.GetRequiredUserId();
+        var result = await _aiService.HandleChatAsync(userId, request);
         return new ApiResponse<ChatResponseDto>(result, "Chat response generated");
     }
 
     [HttpGet("history")]
     [SwaggerOperation(
         Summary = "Lấy lịch sử chat",
-        Description = "Lấy lịch sử chat với AI. Mặc định 20 tin nhắn gần nhất."
+        Description = "Lấy lịch sử chat của người dùng hiện tại. Mặc định 20 tin nhắn gần nhất."
     )]
     public async Task<ApiResponse<List<ChatResponseDto>>> GetHistory([FromQuery] int limit = 20)
     {
-        var memberId = User.GetRequiredUserId();
-        var result = await _aiService.GetChatHistoryAsync(memberId, limit);
+        var userId = User.GetRequiredUserId();
+        var result = await _aiService.GetChatHistoryAsync(userId, limit);
         return new ApiResponse<List<ChatResponseDto>>(result, "Chat history retrieved");
     }
 
     [HttpGet("recommendations")]
+    [Authorize(Roles = AuthorizationRoles.Member)]
     [SwaggerOperation(
-        Summary = "Lấy các gợi ý AI đã lưu",
-        Description = "Lấy danh sách workout plan và nutrition advice đã được AI tạo và lưu lại."
+        Summary = "Lấy các gợi ý AI đã lưu (Member only)",
+        Description = "Lấy danh sách workout plan và nutrition advice đã được AI tạo và lưu. Chỉ dành cho hội viên."
     )]
     public async Task<ApiResponse<List<AIPlanResultDto>>> GetRecommendations()
     {
         var memberId = User.GetRequiredUserId();
         var result = await _aiService.GetRecommendationsAsync(memberId);
         return new ApiResponse<List<AIPlanResultDto>>(result, "Recommendations retrieved");
+    }
+
+    [HttpGet("tools")]
+    [SwaggerOperation(
+        Summary = "Khám phá tools khả dụng (MCP-compatible)",
+        Description = "Trả về danh sách AI tools mà người dùng hiện tại được phép sử dụng, " +
+                      "dựa trên role và StaffPosition. Member sẽ không thấy admin tools."
+    )]
+    public async Task<IActionResult> GetAvailableTools()
+    {
+        var userId = User.GetRequiredUserId();
+        var ctx = await _aiService.BuildContextAsync(userId);
+
+        // SECURITY: filtered by caller's role + staffPosition — Member never sees PayrollOverviewTool
+        var tools = _toolRegistry.GetAvailableTools(ctx);
+
+        var defs = tools.Select(t => new ToolDiscoveryDto
+        {
+            Name = t.Name,
+            Description = t.Description,
+            Schema = t.InputSchema
+            // AllowedRoles/AllowedStaffPositions intentionally NOT included
+        });
+
+        return Ok(defs);
     }
 }
