@@ -78,6 +78,8 @@ public class ApplicationDbContext
     public DbSet<ChatHistory> ChatHistories => Set<ChatHistory>();
     public DbSet<AIRecommendation> AIRecommendations => Set<AIRecommendation>();
     public DbSet<AIContextCache> AIContextCaches => Set<AIContextCache>();
+    public DbSet<AIToolExecutionLog> AIToolExecutionLogs => Set<AIToolExecutionLog>();
+    public DbSet<AITokenUsageLog> AITokenUsageLogs => Set<AITokenUsageLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -323,7 +325,12 @@ public class ApplicationDbContext
             .HasOne(ch => ch.Member)
             .WithMany(m => m.ChatHistories)
             .HasForeignKey(ch => ch.MemberId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .IsRequired(false)                        // nullable — Staff/Admin chats have no MemberId
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<ChatHistory>()
+            .HasIndex(ch => ch.UserId);               // query by userId (not MemberId)
+
 
         builder.Entity<AIRecommendation>()
             .HasOne(r => r.Member)
@@ -339,6 +346,17 @@ public class ApplicationDbContext
             .WithOne(m => m.AIContextCache)
             .HasForeignKey<AIContextCache>(c => c.MemberId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // AI Tool Execution Log — no FK, standalone audit table
+        builder.Entity<AIToolExecutionLog>()
+            .HasKey(l => l.Id);
+
+        builder.Entity<AIToolExecutionLog>()
+            .HasIndex(l => l.UserId);
+
+        builder.Entity<AIToolExecutionLog>()
+            .HasIndex(l => l.ExecutedAt);
+
 
         // convert all enums to string
         foreach (var entityType in builder.Model.GetEntityTypes())

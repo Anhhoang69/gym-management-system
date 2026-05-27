@@ -1,333 +1,388 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using backend.AI;
+using backend.AI.Core;
+using backend.AI.Kernel;
 using backend.Data;
 using backend.DTOs.AI;
+using backend.Enums;
+using backend.Helpers;
 using backend.Interfaces;
 using backend.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
+
+// Alias SK ChatHistory — avoids name clash with backend.Models.ChatHistory (EF entity)
+using SkChatHistory = Microsoft.SemanticKernel.ChatCompletion.ChatHistory;
+// Alias EF ChatHistory — used explicitly when saving to database
+using EfChatHistory = backend.Models.ChatHistory;
 
 namespace backend.Services;
 
-
+/// <summary>
+/// AI chat orchestrator powered by Semantic Kernel.
+///
+/// Architecture:
+///   1. BuildContextAsync     — resolve userId → Role + StaffPosition + BranchId
+///   2. AIToolRegistry        — RBAC filter: only tools the caller is allowed to use
+///   3. KernelFactory         — create SK Kernel with configured LLM connector
+///   4. SkToolHelper          — wrap each IAITool as a SK KernelFunction (closure pattern)
+///   5. SK FunctionChoiceBehavior.Auto() — SK handles the entire LLM ↔ tool loop
+///   6. Persist               — ChatHistory, AIRecommendation, AITokenUsageLog
+///
+/// No custom HTTP client. No manual tool loop. No provider switch logic.
+/// </summary>
 public class AIService : IAIService
 {
-    private readonly ApplicationDbContext _context;
-    private readonly IntentService _intentService;
+    private readonly ApplicationDbContext _db;
+    private readonly AIToolRegistry _toolRegistry;
+    private readonly KernelFactory _kernelFactory;
+    private readonly ToolInvocationFilter _invocationFilter;
     private readonly GymDataService _gymDataService;
-    private readonly OpenAIService _openAIService;
+    private readonly UserManager<User> _userManager;
+    private readonly IConfiguration _config;
     private readonly ILogger<AIService> _logger;
 
     private const int ChatHistoryLimit = 20;
 
     public AIService(
-        ApplicationDbContext context,
-        IntentService intentService,
+        ApplicationDbContext db,
+        AIToolRegistry toolRegistry,
+        KernelFactory kernelFactory,
+        ToolInvocationFilter invocationFilter,
         GymDataService gymDataService,
-        OpenAIService openAIService,
+        UserManager<User> userManager,
+        IConfiguration config,
         ILogger<AIService> logger)
     {
-        _context = context;
-        _intentService = intentService;
-        _gymDataService = gymDataService;
-        _openAIService = openAIService;
-        _logger = logger;
+        _db               = db;
+        _toolRegistry     = toolRegistry;
+        _kernelFactory    = kernelFactory;
+        _invocationFilter = invocationFilter;
+        _gymDataService   = gymDataService;
+        _userManager      = userManager;
+        _config           = config;
+        _logger           = logger;
     }
 
+    // ── Public API ───────────────────────────────────────────────────────────
 
-    public async Task<ChatResponseDto> HandleChatAsync(Guid memberId, ChatRequestDto request)
+    public async Task<ChatResponseDto> HandleChatAsync(Guid userId, ChatRequestDto request)
     {
-
         if (string.IsNullOrWhiteSpace(request.Message))
-        {
-            return new ChatResponseDto
-            {
-                Message = "Vui lòng nhập tin nhắn.",
-                Type = "text"
-            };
-        }
+            return new ChatResponseDto { Message = "Vui lòng nhập tin nhắn.", Type = "text" };
 
         var message = request.Message.Trim();
 
-        _logger.LogInformation("AI Chat | Member: {MemberId} | Message: {Message}", memberId, message);
+        // 1. Build execution context (role + staffPosition + branchId from Identity + DB)
+        var ctx = await BuildContextAsync(userId);
+        _invocationFilter.CurrentContext = ctx;   // provide context for audit filter
 
+        _logger.LogInformation(
+            "AI Chat | User: {Id} | Role: {Role} | Position: {Pos} | Message: {Msg}",
+            userId, ctx.Role, ctx.StaffPosition,
+            message.Length > 80 ? message[..80] + "…" : message);
 
-        await SaveChatMessageAsync(memberId, "user", message);
+        // 2. Persist user turn
+        await SaveChatMessageAsync(userId, ctx.Role, "user", message);
 
-        var intent = _intentService.Detect(message);
-        var isPlanRequest = _intentService.IsPlanRequest(message);
+        // 3. RBAC filter — only tools the caller is authorized to use
+        var availableTools = _toolRegistry.GetAvailableTools(ctx);
 
-        _logger.LogInformation("AI Chat | Intent: {Intent} | IsPlanRequest: {IsPlan}", intent, isPlanRequest);
+        // 4. Build SK Kernel + attach GymTools plugin (RBAC-filtered)
+        var kernel = _kernelFactory.Create();
+        kernel.FunctionInvocationFilters.Add(_invocationFilter);
 
-        var userContext = await _gymDataService.GetCachedOrBuildContextAsync(memberId);
+        var plugin = KernelPluginFactory.CreateFromFunctions(
+            pluginName: "GymTools",
+            functions:  availableTools.Select(t => SkToolHelper.WrapAsTool(t, ctx)));
+        kernel.Plugins.Add(plugin);
 
-        string responseMessage;
-        var responseType = "text";
+        // 5. Build SK conversation history
+        var skHistory = new SkChatHistory();
+        skHistory.AddSystemMessage(BuildSystemPrompt(ctx));
 
-        switch (intent)
+        // Inject member context for personalized responses (only for Member role)
+        if (ctx.Role == AuthorizationRoles.Member)
         {
-            case "membership":
-                responseMessage = await _gymDataService.GetMembershipInfoAsync(memberId);
-                break;
-
-            case "schedule":
-                // Nếu là plan request → bỏ qua schedule, đưa thẳng qua OpenAI
-                if (!isPlanRequest)
-                {
-                    responseMessage = await _gymDataService.GetScheduleInfoAsync(memberId);
-                    break;
-                }
-                goto case "fitness";
-
-            case "package":
-                // Nếu là plan request → bỏ qua package info, đưa thẳng qua OpenAI
-                if (!isPlanRequest)
-                {
-                    responseMessage = await _gymDataService.GetPackageInfoAsync();
-                    break;
-                }
-                goto case "fitness";
-
-            case "attendance":
-                responseMessage = await _gymDataService.GetAttendanceInfoAsync(memberId);
-                break;
-
-            case "fitness":
-            default:
-                var history = await GetRecentChatHistory(memberId);
-
-                responseMessage = await _openAIService.ChatAsync(message, userContext, history, isPlanRequest);
-
-                if (isPlanRequest)
-                {
-                    await TrySaveRecommendationAsync(memberId, intent, responseMessage);
-                    responseType = "json";
-                }
-                break;
+            var memberCtx = await _gymDataService.GetCachedOrBuildContextAsync(userId);
+            skHistory.AddSystemMessage($"[Thông tin hội viên]\n{memberCtx}");
         }
 
-        await SaveChatMessageAsync(memberId, "assistant", responseMessage);
-
-        _logger.LogInformation("AI Chat | Response sent | Type: {Type} | Length: {Length}",
-            responseType, responseMessage.Length);
-
-        return new ChatResponseDto
+        // Load recent DB history into SK conversation
+        var dbHistory = await GetRecentChatHistoryAsync(userId);
+        foreach (var (role, content) in dbHistory)
         {
-            Message = responseMessage,
-            Type = responseType
+            if (role == "user") skHistory.AddUserMessage(content);
+            else skHistory.AddAssistantMessage(content);
+        }
+
+        skHistory.AddUserMessage(message);
+
+        // 6. SK auto function calling — handles entire LLM ↔ tool loop automatically
+        var chatSvc  = kernel.GetRequiredService<IChatCompletionService>();
+        var settings = new OpenAIPromptExecutionSettings
+        {
+            FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+            MaxTokens   = int.TryParse(_config["AI:OpenAI:MaxTokens"], out var mt) ? mt : 2000,
+            Temperature = 0.7
         };
+
+        var response  = await chatSvc.GetChatMessageContentAsync(skHistory, settings, kernel);
+        var finalText = response.Content ?? "Xin lỗi, tôi không thể trả lời lúc này.";
+
+        // 7. Token usage — SK OpenAI connector sets "Usage" in response metadata automatically
+        var (promptTokens, completionTokens) = SkToolHelper.ExtractTokenUsage(response);
+        await SaveTokenUsageAsync(userId, ctx.Role, promptTokens, completionTokens);
+
+        // 8. Persist assistant turn
+        await SaveChatMessageAsync(userId, ctx.Role, "assistant", finalText);
+
+        // 9. Persist fitness plan if the LLM generated one (Member only)
+        if (ctx.Role == AuthorizationRoles.Member)
+            await TrySaveFitnessPlanAsync(userId, finalText);
+
+        _logger.LogInformation(
+            "AI Chat | Done | Role: {Role} | Tokens: {P}+{C} | Length: {Len}",
+            ctx.Role, promptTokens, completionTokens, finalText.Length);
+
+        return new ChatResponseDto { Message = finalText, Type = "text" };
     }
 
-
-    public async Task<List<ChatResponseDto>> GetChatHistoryAsync(Guid memberId, int limit = 20)
+    public async Task<List<ChatResponseDto>> GetChatHistoryAsync(Guid userId, int limit = 20)
     {
-        var messages = await _context.Set<ChatHistory>()
-            .Where(ch => ch.MemberId == memberId)
+        return await _db.Set<EfChatHistory>()
+            .Where(ch => ch.UserId == userId)
             .OrderByDescending(ch => ch.CreatedAt)
             .Take(limit)
             .OrderBy(ch => ch.CreatedAt)
-            .Select(ch => new ChatResponseDto
-            {
-                Message = ch.Message,
-                Type = ch.Role
-            })
+            .Select(ch => new ChatResponseDto { Message = ch.Message, Type = ch.Role })
             .ToListAsync();
-
-        return messages;
     }
-
 
     public async Task<List<AIPlanResultDto>> GetRecommendationsAsync(Guid memberId)
     {
-        var recommendations = await _context.Set<AIRecommendation>()
+        var recommendations = await _db.Set<AIRecommendation>()
             .Where(r => r.MemberId == memberId)
             .OrderByDescending(r => r.CreatedAt)
             .Take(10)
             .ToListAsync();
 
-
         return recommendations.Select(r => new AIPlanResultDto
         {
-            WorkoutPlan = TryParseJsonObject(r.WorkoutPlan),
+            WorkoutPlan     = TryParseJsonObject(r.WorkoutPlan),
             NutritionAdvice = TryParseJsonObject(r.NutritionAdvice),
-            Summary = r.Goal,
-            RawResponse = r.RawJson,
-            Intent = r.Intent,
-            CreatedAt = r.CreatedAt
+            Summary         = r.Goal,
+            RawResponse     = r.RawJson,
+            Intent          = r.Intent,
+            CreatedAt       = r.CreatedAt
         }).ToList();
     }
 
-
-
-
-    private async Task SaveChatMessageAsync(Guid memberId, string role, string message)
+    public async Task<ToolExecutionContext> BuildContextAsync(Guid userId)
     {
-        _context.Set<ChatHistory>().Add(new ChatHistory
-        {
-            Id = Guid.NewGuid(),
-            MemberId = memberId,
-            Role = role,
-            Message = message,
-            CreatedAt = DateTime.UtcNow
-        });
+        var user = await _userManager.FindByIdAsync(userId.ToString())
+            ?? throw new UnauthorizedAccessException("User not found");
 
-        await _context.SaveChangesAsync();
+        var roles = await _userManager.GetRolesAsync(user);
+        var role  = roles.FirstOrDefault() ?? AuthorizationRoles.Member;
+
+        StaffPosition? staffPosition = null;
+        Guid? branchId = null;
+
+        if (role == AuthorizationRoles.Staff)
+        {
+            var staff = await _db.Staffs
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+
+            staffPosition = staff?.Position;
+            branchId      = staff?.BranchId;
+        }
+
+        return new ToolExecutionContext
+        {
+            UserId        = userId,
+            Role          = role,
+            StaffPosition = staffPosition,
+            BranchId      = branchId,
+            Language      = "vi"
+        };
     }
 
-
-    private async Task<List<OpenAIService.ChatMessage>> GetRecentChatHistory(Guid memberId)
+    public async Task<TokenUsageStatsDto> GetTokenStatsAsync(int days)
     {
-        var messages = await _context.Set<ChatHistory>()
-            .Where(ch => ch.MemberId == memberId)
+        var since = DateTime.UtcNow.AddDays(-days);
+
+        var logs = await _db.Set<AITokenUsageLog>()
+            .Where(l => l.CreatedAt >= since)
+            .ToListAsync();
+
+        var totalPrompt     = logs.Sum(l => (long)l.PromptTokens);
+        var totalCompletion = logs.Sum(l => (long)l.CompletionTokens);
+        var totalTokens     = totalPrompt + totalCompletion;
+
+        // gpt-4o-mini pricing: $0.15/1M prompt + $0.60/1M completion
+        var costUsd = (totalPrompt * 0.15m / 1_000_000m)
+                    + (totalCompletion * 0.60m / 1_000_000m);
+
+        var byRole = logs
+            .GroupBy(l => l.UserRole)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Sum(l => (long)(l.PromptTokens + l.CompletionTokens)));
+
+        return new TokenUsageStatsDto
+        {
+            Days                  = days,
+            TotalPromptTokens     = totalPrompt,
+            TotalCompletionTokens = totalCompletion,
+            TotalTokens           = totalTokens,
+            EstimatedCostUsd      = Math.Round(costUsd, 6),
+            TokensByRole          = byRole
+        };
+    }
+
+    // ── Private helpers ──────────────────────────────────────────────────────
+
+    private string BuildSystemPrompt(ToolExecutionContext ctx)
+    {
+        var roleDesc = ctx.Role switch
+        {
+            AuthorizationRoles.Member     => "hội viên phòng gym",
+            AuthorizationRoles.Staff      => $"nhân viên ({ctx.StaffPosition?.ToString() ?? "Staff"})",
+            AuthorizationRoles.GymOwner   => "chủ phòng gym",
+            AuthorizationRoles.SuperAdmin => "quản trị viên hệ thống",
+            _                             => ctx.Role
+        };
+
+        return $"Bạn là AI Assistant của hệ thống quản lý phòng gym. " +
+               $"Người dùng hiện tại là {roleDesc}. " +
+               $"Trả lời bằng tiếng Việt, rõ ràng và hữu ích. " +
+               $"Sử dụng các công cụ (tools) khi cần lấy dữ liệu thực tế từ hệ thống. " +
+               $"Không bịa đặt số liệu — chỉ dùng dữ liệu từ tools.";
+    }
+
+    private async Task<List<(string Role, string Content)>> GetRecentChatHistoryAsync(Guid userId)
+    {
+        var raw = await _db.Set<EfChatHistory>()
+            .Where(ch => ch.UserId == userId)
             .OrderByDescending(ch => ch.CreatedAt)
             .Take(ChatHistoryLimit)
             .OrderBy(ch => ch.CreatedAt)
-            .Select(ch => new OpenAIService.ChatMessage
-            {
-                Role = ch.Role,
-                Content = ch.Message
-            })
+            .Select(ch => new { ch.Role, ch.Message })
             .ToListAsync();
 
-        return messages;
+        return raw.Select(r => (r.Role, r.Message)).ToList();
     }
 
-
-    private async Task TrySaveRecommendationAsync(Guid memberId, string intent, string aiResponse)
+    private async Task SaveChatMessageAsync(Guid userId, string userRole, string role, string message)
     {
-        string? workoutPlan = null;
-        string? nutritionAdvice = null;
-        string? goal = null;
+        _db.Set<EfChatHistory>().Add(new EfChatHistory
+        {
+            Id        = Guid.NewGuid(),
+            UserId    = userId,
+            MemberId  = userRole == AuthorizationRoles.Member ? userId : null,
+            UserRole  = userRole,
+            Role      = role,
+            Message   = message,
+            CreatedAt = DateTime.UtcNow
+        });
+        await _db.SaveChangesAsync();
+    }
 
+    private async Task SaveTokenUsageAsync(
+        Guid userId, string userRole, int promptTokens, int completionTokens)
+    {
+        if (promptTokens == 0 && completionTokens == 0) return;
+
+        try
+        {
+            var model = _config["AI:OpenAI:Model"] ?? "gpt-4o-mini";
+            _db.Set<AITokenUsageLog>().Add(new AITokenUsageLog
+            {
+                UserId           = userId,
+                UserRole         = userRole,
+                PromptTokens     = promptTokens,
+                CompletionTokens = completionTokens,
+                Model            = model,
+                CreatedAt        = DateTime.UtcNow
+            });
+            await _db.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to save AITokenUsageLog");
+        }
+    }
+
+    private async Task TrySaveFitnessPlanAsync(Guid memberId, string aiResponse)
+    {
         try
         {
             var jsonStr = ExtractJson(aiResponse);
+            if (jsonStr == null) return;
 
-            if (jsonStr != null)
+            var doc  = JsonDocument.Parse(jsonStr);
+            var root = doc.RootElement;
+
+            string? workoutPlan     = null;
+            string? nutritionAdvice = null;
+            string? goal            = null;
+
+            if (root.TryGetProperty("WorkoutPlan", out var wp))
             {
-                var doc = JsonDocument.Parse(jsonStr);
-                var root = doc.RootElement;
-
-                if (root.TryGetProperty("WorkoutPlan", out var wp))
-                {
-                    workoutPlan = wp.GetRawText();
-
-                    if (wp.TryGetProperty("Goal", out var g))
-                        goal = g.GetString();
-                }
-
-                if (root.TryGetProperty("NutritionAdvice", out var na))
-                    nutritionAdvice = na.GetRawText();
-
-                _logger.LogInformation(
-                    "AI Recommendation parsed | WorkoutPlan: {HasWP} | NutritionAdvice: {HasNA} | Goal: {Goal}",
-                    workoutPlan != null, nutritionAdvice != null, goal);
+                workoutPlan = wp.GetRawText();
+                if (wp.TryGetProperty("Goal", out var g)) goal = g.GetString();
             }
-            else
-            {
-                _logger.LogWarning("No valid JSON found in AI response. RawResponse length: {Length}", aiResponse.Length);
-            }
-        }
-        catch (JsonException ex)
-        {
-            _logger.LogWarning(ex, "Failed to parse JSON from AI response | First 200 chars: {Preview}",
-                aiResponse.Length > 200 ? aiResponse[..200] : aiResponse);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error parsing AI recommendation");
-        }
+            if (root.TryGetProperty("NutritionAdvice", out var na))
+                nutritionAdvice = na.GetRawText();
 
-
-        try
-        {
-            _context.Set<AIRecommendation>().Add(new AIRecommendation
+            _db.Set<AIRecommendation>().Add(new AIRecommendation
             {
-                Id = Guid.NewGuid(),
-                MemberId = memberId,
-                Intent = intent,
-                Goal = goal,
-                RawJson = aiResponse,
-                WorkoutPlan = workoutPlan,
+                Id              = Guid.NewGuid(),
+                MemberId        = memberId,
+                Intent          = "fitness",
+                Goal            = goal,
+                RawJson         = aiResponse,
+                WorkoutPlan     = workoutPlan,
                 NutritionAdvice = nutritionAdvice,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt       = DateTime.UtcNow
             });
-
-            await _context.SaveChangesAsync();
-
-            _logger.LogInformation("AI Recommendation saved | Member: {MemberId} | Intent: {Intent}", memberId, intent);
+            await _db.SaveChangesAsync();
+            _logger.LogInformation("Fitness plan saved | Member: {Id}", memberId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to save AI recommendation to DB");
+            _logger.LogError(ex, "Failed to save fitness plan recommendation");
         }
     }
-
 
     private static string? ExtractJson(string response)
     {
-        if (string.IsNullOrWhiteSpace(response))
-            return null;
-
+        if (string.IsNullOrWhiteSpace(response)) return null;
         var trimmed = response.Trim();
-
-
-        if (trimmed.StartsWith('{') && trimmed.EndsWith('}'))
-        {
-            return trimmed;
-        }
-
-
+        if (trimmed.StartsWith('{') && trimmed.EndsWith('}')) return trimmed;
         var fenceMatch = Regex.Match(trimmed, @"```(?:json)?\s*(\{[\s\S]*\})\s*```");
-        if (fenceMatch.Success)
-        {
-            return fenceMatch.Groups[1].Value.Trim();
-        }
-
-
+        if (fenceMatch.Success) return fenceMatch.Groups[1].Value.Trim();
         var firstBrace = trimmed.IndexOf('{');
         if (firstBrace < 0) return null;
-
         var depth = 0;
-        var lastBrace = -1;
-
         for (var i = firstBrace; i < trimmed.Length; i++)
         {
-            switch (trimmed[i])
-            {
-                case '{': depth++; break;
-                case '}':
-                    depth--;
-                    if (depth == 0)
-                    {
-                        lastBrace = i;
-                        goto done;
-                    }
-                    break;
-            }
+            if (trimmed[i] == '{') depth++;
+            else if (trimmed[i] == '}') { depth--; if (depth == 0) return trimmed[firstBrace..(i + 1)]; }
         }
-
-        done:
-        if (lastBrace > firstBrace)
-        {
-            return trimmed.Substring(firstBrace, lastBrace - firstBrace + 1);
-        }
-
         return null;
     }
 
-
     private static object? TryParseJsonObject(string? jsonString)
     {
-        if (string.IsNullOrWhiteSpace(jsonString))
-            return null;
-
-        try
-        {
-            return JsonSerializer.Deserialize<object>(jsonString);
-        }
-        catch
-        {
-            return jsonString;
-        }
+        if (string.IsNullOrWhiteSpace(jsonString)) return null;
+        try { return JsonSerializer.Deserialize<object>(jsonString); }
+        catch { return jsonString; }
     }
 }
