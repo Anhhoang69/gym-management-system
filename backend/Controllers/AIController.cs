@@ -6,6 +6,7 @@ using backend.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using static backend.Helpers.AuthorizationRoles;
 
 namespace backend.Controllers;
 
@@ -63,26 +64,39 @@ public class AIController : ControllerBase
 
     [HttpGet("tools")]
     [SwaggerOperation(
-        Summary = "Khám phá tools khả dụng (MCP-compatible)",
+        Summary = "Khám phá tools khả dụng",
         Description = "Trả về danh sách AI tools mà người dùng hiện tại được phép sử dụng, " +
                       "dựa trên role và StaffPosition. Member sẽ không thấy admin tools."
     )]
     public async Task<IActionResult> GetAvailableTools()
     {
         var userId = User.GetRequiredUserId();
-        var ctx = await _aiService.BuildContextAsync(userId);
+        var ctx    = await _aiService.BuildContextAsync(userId);
 
         // SECURITY: filtered by caller's role + staffPosition — Member never sees PayrollOverviewTool
         var tools = _toolRegistry.GetAvailableTools(ctx);
 
         var defs = tools.Select(t => new ToolDiscoveryDto
         {
-            Name = t.Name,
+            Name        = t.Name,
             Description = t.Description,
-            Schema = t.InputSchema
-            // AllowedRoles/AllowedStaffPositions intentionally NOT included
+            Schema      = t.InputSchema
+            // AllowedRoles/AllowedStaffPositions intentionally NOT exposed to callers
         });
 
         return Ok(defs);
+    }
+
+    [HttpGet("usage")]
+    [Authorize(Roles = $"{SuperAdmin},{GymOwner}")]
+    [SwaggerOperation(
+        Summary = "Thống kê token AI (SuperAdmin/GymOwner)",
+        Description = "Tổng token đã tiêu thụ, breakdown theo role người dùng, và chi phí ước tính (USD). " +
+                      "Dùng gpt-4o-mini pricing: $0.15/1M prompt tokens + $0.60/1M completion tokens."
+    )]
+    public async Task<IActionResult> GetTokenUsage([FromQuery] int days = 30)
+    {
+        var stats = await _aiService.GetTokenStatsAsync(days);
+        return Ok(stats);
     }
 }

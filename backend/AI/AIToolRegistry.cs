@@ -40,11 +40,8 @@ public class AIToolRegistry
         return available;
     }
 
-    /// <summary>
-    /// Convert available tools to ToolDefinition list for LLM request.
-    /// </summary>
-    public List<ToolDefinition> ToDefinitions(List<IAITool> tools)
-        => tools.Select(t => new ToolDefinition(t.Name, t.Description, t.InputSchema)).ToList();
+    // Note: ToDefinitions() removed — SK wraps IAITools directly via SkToolHelper.WrapAsTool().
+    // ToolDefinition was part of the old custom provider layer (deleted).
 
     /// <summary>
     /// Resolve a specific tool by name, only if the caller is authorized.

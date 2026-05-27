@@ -79,6 +79,7 @@ public class ApplicationDbContext
     public DbSet<AIRecommendation> AIRecommendations => Set<AIRecommendation>();
     public DbSet<AIContextCache> AIContextCaches => Set<AIContextCache>();
     public DbSet<AIToolExecutionLog> AIToolExecutionLogs => Set<AIToolExecutionLog>();
+    public DbSet<AITokenUsageLog> AITokenUsageLogs => Set<AITokenUsageLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

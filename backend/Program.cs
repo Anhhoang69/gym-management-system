@@ -145,18 +145,15 @@ builder.Services.AddScoped<IRequestService, RequestService>();
 builder.Services.AddHttpContextAccessor();
 
 
-// ================= HYBRID MCP ARCHITECTURE: AI SERVICES =================
+// ================= AI: SEMANTIC KERNEL =================
 
-// LLM Providers
-builder.Services.AddHttpClient<backend.AI.Providers.OpenAIProvider>();
-builder.Services.AddHttpClient<backend.AI.Providers.OllamaProvider>();
-builder.Services.AddScoped<backend.AI.Providers.LLMProviderFactory>();
+// SK Kernel Factory — creates a configured Kernel (OpenAI/Ollama) per request
+builder.Services.AddScoped<backend.AI.Kernel.KernelFactory>();
 
-// Resolve active provider via factory (switches on AI:Provider config)
-builder.Services.AddScoped<backend.AI.Core.ILLMProvider>(sp =>
-    sp.GetRequiredService<backend.AI.Providers.LLMProviderFactory>().GetProvider());
+// SK Function Invocation Filter — audits every tool call to AIToolExecutionLog
+builder.Services.AddScoped<backend.AI.Kernel.ToolInvocationFilter>();
 
-// AI Tool Registry
+// AI Tool Registry — RBAC filtering (Role + StaffPosition)
 builder.Services.AddScoped<backend.AI.AIToolRegistry>();
 builder.Services.AddScoped<GymDataService>();
 
@@ -203,7 +200,7 @@ builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Payroll.Pay
 // ── Contract Tools ────────────────────────────────────────────────────
 builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Contract.ContractLookupTool>();
 
-// AIService (orchestrator)
+// AI Service (orchestrator)
 builder.Services.AddScoped<IAIService, AIService>();
 
 

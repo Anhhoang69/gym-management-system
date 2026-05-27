@@ -6,8 +6,8 @@ namespace backend.Interfaces;
 public interface IAIService
 {
     /// <summary>
-    /// Handle a chat message from any authenticated user (Member, Staff, Admin).
-    /// Role and tools are resolved internally from userId.
+    /// Handle a chat message from any authenticated user (Member, Staff, GymOwner, SuperAdmin).
+    /// Role and available tools are resolved internally from userId.
     /// </summary>
     Task<ChatResponseDto> HandleChatAsync(Guid userId, ChatRequestDto request);
 
@@ -22,4 +22,10 @@ public interface IAIService
     /// Exposed so AIController can pass it to AIToolRegistry for /tools discovery.
     /// </summary>
     Task<ToolExecutionContext> BuildContextAsync(Guid userId);
+
+    /// <summary>
+    /// Returns token usage statistics for the past N days.
+    /// Includes estimated cost and breakdown by role. SuperAdmin/GymOwner only.
+    /// </summary>
+    Task<TokenUsageStatsDto> GetTokenStatsAsync(int days);
 }
