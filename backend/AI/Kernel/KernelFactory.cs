@@ -49,16 +49,20 @@ public class KernelFactory
     private void ConfigureOpenAI(IKernelBuilder builder)
     {
         var apiKey = _config["AI:OpenAI:ApiKey"];
-
-        if (string.IsNullOrWhiteSpace(apiKey))
+        if (string.IsNullOrWhiteSpace(apiKey) || apiKey.StartsWith("REPLACE_"))
         {
-            _logger.LogError("KernelFactory | AI:OpenAI:ApiKey is not configured");
-            throw new InvalidOperationException(
-                "OpenAI API key is missing. " +
-                "Set AI:OpenAI:ApiKey in appsettings.json or environment variable AI__OpenAI__ApiKey.");
+            apiKey = _config["OpenAI:ApiKey"];
         }
 
-        var model = _config["AI:OpenAI:Model"] ?? "gpt-4o-mini";
+        if (string.IsNullOrWhiteSpace(apiKey) || apiKey.StartsWith("REPLACE_"))
+        {
+            _logger.LogError("KernelFactory | OpenAI API Key is not configured");
+            throw new InvalidOperationException(
+                "OpenAI API key is missing. " +
+                "Set AI:OpenAI:ApiKey or OpenAI:ApiKey in appsettings.json, or environment variable OpenAI__ApiKey.");
+        }
+
+        var model = _config["AI:OpenAI:Model"] ?? _config["OpenAI:Model"] ?? "gpt-4o-mini";
 
         builder.AddOpenAIChatCompletion(modelId: model, apiKey: apiKey);
 

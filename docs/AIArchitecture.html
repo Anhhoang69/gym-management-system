@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>AIArchitecture.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="%F0%9F%8F%8B%EF%B8%8F-ai-assistant-module--t%C3%A0i-li%E1%BB%87u-ki%E1%BA%BFn-tr%C3%BAc--b%E1%BA%A3o-v%E1%BB%87">🏋️ AI Assistant Module — Tài liệu Kiến trúc &amp; Bảo vệ</h1>
+<blockquote>
+<p><strong>Phiên bản:</strong> 2.0 — Semantic Kernel Architecture<br>
+<strong>Framework:</strong> Microsoft Semantic Kernel v1.30.0 + ASP.NET Core 9<br>
+<strong>LLM:</strong> OpenAI GPT-4o-mini (mặc định) / Ollama (local)</p>
+</blockquote>
+<hr>
+<h2 id="1-t%E1%BB%95ng-quan-ki%E1%BA%BFn-tr%C3%BAc">1. Tổng quan kiến trúc</h2>
+<h3 id="11-s%C6%A1-%C4%91%E1%BB%93-ki%E1%BA%BFn-tr%C3%BAc-t%E1%BB%95ng-th%E1%BB%83">1.1 Sơ đồ kiến trúc tổng thể</h3>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart TD
+    FE["🌐 Frontend / Mobile App"]
+    AC["AIController\n(POST /api/ai/chat)"]
+    AS["AIService\n(Orchestrator)"]
+    BC["BuildContextAsync\nuserId → Role + StaffPosition + BranchId"]
+    TR["AIToolRegistry\nRBAC Filter"]
+    KF["KernelFactory\nCreate SK Kernel"]
+    SK["Semantic Kernel\nFunctionChoiceBehavior.Auto()"]
+    OAI["☁️ OpenAI API\ngpt-4o-mini"]
+    FIF["ToolInvocationFilter\nAudit log per tool call"]
+    GT["GymTools Plugin\n(RBAC-filtered IAITools)"]
+    T1["GetMembershipTool"]
+    T2["BranchRevenueTool"]
+    T3["GetLeadSummaryTool"]
+    TN["...25 tools"]
+    SVC["Existing Backend Services\n(ReportsService, LeadService, ClassService...)"]
+    DB[("🗄️ PostgreSQL Database")]
+    CH["ChatHistory persist"]
+    TUL["AITokenUsageLog persist"]
+    ATEL["AIToolExecutionLog persist"]
+
+    FE -->|"JWT Bearer\nPOST /api/ai/chat"| AC
+    AC --> AS
+    AS --> BC
+    BC -->|"Role + Position"| TR
+    TR -->|"Filtered IAITools"| KF
+    KF -->|"SK Kernel + Plugin"| SK
+    SK <-->|"Chat Completions API\n(function calling)"| OAI
+    SK --> FIF
+    SK -->|"Auto-invoke"| GT
+    GT --> T1 & T2 & T3 & TN
+    T1 & T2 & T3 & TN --> SVC
+    SVC --> DB
+    FIF --> ATEL
+    AS --> CH
+    AS --> TUL
+    CH & TUL & ATEL --> DB
+    SK -->|"Final answer"| AS
+    AS -->|"ChatResponseDto"| AC
+    AC -->|"JSON response"| FE
+
+    style SK fill:#0078d4,color:#fff
+    style OAI fill:#74aa9c,color:#fff
+    style DB fill:#336791,color:#fff
+    style FIF fill:#f0a500,color:#fff
+</div></code></pre>
+<h3 id="12-nguy%C3%AAn-t%E1%BA%AFc-thi%E1%BA%BFt-k%E1%BA%BF">1.2 Nguyên tắc thiết kế</h3>
+<table>
+<thead>
+<tr>
+<th>Nguyên tắc</th>
+<th>Hiện thực hóa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Separation of Concerns</strong></td>
+<td>IAITool = business/RBAC layer; SK = AI orchestration layer</td>
+</tr>
+<tr>
+<td><strong>Single Responsibility</strong></td>
+<td>Mỗi tool xử lý 1 domain nghiệp vụ</td>
+</tr>
+<tr>
+<td><strong>Provider Agnostic</strong></td>
+<td>KernelFactory swap OpenAI ↔ Ollama qua config, không thay code</td>
+</tr>
+<tr>
+<td><strong>Security by Design</strong></td>
+<td>RBAC filter trước khi tools được đưa vào SK Kernel</td>
+</tr>
+<tr>
+<td><strong>Observability</strong></td>
+<td>Mỗi tool call được audit log; mỗi chat ghi token usage</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="2-use-case-diagram">2. Use Case Diagram</h2>
+<pre><code class="language-mermaid"><div class="mermaid">flowchart LR
+    subgraph Actors
+        MB["👤 Member\n(Hội viên)"]
+        SA["👤 Sales\n(Nhân viên KD)"]
+        PT["👤 PT\n(Huấn luyện viên)"]
+        RE["👤 Receptionist\n(Lễ tân)"]
+        BA["👤 BranchAdmin\n(Quản lý CN)"]
+        GO["👤 GymOwner\n(Chủ phòng gym)"]
+        SU["👤 SuperAdmin\n(Quản trị hệ thống)"]
+    end
+
+    subgraph AI_System["AI Assistant System"]
+        UC1["💬 Chat với AI Assistant"]
+        UC2["📋 Xem lịch sử chat"]
+        UC3["🔍 Khám phá tools khả dụng"]
+        UC4["📊 Xem thống kê token usage"]
+        UC5["💪 Xem thông tin gói tập"]
+        UC6["📅 Xem/đặt lịch tập"]
+        UC7["🏃 Nhận kế hoạch tập & dinh dưỡng"]
+        UC8["📈 Xem leads & phễu bán hàng"]
+        UC9["📑 Tra cứu hợp đồng"]
+        UC10["🏃 Xem danh sách lớp học / học viên"]
+        UC11["📋 Xem lịch dạy của PT"]
+        UC12["💰 Xem doanh thu chi nhánh"]
+        UC13["📊 Xem dashboard KPI toàn hệ thống"]
+        UC14["💵 Xem bảng lương nhân viên"]
+    end
+
+    MB --> UC1 & UC2 & UC3 & UC5 & UC6 & UC7
+    SA --> UC1 & UC2 & UC3 & UC8 & UC9
+    PT --> UC1 & UC2 & UC3 & UC10 & UC11
+    RE --> UC1 & UC2 & UC3 & UC6 & UC9
+    BA --> UC1 & UC2 & UC3 & UC8 & UC9 & UC10 & UC11 & UC12 & UC14
+    GO --> UC1 & UC2 & UC3 & UC4 & UC12 & UC13 & UC14
+    SU --> UC1 & UC2 & UC3 & UC4 & UC12 & UC13 & UC14
+</div></code></pre>
+<hr>
+<h2 id="3-%C4%91%E1%BA%B7c-t%E1%BA%A3-use-case">3. Đặc tả Use Case</h2>
+<h3 id="uc1--chat-v%E1%BB%9Bi-ai-assistant">UC1 — Chat với AI Assistant</h3>
+<table>
+<thead>
+<tr>
+<th>Mục</th>
+<th>Nội dung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tên</strong></td>
+<td>Chat với AI Assistant</td>
+</tr>
+<tr>
+<td><strong>Actor</strong></td>
+<td>Member, Staff (Sales/PT/Receptionist/BranchAdmin), GymOwner, SuperAdmin</td>
+</tr>
+<tr>
+<td><strong>Mô tả</strong></td>
+<td>Người dùng gửi tin nhắn tự nhiên; AI tự động gọi tools phù hợp để lấy dữ liệu thực và trả lời</td>
+</tr>
+<tr>
+<td><strong>Điều kiện tiên quyết</strong></td>
+<td>Đã đăng nhập, có JWT token hợp lệ</td>
+</tr>
+<tr>
+<td><strong>Luồng chính</strong></td>
+<td>1. Người dùng gửi <code>POST /api/ai/chat</code> với <code>{ message }</code> <br> 2. Hệ thống xác định Role + StaffPosition từ JWT <br> 3. AI lọc tools theo quyền <br> 4. LLM phân tích intent, chọn tool phù hợp <br> 5. SK tự động gọi tool, nhận kết quả <br> 6. LLM tổng hợp câu trả lời bằng tiếng Việt <br> 7. Trả về <code>{ message, type }</code></td>
+</tr>
+<tr>
+<td><strong>Luồng ngoại lệ</strong></td>
+<td>API Key lỗi → trả về thông báo lỗi cấu hình <br> Tool lỗi → SK tiếp tục với thông báo lỗi, không crash</td>
+</tr>
+<tr>
+<td><strong>Hậu điều kiện</strong></td>
+<td>Chat message lưu vào <code>ChatHistory</code>; token usage lưu vào <code>AITokenUsageLog</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="uc3--kh%C3%A1m-ph%C3%A1-tools-kh%E1%BA%A3-d%E1%BB%A5ng">UC3 — Khám phá tools khả dụng</h3>
+<table>
+<thead>
+<tr>
+<th>Mục</th>
+<th>Nội dung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tên</strong></td>
+<td>Tool Discovery</td>
+</tr>
+<tr>
+<td><strong>Actor</strong></td>
+<td>Mọi role đã đăng nhập</td>
+</tr>
+<tr>
+<td><strong>Mô tả</strong></td>
+<td>Trả về danh sách tools mà người dùng được phép dùng, kèm JSON Schema tham số</td>
+</tr>
+<tr>
+<td><strong>Bảo mật</strong></td>
+<td>Member <strong>không thấy</strong> <code>get_branch_revenue</code>, <code>get_payroll_overview</code> — filtered hoàn toàn phía server</td>
+</tr>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td><code>GET /api/ai/tools</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="uc4--xem-th%E1%BB%91ng-k%C3%AA-token-usage">UC4 — Xem thống kê token usage</h3>
+<table>
+<thead>
+<tr>
+<th>Mục</th>
+<th>Nội dung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tên</strong></td>
+<td>Token Usage Statistics</td>
+</tr>
+<tr>
+<td><strong>Actor</strong></td>
+<td>SuperAdmin, GymOwner</td>
+</tr>
+<tr>
+<td><strong>Mô tả</strong></td>
+<td>Tổng token đã dùng trong N ngày, breakdown theo Role, ước tính chi phí USD</td>
+</tr>
+<tr>
+<td><strong>Endpoint</strong></td>
+<td><code>GET /api/ai/usage?days=30</code></td>
+</tr>
+<tr>
+<td><strong>Response</strong></td>
+<td><code>{ totalPromptTokens, totalCompletionTokens, estimatedCostUsd, tokensByRole }</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="uc7--nh%E1%BA%ADn-k%E1%BA%BF-ho%E1%BA%A1ch-t%E1%BA%ADp--dinh-d%C6%B0%E1%BB%A1ng-member">UC7 — Nhận kế hoạch tập &amp; dinh dưỡng (Member)</h3>
+<table>
+<thead>
+<tr>
+<th>Mục</th>
+<th>Nội dung</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Tên</strong></td>
+<td>Generate Fitness Plan</td>
+</tr>
+<tr>
+<td><strong>Actor</strong></td>
+<td>Member</td>
+</tr>
+<tr>
+<td><strong>Mô tả</strong></td>
+<td>AI tạo kế hoạch tập cá nhân hóa dựa trên lịch sử, mục tiêu, gói tập</td>
+</tr>
+<tr>
+<td><strong>Tool</strong></td>
+<td><code>generate_fitness_plan</code></td>
+</tr>
+<tr>
+<td><strong>Hậu điều kiện</strong></td>
+<td>Kế hoạch lưu vào <code>AIRecommendation</code>; truy xuất qua <code>GET /api/ai/recommendations</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="4-sequence-diagram--chat-c%C3%B3-tool-call">4. Sequence Diagram — Chat có Tool Call</h2>
+<pre><code class="language-mermaid"><div class="mermaid">sequenceDiagram
+    participant U as 👤 Người dùng
+    participant AC as AIController
+    participant AS as AIService
+    participant TR as AIToolRegistry
+    participant SK as Semantic Kernel
+    participant OAI as OpenAI API
+    participant TIF as ToolInvocationFilter
+    participant T as IAITool.ExecuteAsync
+    participant SVC as Backend Service
+    participant DB as Database
+
+    U->>AC: POST /api/ai/chat {message: "Doanh thu tháng này?"}
+    Note over AC: Validate JWT, extract userId
+    AC->>AS: HandleChatAsync(userId, request)
+
+    AS->>DB: Lookup userId → Role=Staff, Position=BranchAdmin
+    AS->>TR: GetAvailableTools(ctx)
+    Note over TR: RBAC filter: BranchAdmin → get_branch_revenue ✓<br/>get_payroll_overview ✓, get_membership_info ✗ (Member only)
+    TR-->>AS: List<IAITool> (filtered)
+
+    AS->>SK: Build Kernel + GymTools plugin (wrapped tools)
+    AS->>SK: Load chat history từ DB (last 20 messages)
+    AS->>SK: GetChatMessageContentAsync(settings=Auto)
+
+    SK->>OAI: Chat Completions API (functions: get_branch_revenue, ...)
+    OAI-->>SK: finish_reason: "tool_calls"<br/>tool_call: get_branch_revenue({month:5, year:2026})
+
+    SK->>TIF: OnFunctionInvocationAsync (intercept)
+    TIF->>T: Wrapped KernelFunction → IAITool.ExecuteAsync(args, ctx)
+    T->>SVC: ReportsService.GetRevenueReportAsync(query, userId)
+    SVC->>DB: SELECT doanh thu tháng 5/2026
+    DB-->>SVC: RevenueReportDto
+    SVC-->>T: ToolResult.Ok("💰 Doanh thu 5/2026: 120,000,000 VNĐ...", report)
+    T-->>SK: "💰 Doanh thu 5/2026: 120,000,000 VNĐ..."
+    TIF->>DB: INSERT AIToolExecutionLog (tool=get_branch_revenue, success=true, 234ms)
+
+    SK->>OAI: Chat Completions API (tool result appended)
+    OAI-->>SK: finish_reason: "stop"<br/>content: "Doanh thu tháng 5/2026 của chi nhánh đạt 120 triệu VNĐ..."
+
+    SK-->>AS: ChatMessageContent (finalText + Usage metadata)
+    AS->>DB: INSERT ChatHistory (user message + assistant response)
+    AS->>DB: INSERT AITokenUsageLog (847 prompt + 203 completion tokens)
+    AS-->>AC: ChatResponseDto { message, type="text" }
+    AC-->>U: 200 OK { data: { message: "Doanh thu tháng 5..." } }
+</div></code></pre>
+<hr>
+<h2 id="5-b%E1%BA%A3ng-ph%C3%A2n-quy%E1%BB%81n-tools-rbac-matrix">5. Bảng phân quyền Tools (RBAC Matrix)</h2>
+<h3 id="roles--positions">Roles &amp; Positions</h3>
+<pre class="hljs"><code><div>Application Roles (ASP.NET Identity):
+  SuperAdmin │ GymOwner │ Staff │ Member
+
+StaffPosition (chỉ áp dụng khi Role = Staff):
+  BranchAdmin │ Sales │ PT │ HeadPT │ Receptionist
+</div></code></pre>
+<h3 id="tool-%E2%86%92-roleposition-mapping">Tool → Role/Position Mapping</h3>
+<table>
+<thead>
+<tr>
+<th>Tool Name</th>
+<th style="text-align:center">Member</th>
+<th style="text-align:center">Sales</th>
+<th style="text-align:center">PT</th>
+<th style="text-align:center">HeadPT</th>
+<th style="text-align:center">Receptionist</th>
+<th style="text-align:center">BranchAdmin</th>
+<th style="text-align:center">GymOwner</th>
+<th style="text-align:center">SuperAdmin</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get_membership_info</code></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>get_available_packages</code></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>get_my_schedule</code></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>book_class</code></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>cancel_booking</code></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>get_attendance_summary</code></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>generate_fitness_plan</code></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>ask_fitness_coach</code></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>get_lead_summary</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>get_lead_pipeline</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>get_sales_funnel</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>contract_lookup</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>get_class_roster</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>get_member_training_overview</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>get_my_teaching_schedule</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+</tr>
+<tr>
+<td><code>get_pt_performance</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>checkin_lookup</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>booking_lookup</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>member_lookup</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>get_checkin_report</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>get_branch_revenue</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>get_branch_payroll</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>get_branch_dashboard</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>get_global_revenue</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>get_system_dashboard</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>get_payroll_overview</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+<tr>
+<td><code>get_global_sales_funnel</code></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center"></td>
+<td style="text-align:center">✅</td>
+<td style="text-align:center">✅</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="6-qa-ph%E1%BA%A3n-bi%E1%BB%87n">6. Q&amp;A Phản biện</h2>
+<h3 id="%E2%9D%93-%22t%E1%BA%A1i-sao-d%C3%B9ng-semantic-kernel-thay-v%C3%AC-t%E1%BB%B1-vi%E1%BA%BFt%22">❓ &quot;Tại sao dùng Semantic Kernel thay vì tự viết?&quot;</h3>
+<blockquote>
+<p>Semantic Kernel là enterprise AI orchestration framework của Microsoft, được dùng trong production bởi các công ty lớn. Nó cung cấp:</p>
+<ul>
+<li><strong>Auto function calling loop</strong> — tự động xử lý vòng lặp LLM ↔ tool mà không cần viết thủ công</li>
+<li><strong>IFunctionInvocationFilter</strong> — hook để audit mọi tool call, tích hợp observability</li>
+<li><strong>Provider abstraction</strong> — swap OpenAI sang Azure OpenAI hay Ollama bằng 1 dòng config</li>
+<li><strong>Production-tested</strong> — không phải reinvent the wheel với HTTP client, JSON parsing, parallel tool calls</li>
+</ul>
+<p>Tự viết sẽ tạo ra technical debt và bug tiềm ẩn (ví dụ: sai format assistant message khi có tool_calls).</p>
+</blockquote>
+<hr>
+<h3 id="%E2%9D%93-%22n%E1%BA%BFu-%C4%91%C3%A3-d%C3%B9ng-semantic-kernel-th%C3%AC-iaitool-%C4%91%E1%BB%83-l%C3%A0m-g%C3%AC%22">❓ &quot;Nếu đã dùng Semantic Kernel thì IAITool để làm gì?&quot;</h3>
+<blockquote>
+<p>Đây là <strong>Separation of Concerns</strong> có chủ đích:</p>
+<ul>
+<li>
+<p><strong>IAITool</strong> = business/RBAC layer — nơi đặt logic &quot;ai được làm gì&quot;</p>
+<ul>
+<li><code>AllowedRoles</code> → SuperAdmin, GymOwner, Staff, Member</li>
+<li><code>AllowedStaffPositions</code> → BranchAdmin, Sales, PT, HeadPT, Receptionist</li>
+<li><code>ExecuteAsync</code> → gọi existing backend services (không duplicate logic)</li>
+</ul>
+</li>
+<li>
+<p><strong>Semantic Kernel</strong> = AI orchestration layer — nơi đặt logic &quot;LLM gọi tool như thế nào&quot;</p>
+</li>
+</ul>
+<p>SK không có khái niệm <code>StaffPosition</code>-based filtering. Nếu bỏ <code>IAITool</code>, phải nhúng RBAC logic vào SK internals — vi phạm Single Responsibility và rất khó test.</p>
+<p><code>SkToolHelper.WrapAsTool()</code> là bridge layer: convert IAITool → SK KernelFunction mà không thay đổi business logic.</p>
+</blockquote>
+<hr>
+<h3 id="%E2%9D%93-%22t%E1%BA%A1i-sao-d%C3%B9ng-functionchoicebehaviorauto-thay-v%C3%AC-ch%E1%BB%89-%C4%91%E1%BB%8Bnh-tool-c%E1%BB%A5-th%E1%BB%83%22">❓ &quot;Tại sao dùng <code>FunctionChoiceBehavior.Auto()</code> thay vì chỉ định tool cụ thể?&quot;</h3>
+<blockquote>
+<p><code>Auto()</code> cho phép LLM tự quyết định khi nào cần gọi tool và gọi tool nào. Đây là chuẩn của modern AI agent:</p>
+<ul>
+<li>LLM đủ thông minh để không gọi tool khi không cần (ví dụ: câu hỏi chào hỏi)</li>
+<li>LLM có thể gọi nhiều tools song song trong 1 lượt (parallel function calling)</li>
+<li>Không cần hardcode &quot;câu hỏi về doanh thu → gọi tool X&quot; như intent routing</li>
+</ul>
+</blockquote>
+<hr>
+<h3 id="%E2%9D%93-%22chi-ph%C3%AD-v%E1%BA%ADn-h%C3%A0nh-ai-module-nh%C6%B0-th%E1%BA%BF-n%C3%A0o%22">❓ &quot;Chi phí vận hành AI module như thế nào?&quot;</h3>
+<blockquote>
+<p>Có thể xem real-time tại <code>GET /api/ai/usage?days=30</code>.</p>
+<p>Ước tính với <strong>gpt-4o-mini</strong>:</p>
+<ul>
+<li>1 chat turn trung bình: ~800 prompt tokens + 200 completion tokens = 1,000 tokens</li>
+<li>Chi phí: $0.15/1M prompt + $0.60/1M completion ≈ <strong>$0.00024/chat</strong></li>
+<li>1,000 chats/tháng ≈ <strong>$0.24/tháng</strong> — cực kỳ rẻ so với tính năng mang lại</li>
+</ul>
+</blockquote>
+<hr>
+<h3 id="%E2%9D%93-%22security--l%C3%A0m-th%E1%BA%BF-n%C3%A0o-%C4%91%E1%BA%A3m-b%E1%BA%A3o-member-kh%C3%B4ng-d%C3%B9ng-%C4%91%C6%B0%E1%BB%A3c-admin-tools%22">❓ &quot;Security — làm thế nào đảm bảo Member không dùng được admin tools?&quot;</h3>
+<blockquote>
+<p>Ba lớp bảo vệ:</p>
+<ol>
+<li>
+<p><strong>RBAC filter trước SK</strong> — <code>AIToolRegistry.GetAvailableTools(ctx)</code> chỉ trả về tools phù hợp role. Member không bao giờ nhận được <code>get_branch_revenue</code> trong danh sách → LLM không biết tool đó tồn tại → không thể invoke</p>
+</li>
+<li>
+<p><strong>ResolveAuthorized trong Registry</strong> — nếu LLM cố tình gọi tool không trong danh sách, registry trả về null và log UNAUTHORIZED</p>
+</li>
+<li>
+<p><strong>JWT trên mọi request</strong> — không có token hợp lệ = 401 Unauthorized từ middleware, không đến được AIService</p>
+</li>
+</ol>
+</blockquote>
+<hr>
+<h3 id="%E2%9D%93-%22h%E1%BB%87-th%E1%BB%91ng-c%C3%B3-th%E1%BB%83-m%E1%BB%9F-r%E1%BB%99ng-th%C3%AAm-llm-provider-kh%C3%A1c-kh%C3%B4ng%22">❓ &quot;Hệ thống có thể mở rộng thêm LLM Provider khác không?&quot;</h3>
+<blockquote>
+<p>Có. Chỉ cần thay đổi config <code>AI:Provider</code>:</p>
+<ul>
+<li><code>OpenAI</code> → OpenAI API (default)</li>
+<li><code>Ollama</code> → Ollama local server (OpenAI-compatible API)</li>
+<li>Thêm provider mới (Azure OpenAI, Anthropic) → thêm case trong <code>KernelFactory.Create()</code>, không đụng đến tools hay business logic</li>
+</ul>
+</blockquote>
+<hr>
+<h3 id="%E2%9D%93-%22t%E1%BA%A1i-sao-kh%C3%B4ng-d%C3%B9ng-semantic-kernel-plugins-v%E1%BB%9Bi-kernelfunction-attribute-tr%E1%BB%B1c-ti%E1%BA%BFp%22">❓ &quot;Tại sao không dùng Semantic Kernel Plugins với [KernelFunction] attribute trực tiếp?&quot;</h3>
+<blockquote>
+<p><strong>Hybrid Wrapper Pattern</strong> được chọn vì:</p>
+<ol>
+<li>
+<p><code>[KernelFunction]</code> attribute gắn coupling SK vào business layer — nếu sau này đổi framework, phải rewrite toàn bộ tools</p>
+</li>
+<li>
+<p>RBAC filtering (<code>AllowedRoles</code>, <code>AllowedStaffPositions</code>) không thể express bằng <code>[KernelFunction]</code> — cần metadata riêng trên <code>IAITool</code></p>
+</li>
+<li>
+<p><code>SkToolHelper.WrapAsTool()</code> là thin bridge — 30 dòng code, convert IAITool → KernelFunction on-the-fly. Tools hoàn toàn independent với SK</p>
+</li>
+</ol>
+</blockquote>
+<hr>
+<h2 id="7-k%E1%BA%BFt-lu%E1%BA%ADn-ki%E1%BA%BFn-tr%C3%BAc">7. Kết luận kiến trúc</h2>
+<pre class="hljs"><code><div>Kế thừa từ existing backend (không duplicate):
+  ✅ ReportsService, LeadService, ClassService, AttendanceService, PayrollService
+  ✅ Repository pattern, EF Core, Identity
+
+Thêm AI layer (clean architecture):
+  ✅ IAITool → domain-organized, RBAC-aware, testable independently
+  ✅ AIToolRegistry → centralized authorization, single responsibility
+  ✅ Semantic Kernel → enterprise AI orchestration, provider agnostic
+  ✅ ToolInvocationFilter → observability, audit trail
+  ✅ AITokenUsageLog → cost monitoring, production readiness
+</div></code></pre>
+
+</body>
+</html>
