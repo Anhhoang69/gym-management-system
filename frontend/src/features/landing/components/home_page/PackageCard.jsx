@@ -8,6 +8,7 @@ export default function PackageCard({
     description = "Mô tả gói tập.",
     features = [],
     highlight = false,
+    isCurrentPackage = false,
     onRegister,
 }) {
     return (
@@ -76,26 +77,42 @@ export default function PackageCard({
                 </div>
 
                 {/* CTA */}
-                <button style={{ borderRadius: '50px' }}
-                    onClick={onRegister}
-                    className="
-                        group
+                {isCurrentPackage ? (
+                    <div className="
                         mt-2
                         w-full
                         flex items-center justify-center gap-2
                         rounded-full
-                        border border-white
+                        border border-green-500/50
+                        bg-green-500/10
                         py-1.5
-                        text-sm font-medium
-                        transition
-                        cursor-pointer
-                        hover:bg-white
-                        hover:text-black
+                        text-sm font-bold text-green-400
                     "
-                >
-                    Đăng Ký Ngay
-                    <FaArrowRight className="transition-transform group-hover:translate-x-1" />
-                </button>
+                    >
+                        Đang sử dụng
+                    </div>
+                ) : (
+                    <button style={{ borderRadius: '50px' }}
+                        onClick={onRegister}
+                        className="
+                            group
+                            mt-2
+                            w-full
+                            flex items-center justify-center gap-2
+                            rounded-full
+                            border border-white
+                            py-1.5
+                            text-sm font-medium
+                            transition
+                            cursor-pointer
+                            hover:bg-white
+                            hover:text-black
+                        "
+                    >
+                        Đăng Ký Ngay
+                        <FaArrowRight className="transition-transform group-hover:translate-x-1" />
+                    </button>
+                )}
             </div>
         </div>
     );

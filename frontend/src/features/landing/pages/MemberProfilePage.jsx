@@ -18,7 +18,8 @@ export default function MemberProfilePage() {
     joinDate: "N/A",
     gender: "Male",
     birthday: "",
-    address: ""
+    address: "",
+    memberInfo: null
   })
 
   const [passwordForm, setPasswordForm] = useState({
@@ -117,7 +118,8 @@ export default function MemberProfilePage() {
           address: data.address || "",
           role: "Member",
           avatarUrl: data.avatarUrl || "https://i.pravatar.cc/150",
-          joinDate: data.createdAt ? new Date(data.createdAt).toLocaleDateString('vi-VN') : "N/A"
+          joinDate: data.createdAt ? new Date(data.createdAt).toLocaleDateString('vi-VN') : "N/A",
+          memberInfo: data.memberInfo || null
         };
         setUser(profileData);
         setIs2FAEnabled(data.twoFactorEnabled);
@@ -365,6 +367,7 @@ export default function MemberProfilePage() {
           {/* Tabs */}
           <div className="flex gap-2 border-b border-[var(--border)] pb-2 overflow-x-auto custom-scrollbar flex-shrink-0">
             <button onClick={() => setActiveTab('general')} className={`px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 transition-colors ${activeTab === 'general' ? 'border-[var(--brand)] text-[var(--brand)]' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>Thông tin chung</button>
+            <button onClick={() => setActiveTab('membership')} className={`px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 transition-colors ${activeTab === 'membership' ? 'border-[var(--brand)] text-[var(--brand)]' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>Thẻ & Gói tập</button>
             <button onClick={() => setActiveTab('security')} className={`px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 transition-colors ${activeTab === 'security' ? 'border-[var(--brand)] text-[var(--brand)]' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>Bảo mật</button>
             <button onClick={() => setActiveTab('sessions')} className={`px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 transition-colors ${activeTab === 'sessions' ? 'border-[var(--brand)] text-[var(--brand)]' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>Phiên đăng nhập</button>
             <button onClick={() => setActiveTab('requests')} className={`px-4 py-2 text-sm font-semibold rounded-t-lg border-b-2 transition-colors ${activeTab === 'requests' ? 'border-[var(--brand)] text-[var(--brand)]' : 'border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}>Yêu cầu của tôi</button>
@@ -372,6 +375,117 @@ export default function MemberProfilePage() {
           </div>
 
           <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+
+            {/* MEMBERSHIP TAB */}
+            {activeTab === 'membership' && (
+              <div className="flex flex-col xl:flex-row gap-6">
+                {/* Gym Card representation */}
+                <div className="flex-1 bg-[var(--surface)] rounded-xl shadow-sm border border-[var(--border)] p-6 flex flex-col justify-between relative overflow-hidden min-h-[220px] max-w-[400px]">
+                  {/* Card background/gradient decoration */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/10 rounded-full blur-2xl -mr-16 -mt-16"></div>
+                  <div className="absolute bottom-0 left-0 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl -ml-16 -mb-16"></div>
+                  
+                  <div className="flex justify-between items-start z-10">
+                    <div>
+                      <h4 className="text-lg font-bold text-[var(--text-primary)] tracking-wide">EnerGym</h4>
+                      <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider">Thẻ Thành Viên / Member Card</p>
+                    </div>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                      user.memberInfo?.cardStatus === 'Active' 
+                        ? 'bg-green-100 text-green-700 dark:bg-green-950/35 dark:text-green-400' 
+                        : 'bg-red-100 text-red-700 dark:bg-red-950/35 dark:text-red-400'
+                    }`}>
+                      {user.memberInfo?.cardStatus === 'Active' ? 'Đang hoạt động' : 'Khóa / Chưa có'}
+                    </span>
+                  </div>
+
+                  <div className="mt-6 z-10 text-left">
+                    <div className="text-[10px] text-[var(--text-secondary)] uppercase">Mã thẻ / Card Code</div>
+                    <div className="text-xl font-mono font-bold text-[var(--text-primary)] tracking-wider mt-0.5">
+                      {user.memberInfo?.cardCode || 'Chưa cấp thẻ'}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-end mt-6 z-10 text-left">
+                    <div>
+                      <div className="text-[9px] text-[var(--text-secondary)] uppercase">Chủ thẻ / Card Holder</div>
+                      <div className="text-sm font-semibold text-[var(--text-primary)] uppercase">{user.fullName}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[9px] text-[var(--text-secondary)] uppercase">Hạn dùng / Expires</div>
+                      <div className="text-sm font-semibold text-[var(--text-primary)]">
+                        {user.memberInfo?.cardExpireDate ? new Date(user.memberInfo.cardExpireDate).toLocaleDateString('vi-VN') : 'N/A'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contract details */}
+                <div className="flex-[1.5] bg-[var(--surface)] rounded-xl shadow-sm border border-[var(--border)] p-6">
+                  <h5 className="text-sm font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                    <FaCheckCircle className="text-yellow-500" />
+                    Hợp đồng gói tập hiện tại
+                  </h5>
+                  
+                  {user.memberInfo?.activeContract ? (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="text-left">
+                          <div className="text-xs text-[var(--text-secondary)]">Gói tập</div>
+                          <div className="text-base font-bold text-[var(--text-primary)] mt-0.5">
+                            Gói {user.memberInfo.activeContract.packageName}
+                          </div>
+                        </div>
+                        <div className="text-left">
+                          <div className="text-xs text-[var(--text-secondary)]">Trạng thái</div>
+                          <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                            user.memberInfo.activeContract.status === 'Active' 
+                              ? 'bg-green-100 text-green-700 dark:bg-green-950/35 dark:text-green-400' 
+                              : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-950/35 dark:text-yellow-400'
+                          }`}>
+                            {user.memberInfo.activeContract.status === 'Active' ? 'Kích hoạt' : user.memberInfo.activeContract.status}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 border-t border-[var(--border)] pt-3">
+                        <div className="text-left">
+                          <div className="text-xs text-[var(--text-secondary)]">Ngày bắt đầu</div>
+                          <div className="text-sm font-semibold text-[var(--text-primary)] mt-0.5">
+                            {new Date(user.memberInfo.activeContract.startDate).toLocaleDateString('vi-VN')}
+                          </div>
+                        </div>
+                        <div className="text-left">
+                          <div className="text-xs text-[var(--text-secondary)]">Ngày kết thúc</div>
+                          <div className="text-sm font-semibold text-[var(--text-primary)] mt-0.5">
+                            {new Date(user.memberInfo.activeContract.endDate).toLocaleDateString('vi-VN')}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 border-t border-[var(--border)] pt-3">
+                        <div className="text-left">
+                          <div className="text-xs text-[var(--text-secondary)]">Buổi tập PT còn lại</div>
+                          <div className="text-sm font-bold text-yellow-500 mt-0.5">
+                            {user.memberInfo.activeContract.remainingPrivateSessions} buổi
+                          </div>
+                        </div>
+                        <div className="text-left">
+                          <div className="text-xs text-[var(--text-secondary)]">Buổi tập nhóm còn lại</div>
+                          <div className="text-sm font-bold text-yellow-500 mt-0.5">
+                            {user.memberInfo.activeContract.remainingGroupSessions} buổi
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-[var(--text-secondary)]">
+                      Bạn hiện không có hợp đồng gói tập nào đang kích hoạt.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* GENERAL TAB */}
             {activeTab === 'general' && (

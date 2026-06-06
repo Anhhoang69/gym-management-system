@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import PackageCard from '../home_page/PackageCard';
 import RegisterModal from '../RegisterModal';
 import { getPublicPackages } from '../../services/publicService';
+import { getMyProfile } from '../../services/memberService';
 
 import pkg1 from "../../../../assets/package-1.webp";
 import pkg2 from "../../../../assets/package-2.webp";
@@ -12,20 +13,34 @@ export default function PricingSection() {
   const [loading, setLoading] = useState(true);
   const [registerModalVisible, setRegisterModalVisible] = useState(false);
   const [selectedPackageId, setSelectedPackageId] = useState("");
+  const [activeContractPackage, setActiveContractPackage] = useState(null);
   const defaultImages = [pkg1, pkg2, pkg3];
 
   useEffect(() => {
-    const fetchPackages = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getPublicPackages();
-        setPackages(data || []);
+        setLoading(true);
+        const pkgs = await getPublicPackages();
+        setPackages(pkgs || []);
+
+        const token = localStorage.getItem("token");
+        if (token) {
+          try {
+            const meData = await getMyProfile();
+            if (meData?.memberInfo?.activeContract?.status === "Active") {
+              setActiveContractPackage(meData.memberInfo.activeContract.packageName);
+            }
+          } catch (profileErr) {
+            console.error("Failed to fetch user profile in pricing", profileErr);
+          }
+        }
       } catch (error) {
         console.error("Failed to fetch packages", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchPackages();
+    fetchData();
   }, []);
 
   const handleRegisterClick = (packageId) => {
@@ -74,6 +89,7 @@ export default function PricingSection() {
                   description={pkg.description}
                   features={pkg.features?.map(f => ({ label: f, available: true })) || []}
                   highlight={index === 1 || pkg.tier === 'Premium' || pkg.tier === 'Elite'}
+                  isCurrentPackage={activeContractPackage === pkg.name}
                   onRegister={() => handleRegisterClick(pkg.packageId)}
                 />
               );

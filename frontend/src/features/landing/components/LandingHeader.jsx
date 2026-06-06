@@ -19,6 +19,7 @@ import {
   readNotification,
   readAllNotifications
 } from '../../../shared/services/notificationService';
+import { getMyProfile } from '../services/memberService';
 
 import LogoWhite from '../../../assets/LogoWhiteText.svg';
 import LogoBlack from '../../../assets/LogoBlackText.svg';
@@ -50,11 +51,28 @@ export default function LandingHeader() {
   }, [location.pathname]);
 
   // LOAD USER
-  const loadUser = () => {
+  const loadUser = async () => {
     const stored = localStorage.getItem('user');
 
     if (stored) {
-      setUser(JSON.parse(stored));
+      const parsed = JSON.parse(stored);
+      setUser(parsed);
+
+      // Background sync profile details
+      try {
+        const freshProfile = await getMyProfile();
+        if (freshProfile) {
+          const updated = {
+            ...parsed,
+            fullName: freshProfile.fullName || freshProfile.email?.split('@')[0],
+            avatarUrl: freshProfile.avatarUrl
+          };
+          localStorage.setItem('user', JSON.stringify(updated));
+          setUser(updated);
+        }
+      } catch (e) {
+        console.error("Failed to sync member profile details in header", e);
+      }
     } else {
       setUser(null);
     }
@@ -196,7 +214,7 @@ export default function LandingHeader() {
     },
 
     {
-      name: 'Lịch tập',
+      name: 'Lớp học',
       path: '/classes',
       memberOnly: true
     },

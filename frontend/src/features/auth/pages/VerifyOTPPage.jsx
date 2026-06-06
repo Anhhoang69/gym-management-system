@@ -88,6 +88,18 @@ function VerifyOTPPage() {
         navigate("/owner")
       }
       else if (roles.includes("MEMBER")) {
+        try {
+          const meRes = await api.get("/api/me")
+          const meData = meRes.data.data || {}
+          user = {
+            ...user,
+            fullName: meData.fullName || "",
+            avatarUrl: meData.avatarUrl || ""
+          }
+          localStorage.setItem("user", JSON.stringify(user))
+        } catch (e) {
+          console.error("Failed to verify member profile details", e)
+        }
         navigate("/")
       }
       else {
