@@ -4,6 +4,7 @@ import {
     CNavItem
 } from "@coreui/react"
 import { NavLink } from "react-router-dom"
+import { Sparkles } from "lucide-react"
 
 function OwnerSidebar() {
     return (
@@ -18,6 +19,13 @@ function OwnerSidebar() {
         >
             {/* Menu */}
             <CSidebarNav>
+                <CNavItem>
+                    <NavLink to="/ai" className="nav-link flex items-center gap-2">
+                        <Sparkles size={16} className="text-yellow-500 flex-shrink-0" />
+                        <span>Trợ Lý AI</span>
+                    </NavLink>
+                </CNavItem>
+
                 <CNavItem>
                     <NavLink to="/owner" className="nav-link" end>
                         Tổng Quan (Dashboard)
@@ -53,6 +61,7 @@ function OwnerSidebar() {
                         Hồ Sơ Cá Nhân
                     </NavLink>
                 </CNavItem>
+
             </CSidebarNav>
         </CSidebar>
     )

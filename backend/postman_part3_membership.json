@@ -1,0 +1,475 @@
+{
+  "info": {
+    "_postman_id": "gym-mgmt-v2-part3",
+    "name": "Gym Management System API – Part 3 (Lead + Member + Contract + Invoice + Payment)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "10. Lead Management",
+      "item": [
+        {
+          "name": "Get Leads List (paginated)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has items', () => pm.expect(j.data.items).to.be.an('array'));",
+            "pm.test('Has total', () => pm.expect(j.data.totalItems || j.data.total).to.be.a('number'));",
+            "pm.sendRequest({",
+            "  url: pm.environment.get('baseUrl') + '/api/register/packages',",
+            "  method: 'GET'",
+            "}, (err, res) => {",
+            "  if (!err && res.code === 200) {",
+            "    const packages = res.json().data.items || res.json().data;",
+            "    const p = packages.find(x => x.name.includes('Classic') || x.name.includes('Basic') || x.name.includes('Gói') || x.name.includes('Premium'));",
+            "    if (p) {",
+            "      pm.environment.set('packageId', p.packageId);",
+            "      if (p.pricings && p.pricings.length > 0) {",
+            "        pm.environment.set('pricingId', p.pricings[0].packagePricingId);",
+            "      }",
+            "    }",
+            "  }",
+            "});"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/leads?page=1&pageSize=10"
+          }
+        },
+        {
+          "name": "Get Lead Dashboard Stats",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Stats object returned', () => pm.expect(pm.response.json().data).to.be.an('object'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/leads/stats"
+          }
+        },
+        {
+          "name": "Create Lead (dynamic phone)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const randomDigits = Math.floor(10000000 + Math.random() * 90000000);",
+                  "pm.environment.set('randomPhone', '0' + randomDigits);",
+                  "pm.environment.set('randomEmail', 'lead_' + Date.now() + '@gmail.com');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('LeadId returned', () => pm.expect(j.data.leadId).to.be.a('string'));",
+                  "pm.test('Lead name matches', () => pm.expect(j.data.name).to.be.a('string'));",
+                  "if (j.data && j.data.leadId) pm.environment.set('leadId', j.data.leadId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/leads",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Test Lead Auto\",\"phone\":\"{{randomPhone}}\",\"email\":\"lead_{{$timestamp}}@gmail.com\",\"branchId\":\"{{branchId}}\",\"sourceId\":\"{{leadSourceId}}\"}"
+            }
+          }
+        },
+        {
+          "name": "Create Lead - Missing Phone (400)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 400', () => pm.response.to.have.status(400));",
+            "pm.test('Validation error returned', () => {",
+            "  const j = pm.response.json();",
+            "  pm.expect(j.success === false || j.errors || j.title).to.not.be.undefined;",
+            "});",
+            "pm.test('Response is object', () => pm.expect(pm.response.json()).to.be.an('object'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/leads",
+            "body": { "mode": "raw", "raw": "{\"name\":\"No Phone Lead\",\"branchId\":\"{{branchId}}\",\"sourceId\":\"{{leadSourceId}}\"}" }
+          }
+        },
+        {
+          "name": "Contact Lead (mark Contacted)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Status is Contacted', () => pm.expect(j.data.status).to.equal('Contacted'));",
+            "pm.test('Response is object', () => pm.expect(pm.response.json()).to.be.an('object'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/leads/{{leadId}}/contact"
+          }
+        },
+        {
+          "name": "Get Lead Detail",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Lead data returned', () => pm.expect(j.data).to.be.an('object'));",
+            "pm.test('Lead status exists', () => pm.expect(j.data.status).to.be.a('string'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/leads/{{leadId}}"
+          }
+        },
+        {
+          "name": "Convert Lead to Member",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('ContractId returned', () => pm.expect(j.data.contractId).to.be.a('string'));",
+            "pm.test('InvoiceId returned', () => pm.expect(j.data.invoiceId).to.be.a('string'));",
+            "if (j.data) {",
+            "  if (j.data.contractId) pm.environment.set('contractId', j.data.contractId);",
+            "  if (j.data.invoiceId) pm.environment.set('invoiceId', j.data.invoiceId);",
+            "}"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/leads/{{leadId}}/convert-to-member",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"packageId\":\"{{packageId}}\",\"pricingId\":\"{{pricingId}}\",\"startDate\":\"2026-06-01\"}"
+            }
+          }
+        },
+        {
+          "name": "Get Lead - Member Forbidden (403)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 403', () => pm.response.to.have.status(403));",
+            "pm.test('Forbidden message returned', () => pm.expect(pm.response.text()).to.include('Forbidden'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/leads"
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Member (Quick Register)",
+      "item": [
+        {
+          "name": "Quick Register Member (Staff)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const randomDigits = Math.floor(10000000 + Math.random() * 90000000);",
+                  "pm.environment.set('randomPhone', '0' + randomDigits);",
+                  "pm.environment.set('randomEmail', 'qmember_' + Date.now() + '@gym.local');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('Status 201 or 200', () => pm.expect([200, 201]).to.include(pm.response.code));",
+                  "pm.test('ContractId returned', () => pm.expect(j.data.contractId).to.be.a('string'));",
+                  "pm.test('InvoiceId returned', () => pm.expect(j.data.invoiceId).to.be.a('string'));",
+                  "if (j.data) {",
+                  "  if (j.data.contractId) pm.environment.set('contractId', j.data.contractId);",
+                  "  if (j.data.invoiceId) pm.environment.set('invoiceId', j.data.invoiceId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{receptionistToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/members/quick-register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fullName\":\"Quick Member {{$timestamp}}\",\"email\":\"qmember_{{$timestamp}}@gym.local\",\"phone\":\"{{randomPhone}}\",\"packageId\":\"{{packageId}}\",\"pricingId\":\"{{pricingId}}\",\"branchId\":\"{{branchId}}\",\"startDate\":\"2026-06-01\"}"
+            }
+          }
+        },
+        {
+          "name": "Quick Register - Missing Fields (400)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 400', () => pm.response.to.have.status(400));",
+            "pm.test('Response is object', () => pm.expect(pm.response.json()).to.be.an('object'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{receptionistToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/members/quick-register",
+            "body": { "mode": "raw", "raw": "{\"fullName\":\"Only Name\"}" }
+          }
+        },
+        {
+          "name": "Quick Register - Member Role Forbidden (403)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 403', () => pm.response.to.have.status(403));",
+            "pm.test('Forbidden message returned', () => pm.expect(pm.response.text()).to.include('Forbidden'));",
+            "pm.test('Response time < 2500ms', () => pm.expect(pm.response.responseTime).to.be.below(2500));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/members/quick-register",
+            "body": { "mode": "raw", "raw": "{\"fullName\":\"Forbidden\",\"email\":\"x@x.com\",\"phone\":\"0900000000\",\"packageId\":\"{{packageId}}\",\"pricingId\":\"{{pricingId}}\",\"branchId\":\"{{branchId}}\"}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "12. Contract",
+      "item": [
+        {
+          "name": "Get Contracts List",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has items', () => pm.expect(j.data.items).to.be.an('array'));",
+            "pm.test('Has total', () => pm.expect(j.data.totalItems || j.data.total).to.be.a('number'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/contracts?page=1&pageSize=10"
+          }
+        },
+        {
+          "name": "Get Contract Detail (Active seed contract)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Status field exists', () => pm.expect(j.data.status).to.be.a('string'));",
+            "pm.test('Contract is Active', () => pm.expect(j.data.status).to.equal('Active'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/contracts/{{activeContractId}}"
+          }
+        },
+        {
+          "name": "Create Contract Draft",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('DraftId returned', () => pm.expect(j.data.draftId).to.be.a('string'));",
+            "if (j.data && j.data.draftId) pm.environment.set('draftId', j.data.draftId);"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/contracts/draft",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"memberUserId\":\"{{pendingMemberUserId}}\",\"packageId\":\"{{packageId}}\",\"pricingId\":\"{{pricingId}}\",\"startDate\":\"2026-07-01\"}"
+            }
+          }
+        },
+        {
+          "name": "Generate Contract from Draft",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('ContractId returned', () => pm.expect(j.data.contractId).to.be.a('string'));",
+            "pm.test('Status is Pending', () => pm.expect(j.data.status).to.equal('Pending'));",
+            "if (j.data && j.data.contractId) pm.environment.set('contractId', j.data.contractId);"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/contracts",
+            "body": { "mode": "raw", "raw": "{\"draftId\":\"{{draftId}}\"}" }
+          }
+        },
+        {
+          "name": "Activate Membership - Invoice Not Paid (400 Business Rule)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 400 - Business rule enforced', () => pm.response.to.have.status(400));",
+            "pm.test('Error message returned', () => pm.expect(pm.response.json().message).to.be.a('string'));",
+            "pm.test('Response is object', () => pm.expect(pm.response.json()).to.be.an('object'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/contracts/{{contractId}}/activate"
+          }
+        },
+        {
+          "name": "Get Contract Detail (new Pending)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Status is Pending', () => pm.expect(j.data.status).to.equal('Pending'));",
+            "pm.test('Contract ID matches', () => pm.expect(j.data.contractId || j.data.id).to.equal(pm.environment.get('contractId')));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/contracts/{{contractId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "13. Invoice & Payment",
+      "item": [
+        {
+          "name": "Get Invoices List",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has items', () => pm.expect(j.data.items).to.be.an('array'));",
+            "pm.test('Has total', () => pm.expect(j.data.totalItems || j.data.total).to.be.a('number'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/invoices?page=1&pageSize=10"
+          }
+        },
+        {
+          "name": "Issue Invoice for Pending Contract",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('InvoiceId returned', () => pm.expect(j.data.invoiceId).to.be.a('string'));",
+            "pm.test('Status is Pending', () => pm.expect(j.data.status).to.equal('Pending'));",
+            "if (j.data && j.data.invoiceId) {",
+            "  pm.environment.set('invoiceId', j.data.invoiceId);",
+            "  pm.environment.set('totalAmountDue', j.data.totalAmount);",
+            "}"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/invoices",
+            "body": { "mode": "raw", "raw": "{\"contractId\":\"{{contractId}}\"}" }
+          }
+        },
+        {
+          "name": "Get Invoice Detail",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('TotalAmount is number', () => pm.expect(j.data.totalAmount).to.be.a('number'));",
+            "pm.test('Status exists', () => pm.expect(j.data.status).to.be.a('string'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/invoices/{{invoiceId}}"
+          }
+        },
+        {
+          "name": "Generate QR Code for Invoice",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('QR image URL returned', () => pm.expect(j.data.qrImageUrl).to.be.a('string'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/invoices/{{invoiceId}}/qr"
+          }
+        },
+        {
+          "name": "Collect Payment (Cash)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('PaymentId returned', () => pm.expect(j.data.paymentId).to.be.a('string'));",
+            "if (j.data && j.data.paymentId) pm.environment.set('paymentId', j.data.paymentId);"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/invoices/{{invoiceId}}/payment",
+            "body": { "mode": "raw", "raw": "{\"method\":\"Cash\",\"amount\":{{totalAmountDue}},\"note\":\"Thanh toán tiền mặt tại quầy\"}" }
+          }
+        },
+        {
+          "name": "Activate Membership (After Payment)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Access card code returned', () => pm.expect(j.data).to.be.a('string'));",
+            "pm.test('Response time < 2500ms', () => pm.expect(pm.response.responseTime).to.be.below(2500));",
+            "if (j.data) pm.environment.set('cardCode', j.data);"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/contracts/{{contractId}}/activate"
+          }
+        },
+        {
+          "name": "Cancel Paid Invoice - Forbidden (400 Business Rule)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 400 - Cannot cancel paid invoice', () => pm.response.to.have.status(400));",
+            "pm.test('Error message returned', () => pm.expect(pm.response.json().message).to.be.a('string'));",
+            "pm.test('Response is object', () => pm.expect(pm.response.json()).to.be.an('object'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "PATCH",
+            "header": [],
+            "url": "{{baseUrl}}/api/invoices/{{invoiceId}}/cancel"
+          }
+        },
+        {
+          "name": "Get Invoice Detail - Seed Pending Invoice",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Invoice status is Pending', () => pm.expect(j.data.status).to.equal('Pending'));",
+            "pm.test('Invoice ID matches', () => pm.expect(j.data.invoiceId || j.data.id).to.equal(pm.environment.get('pendingInvoiceId')));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/invoices/{{pendingInvoiceId}}"
+          }
+        }
+      ]
+    }
+  ]
+}

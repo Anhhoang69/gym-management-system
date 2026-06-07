@@ -5,6 +5,7 @@ import {
 } from "@coreui/react"
 
 import { NavLink } from "react-router-dom"
+import { Sparkles } from "lucide-react"
 
 function BranchAdminSidebar() {
     return (
@@ -19,20 +20,21 @@ function BranchAdminSidebar() {
             {/* Menu */}
             <CSidebarNav>
                 <CNavItem>
+                    <NavLink to="/ai" className="nav-link flex items-center gap-2">
+                        <Sparkles size={16} className="text-yellow-500 flex-shrink-0" />
+                        <span>Trợ Lý AI</span>
+                    </NavLink>
+                </CNavItem>
+
+                <CNavItem>
                     <NavLink to="/branch-admin" className="nav-link" end>
                         Tổng Quan
                     </NavLink>
                 </CNavItem>
 
                 <CNavItem>
-                    <NavLink to="/branch-admin/reports" className="nav-link">
-                        Báo Cáo
-                    </NavLink>
-                </CNavItem>
-
-                <CNavItem>
                     <NavLink to="/branch-admin/users" className="nav-link">
-                        Quản Lý Người Dùng
+                        Quản Lý Nhân Viên
                     </NavLink>
                 </CNavItem>
 
@@ -79,6 +81,12 @@ function BranchAdminSidebar() {
                 </CNavItem>
 
                 <CNavItem>
+                    <NavLink to="/branch-admin/reports" className="nav-link">
+                        Báo Cáo Tài Chính
+                    </NavLink>
+                </CNavItem>
+
+                <CNavItem>
                     <NavLink to="/branch-admin/attendance" className="nav-link">
                         Quản Lý Điểm Danh
                     </NavLink>
@@ -89,6 +97,7 @@ function BranchAdminSidebar() {
                         Quản Lý Lương
                     </NavLink>
                 </CNavItem>
+
             </CSidebarNav>
         </CSidebar>
     )

@@ -13,7 +13,8 @@ import PackagePage from '../../features/landing/pages/PackagePage.jsx';
 import ContactPage from '../../features/landing/pages/ContactPage.jsx';
 import NotFoundPage from '../../shared/components/NotFoundPage.jsx';
 import FAQPage from '../../features/landing/pages/FAQPage.jsx';
-import AIChatPage from '../../features/landing/pages/AIChatPage.jsx';
+import AIChatPage from '../../features/ai/pages/AIChatPage.jsx';
+
 import MemberProfilePage from '../../features/landing/pages/MemberProfilePage.jsx';
 import ClassSchedulePage from '../../features/landing/pages/ClassSchedulePage.jsx';
 import MyBookingsPage from '../../features/landing/pages/MyBookingsPage.jsx';
@@ -89,12 +90,14 @@ export default function AppRouter() {
           <Route path="branches" element={<BranchesPage />} />
           <Route path="branches/:city" element={<BranchCityPage />} />
           <Route path="branches/:city/:slug" element={<BranchDetailPage />} />
-          <Route path="ai" element={<AIChatPage />} />
           <Route path="faqs" element={<FAQPage />} />
           <Route path="packages" element={<PackagePage />} />
           <Route path="trainers" element={<PtPage />} />
           <Route path="contact" element={<ContactPage />} />
         </Route>
+
+        {/* Global AI Chat Page (dynamically maps role layout inside AIChatPage) */}
+        <Route path="/ai" element={<AIChatPage />} />
 
         {/* Staff Dashboard */}
         <Route path="/staff" element={<StaffLayout />}>

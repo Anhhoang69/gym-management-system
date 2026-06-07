@@ -6,6 +6,7 @@ import {
 } from "@coreui/react"
 
 import { NavLink } from "react-router-dom"
+import { Sparkles } from "lucide-react"
 
 function StaffSidebar() {
   return (
@@ -20,6 +21,13 @@ function StaffSidebar() {
 
           {/* Menu */}
           <CSidebarNav>
+
+              <CNavItem>
+                  <NavLink to="/ai" className="nav-link flex items-center gap-2">
+                      <Sparkles size={16} className="text-yellow-500 flex-shrink-0" />
+                      <span>Trợ Lý AI</span>
+                  </NavLink>
+              </CNavItem>
 
               <CNavItem>
                   <NavLink to="/staff" className="nav-link" end>
@@ -57,10 +65,10 @@ function StaffSidebar() {
                   </NavLink>
               </CNavItem>
 
-          </CSidebarNav>
+            </CSidebarNav>
 
-      </CSidebar>
-  )
+        </CSidebar>
+    )
 }
 
 export default StaffSidebar

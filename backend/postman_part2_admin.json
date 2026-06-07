@@ -1,0 +1,428 @@
+{
+  "info": {
+    "_postman_id": "gym-mgmt-v2-part2",
+    "name": "Gym Management System API – Part 2 (Branch + Room + Package + Promotion + LeadSource)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "05. Branch Management",
+      "item": [
+        {
+          "name": "Get Branches List",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Data is array', () => pm.expect(j.data).to.be.an('array'));",
+            "if (j.data && j.data.length > 0) {",
+            "  pm.environment.set('branchId', j.data[0].branchId);",
+            "}"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/branches"
+          }
+        },
+        {
+          "name": "Get Branch Stats",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Stats object returned', () => pm.expect(pm.response.json().data).to.be.an('object'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/branches/stats"
+          }
+        },
+        {
+          "name": "Get Branch Detail by ID",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Branch name exists', () => pm.expect(j.data.name).to.be.a('string'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/branches/{{branchId}}"
+          }
+        },
+        {
+          "name": "Create Branch (SuperAdmin - dynamic name)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('BranchId returned', () => pm.expect(j.data.branchId).to.be.a('string'));",
+            "if (j.data && j.data.branchId) pm.environment.set('newBranchId', j.data.branchId);"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/branches",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"GymFit Test {{$timestamp}}\",\"address\":\"99 Test Street, Quận Test, TP.HCM\",\"email\":\"test_{{$timestamp}}@gymfit.vn\",\"hotline\":\"028999{{$randomInt}}\",\"description\":\"Chi nhánh test tự động\",\"openingHours\":\"06:00 - 22:00\"}"
+            }
+          }
+        },
+        {
+          "name": "Update Branch (SuperAdmin)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Success true or request submitted', () => pm.expect(pm.response.json().success).to.be.true);"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/branches/{{branchId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"GymFit Updated\",\"address\":\"123 Main St\",\"email\":\"updated@gymfit.vn\",\"hotline\":\"0281234567\",\"description\":\"Updated Description\",\"openingHours\":\"06:00 - 22:00\"}"
+            }
+          }
+        },
+        {
+          "name": "Create Branch - GymOwner Forbidden (403)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 403', () => pm.response.to.have.status(403));",
+            "pm.test('Forbidden message returned', () => pm.expect(pm.response.text()).to.include('Forbidden'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{gymOwnerToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/branches",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Forbidden Branch\",\"address\":\"Test\",\"email\":\"test@test.com\",\"hotline\":\"0280000000\"}"
+            }
+          }
+        },
+        {
+          "name": "Assign Staff to Branch",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Result returned', () => pm.expect(pm.response.json().data).to.be.an('object'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/branches/{{branchId}}/staff",
+            "body": { "mode": "raw", "raw": "{\"userIds\":[\"{{staffUserId}}\"]}" }
+          }
+        },
+        {
+          "name": "Get Branch - Not Authorized (401)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 401', () => pm.response.to.have.status(401));",
+            "pm.test('Unauthorized text exists', () => pm.expect(pm.response.text()).to.include('Unauthorized'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/branches"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06. Room Management",
+      "item": [
+        {
+          "name": "Get Rooms by Branch",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Data is array', () => pm.expect(j.data).to.be.an('array'));",
+            "if (j.data && j.data.length > 0) pm.environment.set('roomId', j.data[0].roomId);"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/rooms?branchId={{branchId}}"
+          }
+        },
+        {
+          "name": "Get Room Detail by ID",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Room name exists', () => pm.expect(j.data.name).to.be.a('string'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/rooms/{{roomId}}"
+          }
+        },
+        {
+          "name": "Create Room in Branch",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Success true', () => pm.expect(pm.response.json().success).to.be.true);"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/rooms/{{branchId}}",
+            "body": { "mode": "raw", "raw": "{\"name\":\"Phòng Test Auto\",\"roomNumber\":\"T{{$randomInt}}\",\"capacity\":20}" }
+          }
+        },
+        {
+          "name": "Update Room Status",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Success true', () => pm.expect(pm.response.json().success).to.be.true);"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/rooms/{{roomId}}/status",
+            "body": { "mode": "raw", "raw": "{\"status\":\"Active\"}" }
+          }
+        },
+        {
+          "name": "Create Room - Member Forbidden (403)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 403', () => pm.response.to.have.status(403));",
+            "pm.test('Forbidden message returned', () => pm.expect(pm.response.text()).to.include('Forbidden'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/rooms/{{branchId}}",
+            "body": { "mode": "raw", "raw": "{\"name\":\"Forbidden Room\",\"roomNumber\":\"F01\",\"capacity\":10}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "07. Package Management",
+      "item": [
+        {
+          "name": "Get Packages List",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Data is array', () => pm.expect(j.data).to.be.an('array'));",
+            "if (j.data && j.data.length > 0) {",
+            "  pm.environment.set('packageId', j.data[0].packageId);",
+            "  if (j.data[0].pricings && j.data[0].pricings.length > 0) {",
+            "    pm.environment.set('pricingId', j.data[0].pricings[0].packagePricingId);",
+            "  }",
+            "}"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/packages"
+          }
+        },
+        {
+          "name": "Get Package Stats",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Stats object returned', () => pm.expect(pm.response.json().data).to.be.an('object'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/packages/stats"
+          }
+        },
+        {
+          "name": "Get Package Detail by ID",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Package name exists', () => pm.expect(j.data.name).to.be.a('string'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/packages/{{packageId}}"
+          }
+        },
+        {
+          "name": "Create Package (SuperAdmin)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Package ID returned', () => pm.expect(j.data).to.be.a('string'));",
+            "if (j.data) pm.environment.set('newPackageId', j.data);"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/packages",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Test Package {{$timestamp}}\",\"description\":\"Gói test tự động\",\"tier\":\"Basic\",\"isPtIncluded\":false,\"privatePtLimit\":0,\"groupPtLimit\":0,\"maxCheckinsPerWeek\":7,\"displayOrder\":99,\"pricings\":[{\"durationMonths\":1,\"price\":299000,\"originalPrice\":399000}],\"policy\":{\"changeFeeDefault\":50000,\"prorationRule\":\"Standard\",\"upgradeAllowed\":true,\"downgradeAllowed\":false,\"freezeAllowed\":false,\"maxFreezeDays\":0,\"maxFreezeCount\":0,\"freezeFee\":0,\"transferAllowed\":false,\"earlyRenewAllowed\":true,\"allowMultiBranch\":false}}"
+            }
+          }
+        },
+        {
+          "name": "Update Package Status - Inactive",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Success true', () => pm.expect(pm.response.json().success).to.be.true);"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/packages/{{newPackageId}}/status",
+            "body": { "mode": "raw", "raw": "{\"status\":\"Inactive\"}" }
+          }
+        },
+        {
+          "name": "Get Packages - Member can view (200)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Data is array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/packages"
+          }
+        }
+      ]
+    },
+    {
+      "name": "08. Promotion",
+      "item": [
+        {
+          "name": "Get Promotions List",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Data is array', () => pm.expect(j.data).to.be.an('array'));",
+            "if (j.data && j.data.length > 0) {",
+            "  pm.environment.set('promotionId', j.data[0].promotionId);",
+            "}"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/promotions"
+          }
+        },
+        {
+          "name": "Get Promotion Stats",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Stats object returned', () => pm.expect(pm.response.json().data).to.be.an('object'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/promotions/stats"
+          }
+        },
+        {
+          "name": "Create Promotion (dynamic code)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Promotion ID returned', () => pm.expect(j.data).to.be.a('string'));",
+            "if (j.data) pm.environment.set('promotionId', j.data);"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/promotions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Test Promo {{$timestamp}}\",\"code\":\"TESTPROMO{{$timestamp}}\",\"discountType\":\"Percentage\",\"discountValue\":5,\"startDate\":\"2026-01-01T00:00:00Z\",\"endDate\":\"2026-12-31T23:59:59Z\",\"maxUsage\":10,\"minContractValue\":0,\"applicationRule\":\"BestDiscount\",\"priority\":10}"
+            }
+          }
+        },
+        {
+          "name": "Validate Promotion Conditions",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Validation result returned', () => pm.expect(pm.response.json().data).to.be.an('object'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/promotions/validate",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"code\":\"TESTPROMO{{$timestamp}}NEW\",\"discountType\":\"Percentage\",\"discountValue\":10,\"startDate\":\"2026-01-01T00:00:00Z\",\"endDate\":\"2026-12-31T23:59:59Z\"}"
+            }
+          }
+        },
+        {
+          "name": "Update Promotion Status - Inactive",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Success true', () => pm.expect(pm.response.json().success).to.be.true);"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{superAdminToken}}", "type": "string" }] },
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/promotions/{{promotionId}}/status",
+            "body": { "mode": "raw", "raw": "{\"status\":\"Inactive\"}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "09. Lead Sources",
+      "item": [
+        {
+          "name": "Get Lead Sources List",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "const j = pm.response.json();",
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Data is array', () => pm.expect(j.data).to.be.an('array'));",
+            "if (j.data && j.data.length > 0) pm.environment.set('leadSourceId', j.data[0].id);"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{staffToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/lead-sources"
+          }
+        },
+        {
+          "name": "Get Lead Sources - Member Forbidden (403)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 403', () => pm.response.to.have.status(403));",
+            "pm.test('Forbidden message returned', () => pm.expect(pm.response.text()).to.include('Forbidden'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{memberToken}}", "type": "string" }] },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/lead-sources"
+          }
+        },
+        {
+          "name": "Get Lead Sources - Unauthorized (401)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Status 401', () => pm.response.to.have.status(401));",
+            "pm.test('Unauthorized message returned', () => pm.expect(pm.response.text()).to.include('Unauthorized'));"
+          ]}}],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{baseUrl}}/api/lead-sources"
+          }
+        }
+      ]
+    }
+  ]
+}
