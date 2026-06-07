@@ -20,6 +20,13 @@ function PtSidebar() {
             {/* Menu */}
             <CSidebarNav>
                 <CNavItem>
+                    <NavLink to="/ai" className="nav-link flex items-center gap-2">
+                        <Sparkles size={16} className="text-yellow-500 flex-shrink-0" />
+                        <span>Trợ Lý AI</span>
+                    </NavLink>
+                </CNavItem>
+
+                <CNavItem>
                     <NavLink to="/pt/classes" className="nav-link">
                         Lớp Của Tôi
                     </NavLink>
@@ -40,12 +47,6 @@ function PtSidebar() {
                 <CNavItem>
                     <NavLink to="/pt/commissions" className="nav-link">
                         Hoa Hồng Cá Nhân
-                    </NavLink>
-                </CNavItem>
-                <CNavItem>
-                    <NavLink to="/ai" className="nav-link flex items-center gap-2">
-                        <Sparkles size={16} className="text-yellow-500 flex-shrink-0" />
-                        <span>Trợ Lý AI</span>
                     </NavLink>
                 </CNavItem>
             </CSidebarNav>

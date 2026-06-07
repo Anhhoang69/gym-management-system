@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { getAvailableTools } from "../services/aiService"
 import { ChevronDown, Terminal } from "lucide-react"
 
-export default function AIToolsPanel() {
+export default function AIToolsPanel({ collapsed = false, onExpand }) {
   const [tools, setTools] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(false)
@@ -14,6 +14,22 @@ export default function AIToolsPanel() {
       setLoading(false)
     })
   }, [])
+
+  if (collapsed) {
+    return (
+      <div className="border-t border-[var(--border)]/30 pt-3 mt-3 w-full flex justify-center">
+        <button
+          onClick={onExpand}
+          className="group relative w-10 h-10 flex items-center justify-center rounded-xl border-none bg-transparent hover:bg-[var(--hover)] cursor-pointer text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+        >
+          <Terminal size={18} className="text-[var(--brand)]" />
+          <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl text-xs font-semibold text-[var(--text-primary)] whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 shadow-lg z-50">
+            Tools khả dụng ({tools.length})
+          </div>
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="border-t border-[var(--border)] pt-3.5 mt-3.5">

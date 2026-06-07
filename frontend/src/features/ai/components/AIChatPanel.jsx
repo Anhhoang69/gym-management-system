@@ -1,5 +1,6 @@
-import { Bot, ClipboardList, X, ChevronDown, ChevronRight, Dumbbell } from "lucide-react"
+import { Bot, ClipboardList, X, ChevronDown, ChevronRight, ChevronLeft, Dumbbell } from "lucide-react"
 import * as Lucide from "lucide-react"
+import { useState } from "react"
 import { useAIChat } from "../hooks/useAIChat"
 import MarkdownMessage from "./MarkdownMessage"
 import ChatInput from "./ChatInput"
@@ -213,6 +214,24 @@ export default function AIChatPanel({ headerHeight = 70 }) {
     handleCopyMessage
   } = useAIChat()
 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("ai-sidebar-collapsed") === "true"
+    } catch {
+      return false
+    }
+  })
+
+  const toggleSidebar = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev
+      try {
+        localStorage.setItem("ai-sidebar-collapsed", String(next))
+      } catch (e) {}
+      return next
+    })
+  }
+
   const panelHeight = `calc(100vh - ${headerHeight}px)`
 
   return (
@@ -226,28 +245,61 @@ export default function AIChatPanel({ headerHeight = 70 }) {
           LEFT SIDEBAR
       ═══════════════════════════════════════════════════ */}
       <div
-        className="w-[244px] flex-shrink-0 border-r border-[var(--border)] bg-[var(--bg-third)] flex flex-col overflow-hidden"
+        className={`flex-shrink-0 border-r border-[var(--border)] bg-[var(--bg-third)] flex flex-col overflow-hidden transition-all duration-300 ${
+          sidebarCollapsed ? "w-[64px]" : "w-[244px]"
+        }`}
       >
         {/* EnerGym AI logo/header */}
-        <div className="p-4 border-b border-[var(--border)] flex-shrink-0">
-          <div className="flex items-center gap-2">
+        <div className="p-4 border-b border-[var(--border)] flex-shrink-0 flex items-center justify-between">
+          <div className="flex items-center gap-2 overflow-hidden">
             <div
-              className="w-7 h-7 rounded-full bg-[var(--brand)] flex items-center justify-center text-black font-semibold shadow-sm"
+              className="w-7 h-7 rounded-full bg-[var(--brand)] flex items-center justify-center text-black font-semibold shadow-sm flex-shrink-0"
             >
               <Bot size={14} />
             </div>
-            <div>
-              <div className="text-xs font-extrabold text-[var(--text-primary)] leading-tight">EnerGym AI</div>
-              <div className="text-[10px] text-[var(--text-secondary)]">Trợ lý thông minh</div>
-            </div>
+            {!sidebarCollapsed && (
+              <div className="transition-all duration-200">
+                <div className="text-xs font-extrabold text-[var(--text-primary)] leading-tight">EnerGym AI</div>
+                <div className="text-[10px] text-[var(--text-secondary)]">Trợ lý thông minh</div>
+              </div>
+            )}
           </div>
+          <button
+            onClick={toggleSidebar}
+            title={sidebarCollapsed ? "Mở rộng" : "Thu gọn"}
+            className="w-7 h-7 flex items-center justify-center rounded-lg border-none bg-transparent hover:bg-[var(--hover)] cursor-pointer text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"
+          >
+            {sidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          </button>
         </div>
 
         {/* Scrollable list */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-5">
+        <div className={`flex-1 overflow-y-auto ${sidebarCollapsed ? "p-2 space-y-4 flex flex-col items-center" : "p-4 space-y-5"}`}>
 
-          {/* Quick Actions */}
-          {Array.isArray(quickActions) && quickActions.length > 0 && (
+          {/* Quick Actions (Collapsed) */}
+          {sidebarCollapsed && Array.isArray(quickActions) && quickActions.length > 0 && (
+            <div className="flex flex-col gap-2 w-full items-center">
+              {quickActions.map((action, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSend(action.prompt)}
+                  title={action.label}
+                  className="group relative w-10 h-10 flex items-center justify-center rounded-xl border-none bg-transparent hover:bg-[var(--hover)] cursor-pointer text-[var(--text-primary)] transition-colors"
+                >
+                  <span className="text-[var(--brand)]">
+                    <LucideIcon name={action.icon} size={18} />
+                  </span>
+                  {/* Tooltip */}
+                  <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl text-xs font-semibold text-[var(--text-primary)] whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 shadow-lg z-50">
+                    {action.label}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Quick Actions (Expanded) */}
+          {!sidebarCollapsed && Array.isArray(quickActions) && quickActions.length > 0 && (
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
                 Gợi ý nhanh
@@ -271,8 +323,28 @@ export default function AIChatPanel({ headerHeight = 70 }) {
             </div>
           )}
 
-          {/* Saved Plans (Member only) */}
-          {isMember && (
+          {/* Saved Plans (Collapsed) */}
+          {sidebarCollapsed && isMember && Array.isArray(plans) && plans.length > 0 && (
+            <div className="flex flex-col gap-2 w-full items-center border-t border-[var(--border)]/30 pt-3">
+              {plans.map((plan, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelectedPlan(plan)}
+                  title={plan?.summary || "Workout Plan"}
+                  className="group relative w-10 h-10 flex items-center justify-center rounded-xl border-none bg-transparent hover:bg-[var(--hover)] cursor-pointer text-[var(--text-primary)] transition-colors"
+                >
+                  <Dumbbell size={18} className="text-[var(--brand)]" />
+                  {/* Tooltip */}
+                  <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl text-xs font-semibold text-[var(--text-primary)] whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 shadow-lg z-50">
+                    {plan?.summary || "Workout Plan"}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Saved Plans (Expanded) */}
+          {!sidebarCollapsed && isMember && (
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
                 Kế hoạch đã lưu
@@ -301,10 +373,10 @@ export default function AIChatPanel({ headerHeight = 70 }) {
           )}
 
           {/* Tools Panel */}
-          <AIToolsPanel />
+          <AIToolsPanel collapsed={sidebarCollapsed} onExpand={() => setSidebarCollapsed(false)} />
 
           {/* Token Dashboard (SuperAdmin/GymOwner) */}
-          <AITokenDashboard />
+          <AITokenDashboard collapsed={sidebarCollapsed} onExpand={() => setSidebarCollapsed(false)} />
 
         </div>
       </div>

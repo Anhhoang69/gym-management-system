@@ -23,6 +23,13 @@ function StaffSidebar() {
           <CSidebarNav>
 
               <CNavItem>
+                  <NavLink to="/ai" className="nav-link flex items-center gap-2">
+                      <Sparkles size={16} className="text-yellow-500 flex-shrink-0" />
+                      <span>Trợ Lý AI</span>
+                  </NavLink>
+              </CNavItem>
+
+              <CNavItem>
                   <NavLink to="/staff" className="nav-link" end>
                       Tổng Quan
                   </NavLink>
@@ -57,13 +64,6 @@ function StaffSidebar() {
                       Hoa Hồng
                   </NavLink>
               </CNavItem>
-
-                <CNavItem>
-                    <NavLink to="/ai" className="nav-link flex items-center gap-2">
-                        <Sparkles size={16} className="text-yellow-500 flex-shrink-0" />
-                        <span>Trợ Lý AI</span>
-                    </NavLink>
-                </CNavItem>
 
             </CSidebarNav>
 

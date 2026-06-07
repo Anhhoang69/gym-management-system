@@ -58,7 +58,7 @@ const ROLE_COLORS = {
   SuperAdmin: "#ec4899"
 }
 
-export default function AITokenDashboard() {
+export default function AITokenDashboard({ collapsed = false, onExpand }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(false)
@@ -74,6 +74,22 @@ export default function AITokenDashboard() {
   }, [canAccess])
 
   if (!canAccess) return null
+
+  if (collapsed) {
+    return (
+      <div className="border-t border-[var(--border)]/30 pt-3 mt-3 w-full flex justify-center">
+        <button
+          onClick={onExpand}
+          className="group relative w-10 h-10 flex items-center justify-center rounded-xl border-none bg-transparent hover:bg-[var(--hover)] cursor-pointer text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+        >
+          <BarChart2 size={18} className="text-[var(--brand)]" />
+          <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl text-xs font-semibold text-[var(--text-primary)] whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 shadow-lg z-50">
+            AI Token Usage
+          </div>
+        </button>
+      </div>
+    )
+  }
 
   const totalTokens = data?.totalTokens ?? 0
   const promptTokens = data?.promptTokens ?? 0

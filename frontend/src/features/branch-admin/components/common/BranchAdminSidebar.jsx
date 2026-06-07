@@ -20,6 +20,13 @@ function BranchAdminSidebar() {
             {/* Menu */}
             <CSidebarNav>
                 <CNavItem>
+                    <NavLink to="/ai" className="nav-link flex items-center gap-2">
+                        <Sparkles size={16} className="text-yellow-500 flex-shrink-0" />
+                        <span>Trợ Lý AI</span>
+                    </NavLink>
+                </CNavItem>
+
+                <CNavItem>
                     <NavLink to="/branch-admin" className="nav-link" end>
                         Tổng Quan
                     </NavLink>
@@ -91,12 +98,6 @@ function BranchAdminSidebar() {
                     </NavLink>
                 </CNavItem>
 
-                <CNavItem>
-                    <NavLink to="/ai" className="nav-link flex items-center gap-2">
-                        <Sparkles size={16} className="text-yellow-500 flex-shrink-0" />
-                        <span>Trợ Lý AI</span>
-                    </NavLink>
-                </CNavItem>
             </CSidebarNav>
         </CSidebar>
     )
