@@ -34,11 +34,12 @@ export default function ClassBookingModal({ visible, setVisible, classData, onRe
   }
 
   // Determine availability
+  const isBooked = classData.isBooked || success
   const isFull = classData.isFull
   const isPast = new Date(`${classData.date}T${classData.endTime}`) < new Date()
   const isCancelled = classData.status === "Cancelled"
   
-  const canBook = !isFull && !isPast && !isCancelled && !success
+  const canBook = !isFull && !isPast && !isCancelled && !isBooked
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -70,7 +71,16 @@ export default function ClassBookingModal({ visible, setVisible, classData, onRe
             </span>
           </div>
           
-          <h2 className="text-2xl font-bold mb-1 leading-tight">{classData.title}</h2>
+          <h2 className="text-2xl font-bold mb-1 leading-tight">
+            {(() => {
+              const title = classData.title || "";
+              return title
+                .replace(/^✅\s*/, "")
+                .replace(/^\[Đã Đăng Ký\]\s*/i, "")
+                .replace(/^✅\s*\[Đã Đăng Ký\]\s*/i, "")
+                .trim();
+            })()}
+          </h2>
         </div>
 
         {/* Body */}
@@ -146,6 +156,13 @@ export default function ClassBookingModal({ visible, setVisible, classData, onRe
             </div>
           )}
 
+          {classData.isBooked && !success && (
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-start gap-2">
+              <FaCheckCircle className="mt-0.5 flex-shrink-0" />
+              <span>Bạn đã đăng ký tham gia lớp học này.</span>
+            </div>
+          )}
+
           {success && (
             <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-start gap-2">
               <FaCheckCircle className="mt-0.5 flex-shrink-0" />
@@ -158,15 +175,15 @@ export default function ClassBookingModal({ visible, setVisible, classData, onRe
             onClick={handleBookClass}
             disabled={!canBook || loading}
             className={`w-full py-3.5 rounded-xl font-bold text-sm flex justify-center items-center gap-2 transition-all shadow-sm ${
-              success ? 'bg-green-100 text-green-700 cursor-not-allowed' :
+              isBooked ? 'bg-green-100 text-green-700 cursor-not-allowed' :
               !canBook ? 'bg-gray-100 text-gray-400 cursor-not-allowed' :
               'bg-yellow-500 hover:bg-yellow-600 text-white hover:shadow-md'
             }`}
           >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            ) : success ? (
-              <><FaCheckCircle size={16} /> Đã Đặt Chỗ</>
+            ) : isBooked ? (
+              <><FaCheckCircle size={16} /> Đã Đăng Ký Lớp Học</>
             ) : isFull ? (
               "Lớp Đã Kín Chỗ"
             ) : isPast ? (

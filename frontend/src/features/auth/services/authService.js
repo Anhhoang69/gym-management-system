@@ -24,3 +24,18 @@ export const disable2FA = async (payload) => {
   const res = await api.post("/api/auth/2fa/disable", payload)
   return res.data
 }
+
+export const verifyOtp = async (payload) => {
+  const res = await api.post("/api/auth/verify-otp", payload)
+  return res.data
+}
+
+export const forgotPassword = async (payload) => {
+  const res = await api.post("/api/auth/forgot-password", payload)
+  return res.data
+}
+
+export const resetPassword = async (payload) => {
+  const res = await api.post("/api/auth/reset-password", payload)
+  return res.data
+}

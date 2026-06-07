@@ -10,7 +10,7 @@ import { useState, useEffect } from "react"
 import { createUser } from "../../services/userService"
 import { getBranches } from "../../services/branchService"
 
-function CreateUserModal({ visible, setVisible, onCreated }) {
+function CreateUserModal({ visible, setVisible, onCreated, fixedBranchId }) {
 
   const [form, setForm] = useState({
     fullName: "",
@@ -48,6 +48,13 @@ function CreateUserModal({ visible, setVisible, onCreated }) {
 
     fetchBranches()
   }, [])
+
+  // ================= SET FIXED BRANCH ID =================
+  useEffect(() => {
+    if (fixedBranchId && visible) {
+      setForm(prev => ({ ...prev, branchId: fixedBranchId }))
+    }
+  }, [fixedBranchId, visible])
 
   // ================= HANDLE CHANGE =================
   const handleChange = (e) => {
@@ -277,6 +284,7 @@ function CreateUserModal({ visible, setVisible, onCreated }) {
                 value={form.branchId}
                 onChange={handleChange}
                 invalid={!!errors.branchId}
+                disabled={!!fixedBranchId}
               >
                 <option value="">Chọn chi nhánh</option>
                 {branches.map((b) => (

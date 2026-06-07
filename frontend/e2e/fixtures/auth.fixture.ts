@@ -11,7 +11,7 @@ export const test = base.extend<AdminFixtures>({
     const loginPage = new LoginPage(page);
     await loginPage.goto();
 
-    await loginPage.login('superadmin@gym.com', 'Admin@123');
+    await loginPage.login('superadmin@gymfit.vn', '123456Aa@');
     await page.waitForURL(/\/admin/);
 
     const adminPage = new AdminPage(page);

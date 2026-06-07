@@ -12,19 +12,19 @@ test.describe('Authentication Module', () => {
   // TC_01
   test('should login successfully as Super Admin and redirect to /admin', async ({ page }) => {
     // Note: Use a valid mock or test account in the real environment
-    await loginPage.login('superadmin@gym.com', 'Admin@123');
+    await loginPage.login('superadmin@gymfit.vn', '123456Aa@');
     await expect(page).toHaveURL(/\/admin/);
   });
 
   // TC_02
   test('should login successfully as Member and redirect to home /', async ({ page }) => {
-    await loginPage.login('member05@gym.com', 'Member05@');
+    await loginPage.login('nguyen.van.an@gmail.com', '123456Aa@');
     await expect(page).toHaveURL(/\/$/);
   });
 
   // TC_03
   test('should show error message when login with invalid password', async () => {
-    await loginPage.login('superadmin@gym.com', 'WrongPassword123');
+    await loginPage.login('superadmin@gymfit.vn', 'WrongPassword123');
     await loginPage.verifyLoginError();
   });
 
@@ -37,7 +37,7 @@ test.describe('Authentication Module', () => {
   // TC_05
   test('should keep user logged in after page reload if "Remember me" is checked', async ({ page }) => {
     // In a real scenario, we might intercept the login request or use a real login
-    await loginPage.login('superadmin@gym.com', 'Admin@123');
+    await loginPage.login('superadmin@gymfit.vn', '123456Aa@');
     await expect(page).toHaveURL(/\/admin/);
 
     await page.reload();

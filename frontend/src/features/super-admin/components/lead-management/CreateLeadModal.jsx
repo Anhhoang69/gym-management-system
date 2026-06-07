@@ -7,13 +7,13 @@ import { createLead } from "../../services/leadService"
 import { getBranches, getBranchById } from "../../services/branchService"
 import { getLeadSources } from "../../services/leadSourceService"
 
-function CreateLeadModal({ visible, setVisible, onRefresh }) {
+function CreateLeadModal({ visible, setVisible, onRefresh, fixedBranchId = "" }) {
     const [formData, setFormData] = useState({
         name: "",
         phone: "",
         email: "",
         note: "",
-        branchId: "",
+        branchId: fixedBranchId || "",
         sourceId: "",
         assignedToStaffId: ""
     })
@@ -27,11 +27,24 @@ function CreateLeadModal({ visible, setVisible, onRefresh }) {
             loadInitialData()
             setFormData({
                 name: "", phone: "", email: "", note: "",
-                branchId: "", sourceId: "", assignedToStaffId: ""
+                branchId: fixedBranchId || "", sourceId: "", assignedToStaffId: ""
             })
-            setStaffs([])
+            if (fixedBranchId) {
+                loadStaffForBranch(fixedBranchId)
+            } else {
+                setStaffs([])
+            }
         }
-    }, [visible])
+    }, [visible, fixedBranchId])
+
+    const loadStaffForBranch = async (bId) => {
+        try {
+            const data = await getBranchById(bId)
+            setStaffs(data.staffs || [])
+        } catch (error) {
+            console.error("Failed to load branch staff", error)
+        }
+    }
 
     const loadInitialData = async () => {
         try {
@@ -50,12 +63,7 @@ function CreateLeadModal({ visible, setVisible, onRefresh }) {
         const branchId = e.target.value
         setFormData({ ...formData, branchId, assignedToStaffId: "" })
         if (branchId) {
-            try {
-                const data = await getBranchById(branchId)
-                setStaffs(data.staffs || [])
-            } catch (error) {
-                console.error("Failed to load branch staff", error)
-            }
+            loadStaffForBranch(branchId)
         } else {
             setStaffs([])
         }
@@ -102,7 +110,7 @@ function CreateLeadModal({ visible, setVisible, onRefresh }) {
                     </div>
 
                     <div className="col-md-6">
-                        <CFormSelect label="Chi nhánh quan tâm (*)" value={formData.branchId} onChange={handleBranchChange}>
+                        <CFormSelect label="Chi nhánh quan tâm (*)" value={formData.branchId} onChange={handleBranchChange} disabled={!!fixedBranchId}>
                             <option value="">-- Chọn Chi nhánh --</option>
                             {branches.map(b => (
                                 <option key={b.branchId || b.id} value={b.branchId || b.id}>{b.name}</option>

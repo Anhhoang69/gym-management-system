@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import PackageCard from "./PackageCard";
+import RegisterModal from "../RegisterModal";
 import { getPublicPackages } from "../../services/publicService";
+import { getMyProfile } from "../../services/memberService";
 
 import pkg1 from "../../../../assets/package-1.webp";
 import pkg2 from "../../../../assets/package-2.webp";
@@ -9,33 +11,53 @@ import pkg3 from "../../../../assets/package-3.webp";
 export default function PackageSection() {
     const [packages, setPackages] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [registerModalVisible, setRegisterModalVisible] = useState(false);
+    const [selectedPackageId, setSelectedPackageId] = useState("");
+    const [activeContractPackage, setActiveContractPackage] = useState(null);
     const defaultImages = [pkg1, pkg2, pkg3];
 
 
     useEffect(() => {
-        const fetchPackages = async () => {
+        const fetchData = async () => {
             try {
-                const data = await getPublicPackages();
-                // Sort by price or just use as-is.
-                setPackages(data || []);
+                setLoading(true);
+                const pkgs = await getPublicPackages();
+                setPackages(pkgs || []);
+
+                const token = localStorage.getItem("token");
+                if (token) {
+                    try {
+                        const meData = await getMyProfile();
+                        if (meData?.memberInfo?.activeContract?.status === "Active") {
+                            setActiveContractPackage(meData.memberInfo.activeContract.packageName);
+                        }
+                    } catch (profileErr) {
+                        console.error("Failed to fetch user profile in PackageSection", profileErr);
+                    }
+                }
             } catch (error) {
                 console.error("Failed to fetch packages", error);
             } finally {
                 setLoading(false);
             }
         };
-        fetchPackages();
+        fetchData();
     }, []);
 
+    const handleRegisterClick = (packageId) => {
+        setSelectedPackageId(packageId);
+        setRegisterModalVisible(true);
+    };
+
     return (
-        <section className="min-h-screen bg-[var(--bg)] flex flex-col justify-center py-10 lg:py-10">
+        <section className="bg-[var(--bg)] flex flex-col justify-start pt-8 lg:pt-12 pb-10 lg:pb-10">
             {/* HEADER */}
-            <div className="text-center mx-auto mb-2 lg:mb-8">
-                <h2 style={{ color: 'var(--brand)' }} className="text-3xl md:text-4xl font-extrabold text-yellow-500 tracking-tight">
+            <div className="text-center mx-auto mb-4 lg:mb-6 px-4">
+                <h2 style={{ color: 'var(--brand)' }} className="text-3xl md:text-4xl font-extrabold text-yellow-500 tracking-tight mb-1">
                     Gói Tập Độc Quyền
                 </h2>
 
-                <p style={{ color: 'var(--text-primary)' }} className="block text-xl md:text-2xl italic --text-primary max-w-5xl mx-auto">
+                <p style={{ color: 'var(--text-primary)' }} className="block text-base md:text-lg italic --text-primary max-w-5xl mx-auto mt-0">
                     EnerGym mang đến các gói tập được thiết kế linh hoạt,
                     phù hợp với nhiều mục tiêu và trình độ khác nhau.
                 </p>
@@ -50,9 +72,9 @@ export default function PackageSection() {
                     grid
                     grid-cols-1
                     md:grid-cols-2
-                    lg:grid-cols-3
-                    gap-10
-                    max-w-7xl
+                    lg:grid-cols-4
+                    gap-6 lg:gap-8
+                    max-w-[1400px]
                     mx-auto
                     px-6
                 ">
@@ -72,11 +94,19 @@ export default function PackageSection() {
                                 highlight={index === 1 || pkg.tier === 'Premium' || pkg.tier === 'Elite'}
                                 description={pkg.description}
                                 features={pkg.features?.map(f => ({ label: f, available: true })) || []}
+                                isCurrentPackage={activeContractPackage === pkg.name}
+                                onRegister={() => handleRegisterClick(pkg.packageId)}
                             />
                         );
                     })}
                 </div>
             )}
+
+            <RegisterModal 
+                visible={registerModalVisible} 
+                setVisible={setRegisterModalVisible} 
+                initialPackageId={selectedPackageId} 
+            />
         </section>
     );
 }

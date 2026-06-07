@@ -1,25 +1,46 @@
 import { CFormInput, CFormSelect } from "@coreui/react"
 
-function AttendanceFilters() {
+function AttendanceFilters({
+  branches = [],
+  selectedBranch,
+  onBranchChange,
+  selectedDate,
+  onDateChange,
+  searchName,
+  onSearchChange,
+  hideBranchSelect = false
+}) {
   return (
-    <div className="d-flex gap-3">
+    <div className="d-flex gap-3 flex-wrap">
 
       <CFormInput
         placeholder="Tìm theo tên hội viên..."
         style={{ width: 250 }}
+        value={searchName}
+        onChange={(e) => onSearchChange(e.target.value)}
       />
 
-      <CFormSelect style={{ width: 200 }}>
-        <option>Tất cả chi nhánh</option>
-        <option>Downtown</option>
-        <option>Westside</option>
-      </CFormSelect>
+      {!hideBranchSelect && (
+        <CFormSelect 
+          style={{ width: 200 }} 
+          value={selectedBranch} 
+          onChange={(e) => onBranchChange(e.target.value)}
+        >
+          <option value="">Tất cả chi nhánh</option>
+          {branches.map(branch => (
+            <option key={branch.branchId} value={branch.branchId}>
+              {branch.name}
+            </option>
+          ))}
+        </CFormSelect>
+      )}
 
-      <CFormSelect style={{ width: 200 }}>
-        <option>Hôm nay</option>
-        <option>Tuần này</option>
-        <option>Tháng này</option>
-      </CFormSelect>
+      <CFormInput
+        type="date"
+        style={{ width: 200 }}
+        value={selectedDate}
+        onChange={(e) => onDateChange(e.target.value)}
+      />
 
     </div>
   )

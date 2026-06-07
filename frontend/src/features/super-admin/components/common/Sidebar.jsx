@@ -31,6 +31,12 @@ function Sidebar() {
                 </CNavItem>
 
                 <CNavItem>
+                    <NavLink to="/admin/reports" className="nav-link">
+                        Báo Cáo
+                    </NavLink>
+                </CNavItem>
+
+                <CNavItem>
                     <NavLink to="/admin/users" className="nav-link">
                         Quản Lý Người Dùng
                     </NavLink>
@@ -73,14 +79,14 @@ function Sidebar() {
                 </CNavItem>
 
                 <CNavItem>
-                    <NavLink to="/admin/sales" className="nav-link">
-                        Quản Lý Bán Hàng
+                    <NavLink to="/admin/contracts" className="nav-link">
+                        Quản Lý Hợp Đồng
                     </NavLink>
                 </CNavItem>
 
                 <CNavItem>
-                    <NavLink to="/admin/contracts" className="nav-link">
-                        Quản Lý Hợp Đồng
+                    <NavLink to="/admin/sales" className="nav-link">
+                        Quản Lý Bán Hàng
                     </NavLink>
                 </CNavItem>
 
@@ -91,8 +97,8 @@ function Sidebar() {
                 </CNavItem>
 
                 <CNavItem>
-                    <NavLink to="/admin/reports" className="nav-link">
-                        Báo Cáo
+                    <NavLink to="/admin/payroll" className="nav-link">
+                        Quản Lý Lương
                     </NavLink>
                 </CNavItem>
 

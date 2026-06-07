@@ -6,11 +6,13 @@ import {
   CModalFooter,
   CButton,
   CFormInput,
-  CFormSelect
+  CFormSelect,
+  CAlert
 } from "@coreui/react"
 
 import { useState, useEffect } from "react"
 import { getBranches } from "../../services/branchService"
+import { validatePromotion } from "../../services/promotionService"
 
 function EditPromotionModal({
   visible,
@@ -21,6 +23,15 @@ function EditPromotionModal({
 
   const [form, setForm] = useState({})
   const [branches, setBranches] = useState([])
+  const [validationErrors, setValidationErrors] = useState([])
+  const [validationWarnings, setValidationWarnings] = useState([])
+
+  useEffect(() => {
+    if (visible) {
+      setValidationErrors([])
+      setValidationWarnings([])
+    }
+  }, [visible])
 
   const formatDateInput = (date) => {
     if (!date) return ""
@@ -94,39 +105,47 @@ function EditPromotionModal({
 
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setValidationErrors([])
+    setValidationWarnings([])
 
     const payload = {
-
       name: form.name,
       code: form.code,
-
-      discountType: form.discountType === "Percentage" ? 0 : 1,
-
+      discountType: form.discountType,
       discountValue: Number(form.discountValue),
-
       applicablePackageId: null,
-
-      applicableBranchId:
-        form.applicableBranchId || null,
-
-      contractType:
-        form.contractType === "NewContract"
-          ? 0
-          : form.contractType === "Renewal"
-          ? 1
-          : 2,
-
-      startDate: form.startDate,
-      endDate: form.endDate,
-
+      applicableBranchId: form.applicableBranchId || null,
+      contractType: form.contractType || null,
+      startDate: form.startDate ? `${form.startDate}T00:00:00Z` : null,
+      endDate: form.endDate ? `${form.endDate}T23:59:59Z` : null,
       maxUsage: Number(form.maxUsage)
-
     }
 
-    onUpdate(form.id, payload)
+    try {
+      const check = await validatePromotion({
+        code: payload.code,
+        discountType: payload.discountType,
+        discountValue: payload.discountValue,
+        startDate: payload.startDate,
+        endDate: payload.endDate,
+        applicableBranchId: payload.applicableBranchId,
+        excludePromotionId: form.id
+      })
 
-    setVisible(false)
+      if (!check.isValid) {
+        setValidationErrors(check.errors || ["Thông tin khuyến mãi không hợp lệ"])
+        setValidationWarnings(check.warnings || [])
+        return
+      }
+
+      await onUpdate(form.id, payload)
+      setVisible(false)
+    } catch (err) {
+      console.error("Validation/Update failed:", err)
+      const errorMsg = err.response?.data?.errors || err.response?.data?.message || err.message || "Lỗi hệ thống khi cập nhật khuyến mãi"
+      setValidationErrors(Array.isArray(errorMsg) ? errorMsg : [errorMsg])
+    }
 
   }
 
@@ -146,6 +165,24 @@ function EditPromotionModal({
       </CModalHeader>
 
       <CModalBody>
+        {validationErrors.length > 0 && (
+          <CAlert color="danger" className="mb-3">
+            <ul className="mb-0">
+              {validationErrors.map((err, idx) => (
+                <li key={idx}>{err}</li>
+              ))}
+            </ul>
+          </CAlert>
+        )}
+        {validationWarnings.length > 0 && (
+          <CAlert color="warning" className="mb-3">
+            <ul className="mb-0">
+              {validationWarnings.map((warn, idx) => (
+                <li key={idx}>{warn}</li>
+              ))}
+            </ul>
+          </CAlert>
+        )}
 
         {/* PROMOTION INFO */}
 
