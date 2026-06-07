@@ -9,6 +9,7 @@ using backend.Models;
 using backend.Interfaces;
 using backend.Helpers;
 using System.Security.Claims;
+using Microsoft.Extensions.Logging;
 
 namespace backend.Services;
 
@@ -20,6 +21,8 @@ public class UserService : IUserService
     private readonly IAuditLogService _auditLogService;
     private readonly UserManager<User> _userManager;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<UserService> _logger;
 
     private static readonly HashSet<string> AllowedCreatableRoles = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -39,13 +42,15 @@ public class UserService : IUserService
         "Member"
     };
 
-    public UserService(ApplicationDbContext context, IMapper mapper, IAuditLogService auditLogService, UserManager<User> userManager, IHttpContextAccessor httpContextAccessor)
+    public UserService(ApplicationDbContext context, IMapper mapper, IAuditLogService auditLogService, UserManager<User> userManager, IHttpContextAccessor httpContextAccessor, IEmailService emailService, ILogger<UserService> logger)
     {
         _context = context;
         _mapper = mapper;
         _auditLogService = auditLogService;
         _userManager = userManager;
         _httpContextAccessor = httpContextAccessor;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     private async Task<(bool IsSuperAdmin, bool IsGymOwner, bool IsBranchAdmin, Guid? BranchId)> GetCallerScopeAsync()
@@ -151,6 +156,18 @@ public class UserService : IUserService
             ?? throw new Exception("Created user could not be loaded");
 
         createdUser.Role = targetRole.RoleName;
+
+        // Gửi email chào mừng + mật khẩu (ngoài transaction — lỗi email không rollback)
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(user.Email))
+                await _emailService.SendActivationAsync(user.Email, user.FullName ?? dto.FullName, dto.Password);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to send welcome email to {Email} after account creation", user.Email);
+        }
+
         return createdUser;
     }
 
