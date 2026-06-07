@@ -250,15 +250,13 @@ StaffPosition (chỉ áp dụng khi Role = Staff):
 | `get_pt_performance` | | | | ✅ | | ✅ | ✅ | ✅ |
 | `checkin_lookup` | | | | | ✅ | ✅ | ✅ | ✅ |
 | `booking_lookup` | | | | | ✅ | ✅ | ✅ | ✅ |
-| `member_lookup` | | | | | ✅ | ✅ | ✅ | ✅ |
+| `member_lookup` | | ✅ | | | ✅ | ✅ | ✅ | ✅ |
 | `get_checkin_report` | | | | | | ✅ | ✅ | ✅ |
 | `get_branch_revenue` | | | | | | ✅ | ✅ | ✅ |
 | `get_branch_payroll` | | | | | | ✅ | ✅ | ✅ |
-| `get_branch_dashboard` | | | | | | ✅ | ✅ | ✅ |
 | `get_global_revenue` | | | | | | | ✅ | ✅ |
 | `get_system_dashboard` | | | | | | | ✅ | ✅ |
 | `get_payroll_overview` | | | | | | | ✅ | ✅ |
-| `get_global_sales_funnel` | | | | | | | ✅ | ✅ |
 
 ---
 
