@@ -60,6 +60,72 @@ public class SmtpEmailService : IEmailService
         await SendEmailAsync(toEmail, subject, body);
     }
 
+    public async Task SendRegistrationConfirmationAsync(
+        string toEmail,
+        string fullName,
+        string tempPassword,
+        string packageName,
+        decimal totalAmount,
+        string invoiceCode)
+    {
+        var appUrl = _configuration["AppUrl"] ?? "http://localhost:5173";
+        var isFree = totalAmount == 0;
+        var amountText = isFree
+            ? "<span style=\"color:#2e7d32;font-weight:bold\">Miễn phí 🎁</span>"
+            : $"<strong style=\"color:#c62828\">{totalAmount:N0} VND</strong>";
+        var paymentNote = isFree
+            ? "<p style=\"color:#2e7d32;background:#e8f5e9;padding:12px;border-radius:6px;border-left:4px solid #66bb6a\">🎁 <strong>Gói dùng thử miễn phí!</strong> Nhân viên sẽ kích hoạt thẻ ngay khi bạn đến gym.</p>"
+            : $"<p style=\"color:#e65100;background:#fff3e0;padding:12px;border-radius:6px;border-left:4px solid #ff9800\">💳 <strong>Lưu ý:</strong> Vui lòng thanh toán <strong>{totalAmount:N0} VND</strong> (Mã HĐ: <code>{invoiceCode}</code>) để kích hoạt thẻ tập.</p>";
+
+        var subject = "[GYM] Đăng ký thành công – Thông tin tài khoản & Hóa đơn";
+        var body = $"""
+            <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f9f9f9;padding:24px;border-radius:8px">
+              <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);padding:24px;border-radius:8px 8px 0 0;text-align:center">
+                <h1 style="color:#e2b96f;margin:0;font-size:22px">💪 GYM Management System</h1>
+              </div>
+              <div style="background:#ffffff;padding:28px;border-radius:0 0 8px 8px;border:1px solid #e0e0e0">
+                <h2 style="color:#1a1a2e;margin-top:0">Xin chào {fullName}!</h2>
+                <p style="color:#555;line-height:1.6">Bạn đã đăng ký thành công. Dưới đây là thông tin đăng nhập và chi tiết đăng ký:</p>
+                <h3 style="color:#1a1a2e;border-bottom:2px solid #e2b96f;padding-bottom:6px">🔐 Thông tin tài khoản</h3>
+                <table style="width:100%;border-collapse:collapse;margin:12px 0">
+                  <tr>
+                    <td style="padding:10px 14px;background:#f0f4ff;border:1px solid #d0d8f0;font-weight:bold;width:40%">📧 Email</td>
+                    <td style="padding:10px 14px;border:1px solid #d0d8f0">{toEmail}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:10px 14px;background:#f0f4ff;border:1px solid #d0d8f0;font-weight:bold">🔑 Mật khẩu tạm</td>
+                    <td style="padding:10px 14px;border:1px solid #d0d8f0"><strong style="font-size:16px;color:#d32f2f">{tempPassword}</strong></td>
+                  </tr>
+                </table>
+                <p style="color:#e65100;background:#fff3e0;padding:10px 12px;border-radius:6px;border-left:4px solid #ff9800;font-size:13px">
+                  ⚠️ <strong>Bảo mật:</strong> Đổi mật khẩu ngay sau lần đăng nhập đầu tiên!
+                </p>
+                <h3 style="color:#1a1a2e;border-bottom:2px solid #e2b96f;padding-bottom:6px;margin-top:24px">📋 Thông tin đăng ký</h3>
+                <table style="width:100%;border-collapse:collapse;margin:12px 0">
+                  <tr>
+                    <td style="padding:10px 14px;background:#f0f4ff;border:1px solid #d0d8f0;font-weight:bold;width:40%">📦 Gói tập</td>
+                    <td style="padding:10px 14px;border:1px solid #d0d8f0">{packageName}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:10px 14px;background:#f0f4ff;border:1px solid #d0d8f0;font-weight:bold">🧾 Mã hóa đơn</td>
+                    <td style="padding:10px 14px;border:1px solid #d0d8f0"><code style="background:#f5f5f5;padding:2px 6px;border-radius:4px">{invoiceCode}</code></td>
+                  </tr>
+                  <tr>
+                    <td style="padding:10px 14px;background:#f0f4ff;border:1px solid #d0d8f0;font-weight:bold">💰 Số tiền</td>
+                    <td style="padding:10px 14px;border:1px solid #d0d8f0">{amountText}</td>
+                  </tr>
+                </table>
+                {paymentNote}
+                <div style="text-align:center;margin-top:24px">
+                  <a href="{appUrl}" style="background:linear-gradient(135deg,#1a1a2e,#16213e);color:#e2b96f;padding:12px 32px;border-radius:6px;text-decoration:none;font-weight:bold;font-size:15px">🔐 Đăng nhập ngay</a>
+                </div>
+                <p style="color:#999;font-size:12px;margin-top:24px;text-align:center">Nếu bạn không thực hiện đăng ký này, vui lòng liên hệ quản lý.</p>
+              </div>
+            </div>
+            """;
+        await SendEmailAsync(toEmail, subject, body);
+    }
+
     public async Task SendMembershipActivatedAsync(
         string toEmail,
         string fullName,

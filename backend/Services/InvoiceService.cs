@@ -103,13 +103,23 @@ public class InvoiceService : IInvoiceService
         if (invoice.Status == InvoiceStatus.Paid)
             throw new Exception("Invoice is already fully paid");
 
-        if (dto.Amount <= 0)
-            throw new Exception("Payment amount must be greater than zero");
+        decimal effectiveAmount;
 
-        // The user decided against partial payments. The invoice is either fully paid or not.
-        // So we just check if it matches the total. We could allow them to overpay or whatever, but standard is exact or more.
-        if (dto.Amount < invoice.TotalAmount)
-            throw new Exception($"Payment amount must be at least {invoice.TotalAmount} (Partial payments not supported)");
+        // Gói Trial giá 0đ: tự động xác nhận không cần nhập tiền
+        if (invoice.TotalAmount == 0)
+        {
+            effectiveAmount = 0;
+        }
+        else
+        {
+            if (dto.Amount <= 0)
+                throw new Exception("Payment amount must be greater than zero");
+
+            if (dto.Amount < invoice.TotalAmount)
+                throw new Exception($"Payment amount must be at least {invoice.TotalAmount:N0} VND (Partial payments not supported)");
+
+            effectiveAmount = dto.Amount;
+        }
 
         var isStaffExist = await _context.Staffs.AnyAsync(s => s.UserId == staffId);
         var resolvedStaffId = staffId;
@@ -128,7 +138,7 @@ public class InvoiceService : IInvoiceService
             InvoiceId = invoice.InvoiceId,
             Method = dto.Method,
             RefNo = dto.RefNo,
-            Amount = dto.Amount,
+            Amount = effectiveAmount,
             Status = PaymentStatus.Completed,
             ProcessedBy = resolvedStaffId,
             ProcessedByStaffId = resolvedStaffId,
