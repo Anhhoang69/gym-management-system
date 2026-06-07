@@ -28,6 +28,7 @@ function PromotionTable({
   onToggleSelectAll = () => {},
   onEdit = () => {},
   onDelete = () => {},
+  onToggleStatus = () => {},
 }) {
 
   const allChecked =
@@ -207,6 +208,20 @@ function PromotionTable({
                         >
                           Chỉnh sửa
                         </CDropdownItem>
+
+                        {promo.status === "active" ? (
+                          <CDropdownItem
+                            onClick={() => onToggleStatus(promo.id, "Inactive")}
+                          >
+                            Tạm ngưng
+                          </CDropdownItem>
+                        ) : (
+                          <CDropdownItem
+                            onClick={() => onToggleStatus(promo.id, "Active")}
+                          >
+                            Kích hoạt
+                          </CDropdownItem>
+                        )}
 
                         <CDropdownItem
                           className="text-danger"

@@ -8,10 +8,11 @@ import {
 } from "@coreui/react"
 import { useState, useEffect } from "react"
 import { getContracts } from "../../services/contractService"
+import { createInvoice } from "../../services/invoiceService"
 import moment from "moment"
-import { Banknote } from "lucide-react"
+import { Banknote, FilePlus, Loader2 } from "lucide-react"
 
-function ContractsTable({ onPayClick }) {
+function ContractsTable({ onPayClick, onRefresh, fixedBranchId = "" }) {
   const [contracts, setContracts] = useState([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -19,19 +20,33 @@ function ContractsTable({ onPayClick }) {
 
   useEffect(() => {
     fetchContracts()
-  }, [page])
+  }, [page, fixedBranchId])
 
   const fetchContracts = async () => {
     setLoading(true)
     try {
       // Assuming getContracts supports pagination
-      const data = await getContracts({ page, pageSize: 10 })
+      const data = await getContracts({ page, pageSize: 10, branchId: fixedBranchId })
       setContracts(data.items || [])
       setTotalPages(data.totalPages || 1)
     } catch (error) {
       console.error("Failed to fetch contracts", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCreateInvoice = async (contractId) => {
+    try {
+      setLoading(true);
+      await createInvoice({ contractId });
+      fetchContracts();
+      if (onRefresh) onRefresh();
+    } catch (error) {
+      console.error("Failed to create invoice", error);
+      alert("Không thể tạo hóa đơn. Vui lòng kiểm tra lại.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -65,9 +80,9 @@ function ContractsTable({ onPayClick }) {
           <div className="text-center py-5">Đang tải...</div>
         ) : (
           <>
-            <div className="table-responsive">
-              <table className="table align-middle table-hover">
-                <thead className="table-light">
+            <div className="table-responsive" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+              <table className="table align-middle table-hover mb-0">
+                <thead className="table-light" style={{ position: 'sticky', top: 0, zIndex: 1 }}>
                   <tr>
                     <th>Mã HĐ</th>
                     <th>Hội viên</th>
@@ -80,10 +95,10 @@ function ContractsTable({ onPayClick }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {contracts.map(item => (
-                    <tr key={item.id}>
+                  {contracts.map((item, idx) => (
+                    <tr key={item.contractId || item.id || idx}>
                       <td className="text-muted small fw-semibold">
-                        {item.contractCode || (item.id ? item.id.toString().substring(0, 8) : 'N/A')}
+                        {item.contractId ? item.contractId.substring(0, 8).toUpperCase() : 'N/A'}
                       </td>
                       <td>
                         <div className="fw-semibold">{item.memberName || 'Unknown'}</div>
@@ -96,18 +111,18 @@ function ContractsTable({ onPayClick }) {
                         </div>
                       </td>
                       <td className="fw-bold text-indigo-600">
-                        {formatCurrency(item.totalAmount)}
+                        {formatCurrency(item.dealPrice || item.originalPrice)}
                       </td>
                       <td>{getStatusBadge(item.status)}</td>
-                      <td>{getPaymentBadge(item.paymentStatus)}</td>
+                      <td>{getPaymentBadge(item.invoiceStatus || item.paymentStatus)}</td>
                       <td className="text-center">
                         <div className="d-flex gap-2 justify-content-center">
                           <CButton color="info" variant="ghost" size="sm">
                             Xem
                           </CButton>
 
-                          {/* If contract is Pending or payment is not Paid, allow Collect Payment */}
-                          {(item.status === 'Pending' || item.paymentStatus === 'Pending') && item.invoiceId && (
+                          {/* If contract is Pending or invoice is Pending, allow Collect Payment */}
+                          {(item.status === 'Pending' || item.invoiceStatus === 'Pending') && item.invoiceId && (
                             <CButton
                               color="primary"
                               size="sm"
@@ -116,15 +131,27 @@ function ContractsTable({ onPayClick }) {
                                 if (onPayClick) {
                                   onPayClick({
                                     invoiceId: item.invoiceId,
-                                    contractId: item.id,
-                                    totalAmountDue: item.totalAmount,
-                                    invoiceCode: item.invoiceCode || `INV-${item.id ? item.id.toString().substring(0, 6) : 'TEMP'}`
+                                    contractId: item.contractId,
+                                    totalAmountDue: item.dealPrice,
+                                    invoiceCode: item.invoiceId.substring(0, 8).toUpperCase()
                                   })
                                 }
                               }}
                             >
                               <Banknote size={14} />
                               Thu Tiền
+                            </CButton>
+                          )}
+
+                          {item.status === 'Pending' && !item.invoiceId && (
+                            <CButton
+                              color="secondary"
+                              size="sm"
+                              className="d-flex align-items-center gap-1 shadow-sm"
+                              onClick={() => handleCreateInvoice(item.contractId)}
+                            >
+                              <FilePlus size={14} />
+                              Tạo HĐ
                             </CButton>
                           )}
                         </div>

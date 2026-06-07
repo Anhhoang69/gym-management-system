@@ -8,7 +8,9 @@ import {
   FaMoon,
   FaFire,
   FaBell,
-  FaSignOutAlt
+  FaSignOutAlt,
+  FaUser,
+  FaCalendarAlt
 } from 'react-icons/fa';
 
 import {
@@ -16,7 +18,8 @@ import {
   getNotifications,
   readNotification,
   readAllNotifications
-} from '../services/memberService';
+} from '../../../shared/services/notificationService';
+import { getMyProfile } from '../services/memberService';
 
 import LogoWhite from '../../../assets/LogoWhiteText.svg';
 import LogoBlack from '../../../assets/LogoBlackText.svg';
@@ -48,11 +51,28 @@ export default function LandingHeader() {
   }, [location.pathname]);
 
   // LOAD USER
-  const loadUser = () => {
+  const loadUser = async () => {
     const stored = localStorage.getItem('user');
 
     if (stored) {
-      setUser(JSON.parse(stored));
+      const parsed = JSON.parse(stored);
+      setUser(parsed);
+
+      // Background sync profile details
+      try {
+        const freshProfile = await getMyProfile();
+        if (freshProfile) {
+          const updated = {
+            ...parsed,
+            fullName: freshProfile.fullName || freshProfile.email?.split('@')[0],
+            avatarUrl: freshProfile.avatarUrl
+          };
+          localStorage.setItem('user', JSON.stringify(updated));
+          setUser(updated);
+        }
+      } catch (e) {
+        console.error("Failed to sync member profile details in header", e);
+      }
     } else {
       setUser(null);
     }
@@ -62,12 +82,11 @@ export default function LandingHeader() {
     loadUser();
 
     window.addEventListener('loginSuccess', loadUser);
+    window.addEventListener('userProfileUpdated', loadUser);
 
     return () => {
-      window.removeEventListener(
-        'loginSuccess',
-        loadUser
-      );
+      window.removeEventListener('loginSuccess', loadUser);
+      window.removeEventListener('userProfileUpdated', loadUser);
     };
   }, []);
 
@@ -132,7 +151,7 @@ export default function LandingHeader() {
 
       setNotifications((prev) =>
         prev.map((n) =>
-          n.id === id
+          n.notificationId === id
             ? { ...n, isRead: true }
             : n
         )
@@ -186,7 +205,7 @@ export default function LandingHeader() {
 
     {
       name: 'Huấn luyện viên',
-      path: '/pt'
+      path: '/trainers'
     },
 
     {
@@ -195,7 +214,7 @@ export default function LandingHeader() {
     },
 
     {
-      name: 'Lịch tập',
+      name: 'Lớp học',
       path: '/classes',
       memberOnly: true
     },
@@ -347,6 +366,7 @@ export default function LandingHeader() {
           {/* THEME */}
           <button
             onClick={toggleTheme}
+            aria-label="Toggle theme"
             className="
               flex
               h-9
@@ -442,17 +462,16 @@ export default function LandingHeader() {
                     className="
                       absolute
                       right-0
-                      top-[115%]
+                      top-[55px]
                       z-50
                       w-80
                       overflow-hidden
-                      rounded-2xl
+                      rounded-none
                       border
-                      border-gray-200
-                      bg-white
+                      border-t-0
+                      border-[var(--border)]
+                      bg-[var(--bg-secondary)]
                       shadow-xl
-                      dark:border-gray-700
-                      dark:bg-gray-800
                     "
                   >
                     <div
@@ -461,27 +480,27 @@ export default function LandingHeader() {
                         items-center
                         justify-between
                         border-b
-                        border-gray-200
+                        border-[var(--border)]
                         px-4
                         py-3
-                        dark:border-gray-700
                       "
                     >
-                      <h4
+                      <span
                         className="
-                          font-semibold
-                          text-gray-800
-                          dark:text-gray-200
+                          text-sm
+                          font-bold
+                          text-[var(--text-primary)]
                         "
                       >
                         Thông báo
-                      </h4>
+                      </span>
 
                       {unreadCount > 0 && (
                         <button
                           onClick={handleReadAllNotif}
                           className="
                             text-xs
+                            font-semibold
                             text-[var(--brand)]
                             hover:underline
                           "
@@ -498,7 +517,7 @@ export default function LandingHeader() {
                             p-4
                             text-center
                             text-sm
-                            text-gray-500
+                            text-[var(--text-secondary)]
                           "
                         >
                           Chưa có thông báo nào
@@ -506,34 +525,32 @@ export default function LandingHeader() {
                       ) : (
                         notifications.map((n) => (
                           <div
-                            key={n.id}
+                            key={n.notificationId}
                             onClick={() =>
                               handleReadNotif(
-                                n.id,
+                                n.notificationId,
                                 n.isRead
                               )
                             }
                             className={`
                               cursor-pointer
                               border-b
-                              border-gray-100
+                              border-[var(--border)]
                               p-3
                               transition-colors
-                              hover:bg-gray-50
-                              dark:border-gray-700
-                              dark:hover:bg-gray-700
+                              hover:bg-black/5
+                              dark:hover:bg-white/10
                               ${n.isRead
-                                ? 'opacity-60'
-                                : 'bg-blue-50 dark:bg-blue-900/20'
+                                ? 'opacity-60 bg-transparent'
+                                : 'bg-[var(--brand)]/5 dark:bg-[var(--brand)]/10'
                               }
                             `}
                           >
                             <div
                               className="
-                                text-sm
+                                text-xs
                                 font-semibold
-                                text-gray-800
-                                dark:text-gray-200
+                                text-[var(--text-primary)]
                               "
                             >
                               {n.title}
@@ -542,12 +559,11 @@ export default function LandingHeader() {
                             <div
                               className="
                                 mt-1
-                                text-xs
-                                text-gray-600
-                                dark:text-gray-400
+                                text-[11px]
+                                text-[var(--text-secondary)]
                               "
                             >
-                              {n.content}
+                              {n.message}
                             </div>
                           </div>
                         ))
@@ -580,7 +596,7 @@ export default function LandingHeader() {
                   "
                 >
                   <img
-                    src="https://i.pravatar.cc/40"
+                    src={user.avatarUrl || "https://i.pravatar.cc/150"}
                     alt="avatar"
                     className="
                       h-9
@@ -609,7 +625,7 @@ export default function LandingHeader() {
                         text-[var(--text-primary)]
                       "
                     >
-                      {user.email.split('@')[0]}
+                      {user.fullName || user.email.split('@')[0]}
                     </div>
 
                     <div
@@ -630,17 +646,18 @@ export default function LandingHeader() {
                 {isDropdownOpen && (
                   <div
                     className="
-                      absolute
+                      fixed
                       right-0
-                      top-[115%]
+                      top-[70px]
                       z-50
-                      min-w-[220px]
+                      w-44
                       overflow-hidden
-                      rounded-2xl
+                      rounded-none
                       border
-                      border-gray-200
-                      bg-white
-                      py-2
+                      border-t-0
+                      border-(--border)
+                      bg-(--bg-secondary)
+                      py-1.5
                       shadow-xl
                     "
                   >
@@ -656,13 +673,15 @@ export default function LandingHeader() {
                         items-center
                         gap-3
                         px-4
-                        py-3
-                        text-gray-800
+                        py-2
+                        text-(--text-primary)
                         transition-colors
-                        hover:bg-gray-100
+                        hover:bg-black/5
+                        dark:hover:bg-white/10
                       "
                     >
-                      <span className="text-sm font-medium">
+                      <FaUser className="text-(--text-secondary)" size={13} />
+                      <span className="text-xs font-semibold">
                         Hồ sơ cá nhân
                       </span>
                     </div>
@@ -679,18 +698,20 @@ export default function LandingHeader() {
                         items-center
                         gap-3
                         px-4
-                        py-3
-                        text-gray-800
+                        py-2
+                        text-(--text-primary)
                         transition-colors
-                        hover:bg-gray-100
+                        hover:bg-black/5
+                        dark:hover:bg-white/10
                       "
                     >
-                      <span className="text-sm font-medium">
+                      <FaCalendarAlt className="text-(--text-secondary)" size={13} />
+                      <span className="text-xs font-semibold">
                         Lớp của tôi
                       </span>
                     </div>
 
-                    <div className="my-1 border-t border-gray-200"></div>
+                    <div className="my-1 border-t border-(--border)"></div>
 
                     <div
                       onClick={() => {
@@ -704,15 +725,16 @@ export default function LandingHeader() {
                         items-center
                         gap-3
                         px-4
-                        py-3
-                        text-red-600
+                        py-2
+                        text-red-500
                         transition-colors
-                        hover:bg-red-50
+                        hover:bg-red-500/10
+                        dark:hover:bg-red-950/20
                       "
                     >
-                      <FaSignOutAlt />
+                      <FaSignOutAlt size={13} />
 
-                      <span className="text-sm font-medium">
+                      <span className="text-xs font-semibold">
                         Đăng xuất
                       </span>
                     </div>

@@ -35,7 +35,7 @@ function BranchManagementPage() {
   const [deletingBranch, setDeletingBranch] = useState(null)
 
   const [page, setPage] = useState(1)
-  const pageSize = 4
+  const pageSize = 2
 
   const [apiStats, setApiStats] = useState({
     totalBranches: 0,

@@ -1,6 +1,8 @@
-import StatsCards from "../components/common/StatsCards"
 import ContractFilters from "../components/contract/ContractFilters"
 import ContractsTable from "../components/contract/ContractsTable"
+import DraftContractsTable from "../components/contract/DraftContractsTable"
+import InvoicesTable from "../components/contract/InvoicesTable"
+import CreateContractModal from "../components/contract/CreateContractModal"
 
 import {
   cilFile,
@@ -15,83 +17,98 @@ import UnifiedPaymentDrawer from "../components/common/UnifiedPaymentDrawer"
 
 function ContractsPage() {
   const [showPayment, setShowPayment] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
   const [paymentData, setPaymentData] = useState({})
+  const [refreshKey, setRefreshKey] = useState(0)
 
-
-  const stats = [
-    {
-      title: "Tổng Hợp Đồng",
-      value: "1,284",
-      change: "+6% so với tháng trước",
-      icon: cilFile,
-      bg: "#FFF3CD",
-      color: "#F59E0B",
-      positive: true
-    },
-    {
-      title: "Đang Hoạt Động",
-      value: "1,102",
-      change: "+4% so với tháng trước",
-      icon: cilCheckCircle,
-      bg: "#DCFCE7",
-      color: "#22C55E",
-      positive: true
-    },
-    {
-      title: "Sắp Hết Hạn",
-      value: "96",
-      change: "Trong 7 ngày tới",
-      icon: cilClock,
-      bg: "#FFEAD5",
-      color: "#FB923C",
-      positive: null
-    },
-    {
-      title: "Hóa Đơn Chưa Thanh Toán",
-      value: "$4,320",
-      change: "-2% so với tháng trước",
-      icon: cilWarning,
-      bg: "#FEE2E2",
-      color: "#EF4444",
-      positive: false
-    }
-  ]
+  const [activeTab, setActiveTab] = useState('official')
 
   return (
     <div>
 
       {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="d-flex justify-content-between align-items-center mb-3">
 
         <div>
           <h3 className="fw-bold mb-1">Hợp Đồng & Hóa Đơn</h3>
-          <p className="text-muted mb-0">
-            Quản lý hợp đồng hội viên và các hóa đơn thanh toán
-          </p>
         </div>
 
-        <button className="btn btn-warning px-4 fw-semibold">
+        <button
+          className="btn btn-warning px-4 fw-semibold shadow-sm"
+          onClick={() => setShowCreateModal(true)}
+        >
           + Tạo Hợp Đồng
         </button>
 
       </div>
 
-      {/* Stats */}
-      <StatsCards stats={stats} />
+      {/* Tabs */}
+      <div className="d-flex border-bottom mb-3 gap-4">
+        <button
+          className={`btn btn-link text-decoration-none px-0 pb-2 border-bottom border-2 rounded-0 ${activeTab === 'official' ? 'border-primary fw-bold text-primary' : 'border-transparent text-muted'}`}
+          onClick={() => setActiveTab('official')}
+        >
+          Hợp đồng chính thức
+        </button>
+        <button
+          className={`btn btn-link text-decoration-none px-0 pb-2 border-bottom border-2 rounded-0 ${activeTab === 'draft' ? 'border-primary fw-bold text-primary' : 'border-transparent text-muted'}`}
+          onClick={() => setActiveTab('draft')}
+        >
+          Bản nháp
+        </button>
+        <button
+          className={`btn btn-link text-decoration-none px-0 pb-2 border-bottom border-2 rounded-0 ${activeTab === 'invoice' ? 'border-primary fw-bold text-primary' : 'border-transparent text-muted'}`}
+          onClick={() => setActiveTab('invoice')}
+        >
+          Hóa đơn
+        </button>
+      </div>
 
       {/* Filters */}
-      <div className="mt-4">
+      <div className="mb-3">
         <ContractFilters />
       </div>
 
       {/* Table */}
-      <div className="mt-4">
-        <ContractsTable 
-          onPayClick={(data) => {
-            setPaymentData(data);
-            setShowPayment(true);
-          }}
-        />
+      <div>
+        {activeTab === 'official' && (
+          <ContractsTable
+            key={`official-${refreshKey}`}
+            onPayClick={(data) => {
+              setPaymentData(data);
+              setShowPayment(true);
+            }}
+            onRefresh={() => setRefreshKey(prev => prev + 1)}
+          />
+        )}
+
+        {activeTab === 'draft' && (
+          <DraftContractsTable
+            key={`draft-${refreshKey}`}
+            onContractCreated={(result) => {
+              setRefreshKey(prev => prev + 1);
+              if (result && result.invoiceId) {
+                setPaymentData({
+                  invoiceId: result.invoiceId,
+                  contractId: result.contractId || result.id,
+                  totalAmountDue: result.dealPrice || result.totalAmount || 0,
+                  invoiceCode: result.invoiceId.substring(0, 8).toUpperCase()
+                });
+                setShowPayment(true);
+              }
+            }}
+          />
+        )}
+
+        {activeTab === 'invoice' && (
+          <InvoicesTable
+            key={`invoice-${refreshKey}`}
+            onPayClick={(data) => {
+              setPaymentData(data);
+              setShowPayment(true);
+            }}
+          />
+        )}
       </div>
 
       <UnifiedPaymentDrawer
@@ -102,8 +119,25 @@ function ContractsPage() {
         totalAmountDue={paymentData.totalAmountDue}
         invoiceCode={paymentData.invoiceCode}
         onSuccess={() => {
-          // You could trigger a re-fetch here if ContractsTable manages its own state,
-          // or if ContractPage manages it.
+          setRefreshKey(prev => prev + 1);
+        }}
+      />
+
+      <CreateContractModal
+        visible={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={(result) => {
+          setShowCreateModal(false);
+          setRefreshKey(prev => prev + 1);
+          if (result && result.invoiceId) {
+            setPaymentData({
+              invoiceId: result.invoiceId,
+              contractId: result.contractId || result.id,
+              totalAmountDue: result.dealPrice || result.totalAmount || 0,
+              invoiceCode: result.invoiceId // Using invoiceId as code if there's no code returned
+            });
+            setShowPayment(true);
+          }
         }}
       />
 

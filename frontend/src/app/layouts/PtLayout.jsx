@@ -1,4 +1,6 @@
 import { Outlet } from "react-router-dom";
+import PtHeader from "../../features/pt/components/common/PtHeader";
+import PtSidebar from "../../features/pt/components/common/PtSidebar";
 
 function PtLayout() {
   return (
@@ -10,10 +12,7 @@ function PtLayout() {
         flexDirection: "column"
       }}
     >
-      {/* TODO: Add PtHeader */}
-      <header style={{ background: '#fff', padding: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-        <h2 style={{ margin: 0, color: '#333' }}>PT Portal (Head PT & Trainers)</h2>
-      </header>
+      <PtHeader />
 
       <div
         style={{
@@ -21,15 +20,7 @@ function PtLayout() {
           display: "flex"
         }}
       >
-        {/* TODO: Add PtSidebar */}
-        <aside style={{ width: '250px', background: '#34495e', color: '#fff', padding: '16px' }}>
-          <nav>
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              <li style={{ marginBottom: '12px' }}>Dashboard</li>
-              {/* Add more PT routes here */}
-            </ul>
-          </nav>
-        </aside>
+        <PtSidebar />
 
         <main
           style={{

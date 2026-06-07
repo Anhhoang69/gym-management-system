@@ -28,8 +28,8 @@ export const getMyBookings = async () => {
   return response.data.data
 }
 
-export const cancelBooking = async (classId, reason) => {
-  const response = await api.patch(`/api/classes/${classId}/cancel-booking`, { reason })
+export const cancelBooking = async (classId, cancelReason) => {
+  const response = await api.patch(`/api/classes/${classId}/cancel-booking`, { cancelReason })
   return response.data.data
 }
 
@@ -63,4 +63,22 @@ export const readNotification = async (notificationId) => {
 export const readAllNotifications = async () => {
   const response = await api.patch("/api/notifications/read-all")
   return response.data.data
+}
+
+// ATTENDANCE
+export const getMyAttendance = async () => {
+  const response = await api.get("/api/attendance/my")
+  return response.data.data
+}
+
+// UPLOAD IMAGE
+export const uploadImage = async (file) => {
+  const formData = new FormData()
+  formData.append("file", file)
+  const response = await api.post("/api/Upload/image?folder=gym", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data"
+    }
+  })
+  return response.data.url
 }

@@ -12,6 +12,7 @@ function UserFilters({
   onBulkEmail,
   onBulkSuspend,
   onClearSelection,
+  hideBranchFilter = false,
 }) {
   return (
     <>
@@ -40,19 +41,21 @@ function UserFilters({
         </select>
 
         {/* BRANCH */}
-        <select
-          className="form-select"
-          style={{ width: 180 }}
-          value={branch}
-          onChange={(e) => setBranch(e.target.value)}
-        >
-          <option value="">Tất cả chi nhánh</option>
-          {branches.map((b) => (
-            <option key={b.branchId} value={b.branchId}>
-              {b.name}
-            </option>
-          ))}
-        </select>
+        {!hideBranchFilter && (
+          <select
+            className="form-select"
+            style={{ width: 180 }}
+            value={branch}
+            onChange={(e) => setBranch(e.target.value)}
+          >
+            <option value="">Tất cả chi nhánh</option>
+            {branches.map((b) => (
+              <option key={b.branchId} value={b.branchId}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+        )}
 
         {/* RESET */}
         <CButton
@@ -61,7 +64,9 @@ function UserFilters({
           onClick={() => {
             setSearch("")
             setRole("")
-            setBranch("")
+            if (!hideBranchFilter) {
+              setBranch("")
+            }
           }}
         >
           Reset

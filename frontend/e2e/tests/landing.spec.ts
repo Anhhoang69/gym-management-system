@@ -30,7 +30,7 @@ test.describe('Landing Page Navigation & UI (Guest View)', () => {
   // TC_09
   test('should navigate to PT (Huấn luyện viên) page', async ({ page }) => {
     await landingPage.navigateTo('PT');
-    await expect(page).toHaveURL(/\/pt/);
+    await expect(page).toHaveURL(/\/trainers/);
   });
 
   // TC_10
@@ -73,8 +73,8 @@ test.describe('Landing Page Navigation (Member View)', () => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
     // Sử dụng account test mà bạn đã setup
-    await loginPage.login('member05@gym.com', 'Member05@');
-    
+    await loginPage.login('nguyen.van.an@gmail.com', '123456Aa@');
+
     // Đợi nhảy về trang chủ
     await page.waitForURL(/\/$/);
 
@@ -85,7 +85,7 @@ test.describe('Landing Page Navigation (Member View)', () => {
     // Verify navigate to Classes
     await landingPage.navigateTo('Classes');
     await expect(page).toHaveURL(/\/classes/);
-    
+
     // Verify navigate to AI
     await landingPage.navigateTo('AI');
     await expect(page).toHaveURL(/\/ai/);
@@ -95,7 +95,7 @@ test.describe('Landing Page Navigation (Member View)', () => {
   test('should navigate to member profile', async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
-    await loginPage.login('member05@gym.com', 'Member05@');
+    await loginPage.login('nguyen.van.an@gmail.com', '123456Aa@');
     await page.waitForURL(/\/$/);
 
     // Click vào avatar để mở menu
@@ -108,7 +108,7 @@ test.describe('Landing Page Navigation (Member View)', () => {
   test('should navigate to member bookings (Lớp của tôi)', async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
-    await loginPage.login('member05@gym.com', 'Member05@');
+    await loginPage.login('nguyen.van.an@gmail.com', '123456Aa@');
     await page.waitForURL(/\/$/);
 
     // Click vào avatar để mở menu
@@ -119,8 +119,13 @@ test.describe('Landing Page Navigation (Member View)', () => {
 
   // TC_18
   test('should toggle dark mode on landing page', async ({ page }) => {
-    // Click nút theme (nút đầu tiên trong phần menu bên phải)
-    const themeBtn = page.locator('nav .flex.items-center.gap-4 button').first();
+    const loginPage = new LoginPage(page);
+    await loginPage.goto();
+    await loginPage.login('nguyen.van.an@gmail.com', '123456Aa@');
+    await page.waitForURL(/\/$/);
+
+    // Click nút theme
+    const themeBtn = page.getByRole('button', { name: 'Toggle theme' });
     await themeBtn.click();
     await expect(page.locator('html')).toHaveClass(/dark/);
     

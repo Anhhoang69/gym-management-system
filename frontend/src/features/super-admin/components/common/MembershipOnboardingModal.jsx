@@ -84,8 +84,8 @@ const MembershipOnboardingModal = ({
     }
   };
 
-  const selectedPackage = packages.find(p => p.id === formData.packageId);
-  const selectedPricing = selectedPackage?.pricings?.find(pr => pr.id === formData.pricingId);
+  const selectedPackage = packages.find(p => (p.packageId || p.id) === formData.packageId);
+  const selectedPricing = selectedPackage?.pricings?.find(pr => (pr.packagePricingId || pr.id) === formData.pricingId);
 
   const handleNext = () => {
     if (step === 1) {
@@ -241,9 +241,10 @@ const MembershipOnboardingModal = ({
                         onChange={e => setFormData({...formData, packageId: e.target.value, pricingId: ''})}
                       >
                         <option value="">-- Chọn Gói Tập --</option>
-                        {packages.map(p => (
-                          <option key={p.id} value={p.id}>{p.name} - {p.tier}</option>
-                        ))}
+                        {packages.map(p => {
+                          const pid = p.packageId || p.id;
+                          return <option key={pid} value={pid}>{p.name} - {p.tier}</option>;
+                        })}
                       </CFormSelect>
                     </div>
 
@@ -251,16 +252,18 @@ const MembershipOnboardingModal = ({
                       <div>
                         <label className="form-label font-medium text-gray-700">Thời hạn (*)</label>
                         <div className="grid grid-cols-2 gap-3 mt-2">
-                          {selectedPackage.pricings.map(pr => (
+                          {selectedPackage.pricings.map(pr => {
+                            const prid = pr.packagePricingId || pr.id;
+                            return (
                             <div 
-                              key={pr.id}
-                              onClick={() => setFormData({...formData, pricingId: pr.id})}
-                              className={`cursor-pointer border rounded-xl p-3 transition-all ${formData.pricingId === pr.id ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500' : 'border-gray-200 hover:border-indigo-300'}`}
+                              key={prid}
+                              onClick={() => setFormData({...formData, pricingId: prid})}
+                              className={`cursor-pointer border rounded-xl p-3 transition-all ${formData.pricingId === prid ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500' : 'border-gray-200 hover:border-indigo-300'}`}
                             >
                               <div className="font-bold text-gray-800">{pr.durationMonths} Tháng</div>
                               <div className="text-indigo-600 font-semibold">{formatCurrency(pr.price)}</div>
                             </div>
-                          ))}
+                          )})}
                         </div>
                       </div>
                     )}

@@ -6,6 +6,7 @@ import {
 } from "@coreui/react"
 
 import { NavLink } from "react-router-dom"
+import { Sparkles } from "lucide-react"
 
 function Sidebar() {
     return (
@@ -25,8 +26,21 @@ function Sidebar() {
             <CSidebarNav>
 
                 <CNavItem>
+                    <NavLink to="/ai" className="nav-link flex items-center gap-2">
+                        <Sparkles size={16} className="text-yellow-500 flex-shrink-0" />
+                        <span>Trợ Lý AI</span>
+                    </NavLink>
+                </CNavItem>
+
+                <CNavItem>
                     <NavLink to="/admin" className="nav-link" end>
                         Tổng Quan
+                    </NavLink>
+                </CNavItem>
+
+                <CNavItem>
+                    <NavLink to="/admin/reports" className="nav-link">
+                        Báo Cáo
                     </NavLink>
                 </CNavItem>
 
@@ -73,14 +87,14 @@ function Sidebar() {
                 </CNavItem>
 
                 <CNavItem>
-                    <NavLink to="/admin/sales" className="nav-link">
-                        Quản Lý Bán Hàng
+                    <NavLink to="/admin/contracts" className="nav-link">
+                        Quản Lý Hợp Đồng
                     </NavLink>
                 </CNavItem>
 
                 <CNavItem>
-                    <NavLink to="/admin/contracts" className="nav-link">
-                        Quản Lý Hợp Đồng
+                    <NavLink to="/admin/sales" className="nav-link">
+                        Quản Lý Bán Hàng
                     </NavLink>
                 </CNavItem>
 
@@ -91,11 +105,10 @@ function Sidebar() {
                 </CNavItem>
 
                 <CNavItem>
-                    <NavLink to="/admin/reports" className="nav-link">
-                        Báo Cáo
+                    <NavLink to="/admin/payroll" className="nav-link">
+                        Quản Lý Lương
                     </NavLink>
                 </CNavItem>
-
             </CSidebarNav>
 
         </CSidebar>

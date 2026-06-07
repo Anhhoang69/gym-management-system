@@ -5,14 +5,14 @@ import { activateContract } from '../../services/contractService';
 
 // Unified Payment Drawer
 // Handles displaying the invoice amount, QR code, and processing payment + activation
-const UnifiedPaymentDrawer = ({ 
-  isOpen, 
-  onClose, 
-  invoiceId, 
-  contractId, 
-  totalAmountDue, 
+const UnifiedPaymentDrawer = ({
+  isOpen,
+  onClose,
+  invoiceId,
+  contractId,
+  totalAmountDue,
   invoiceCode,
-  onSuccess 
+  onSuccess
 }) => {
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [qrCodeUrl, setQrCodeUrl] = useState(null);
@@ -34,13 +34,12 @@ const UnifiedPaymentDrawer = ({
   const fetchQrCode = async (id) => {
     try {
       setIsLoadingQr(true);
-      const data = await getInvoiceQr(id);
-      if (data && data.qrUrl) {
-        setQrCodeUrl(data.qrUrl);
+      const qrUrl = await getInvoiceQr(id);
+      if (qrUrl) {
+        setQrCodeUrl(qrUrl);
       }
     } catch (err) {
       console.error("Failed to load QR code:", err);
-      // It's okay if QR fails, they can still pay cash/card
     } finally {
       setIsLoadingQr(false);
     }
@@ -91,117 +90,163 @@ const UnifiedPaymentDrawer = ({
   return (
     <>
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm transition-opacity"
         onClick={!isProcessing ? onClose : undefined}
       ></div>
 
       {/* Drawer */}
-      <div className={`fixed inset-y-0 right-0 z-[101] w-full max-w-md bg-white dark:bg-gray-900 shadow-2xl transform transition-transform duration-300 flex flex-col`}>
-        
+      <div
+        className="fixed inset-y-0 right-0 z-[101] w-full max-w-md bg-white shadow-2xl transform transition-transform duration-300 flex flex-col"
+        style={{ color: '#475569' }}
+      >
+
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white">
+          <h2 className="text-lg font-bold text-slate-850" style={{ color: '#0f172a' }}>
             Thanh toán & Kích hoạt
           </h2>
-          <button 
+          <button
             onClick={onClose}
             disabled={isProcessing}
-            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+            className="p-1.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors disabled:opacity-50"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto bg-white">
           {step === 'payment' && (
-            <div className="p-6 space-y-8">
-              
+            <div className="p-6 space-y-6">
+
               {/* Invoice Summary */}
-              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-2xl p-6 border border-indigo-100 dark:border-indigo-800/30">
-                <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400 mb-1">Tổng tiền thanh toán</p>
-                <p className="text-3xl font-extrabold text-gray-900 dark:text-white mb-4">
+              <div
+                className="rounded-xl p-4 border border-indigo-100/80"
+                style={{
+                  background: 'linear-gradient(135deg, #e0e7ff 0%, #e8f0fe 100%)',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.02)'
+                }}
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-700 mb-0.5">
+                  Tổng tiền thanh toán
+                </p>
+                <p
+                  className="text-2xl font-extrabold mb-2.5"
+                  style={{ color: '#1e1b4b' }}
+                >
                   {formatCurrency(totalAmountDue)}
                 </p>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-500 dark:text-gray-400">Mã hóa đơn:</span>
-                  <span className="font-semibold text-gray-700 dark:text-gray-300">{invoiceCode || 'N/A'}</span>
+                <div className="flex justify-between items-center text-[11px] pt-2 border-t border-indigo-200/40">
+                  <span className="text-indigo-650 font-medium">Mã hóa đơn:</span>
+                  <span className="font-bold px-1.5 py-0.5 bg-white/60 rounded text-indigo-900">
+                    {invoiceCode || 'N/A'}
+                  </span>
                 </div>
               </div>
 
               {error && (
-                <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm border border-red-100">
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-xs border border-red-100">
                   {error}
                 </div>
               )}
 
               {/* Payment Methods */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 uppercase tracking-wider">Phương thức thanh toán</h3>
-                <div className="grid gap-3">
+                <h3 className="text-[9px] font-bold mb-2 uppercase tracking-widest" style={{ color: '#94a3b8' }}>
+                  Phương thức thanh toán
+                </h3>
+                <div className="grid gap-2">
                   {/* Cash */}
-                  <label className={`relative flex cursor-pointer rounded-xl border p-4 shadow-sm focus:outline-none ${paymentMethod === 'Cash' ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/20 ring-1 ring-indigo-600' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'}`}>
+                  <label
+                    className={`relative flex cursor-pointer rounded-lg border py-2.5 px-3.5 transition-all duration-200 ${paymentMethod === 'Cash'
+                        ? 'border-indigo-600 ring-2 ring-indigo-650/15'
+                        : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    style={{
+                      backgroundColor: paymentMethod === 'Cash' ? '#f0f4ff' : '#ffffff',
+                      color: paymentMethod === 'Cash' ? '#4f46e5' : '#475569'
+                    }}
+                  >
                     <input type="radio" name="paymentMethod" value="Cash" className="sr-only" checked={paymentMethod === 'Cash'} onChange={() => setPaymentMethod('Cash')} />
-                    <span className="flex flex-1">
-                      <span className="flex flex-col">
-                        <span className="block text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                          <Banknote size={18} className={paymentMethod === 'Cash' ? 'text-indigo-600' : 'text-gray-400'} />
-                          Tiền mặt
-                        </span>
+                    <span className="flex flex-1 items-center gap-2.5">
+                      <Banknote size={16} className={paymentMethod === 'Cash' ? 'text-indigo-600' : 'text-slate-400'} />
+                      <span className="text-xs font-semibold">
+                        Tiền mặt
                       </span>
                     </span>
-                    <CheckCircle className={`h-5 w-5 ${paymentMethod === 'Cash' ? 'text-indigo-600' : 'text-transparent'}`} />
+                    <CheckCircle className={`h-4.5 w-4.5 ${paymentMethod === 'Cash' ? 'text-indigo-600' : 'text-transparent'}`} />
                   </label>
 
                   {/* Card */}
-                  <label className={`relative flex cursor-pointer rounded-xl border p-4 shadow-sm focus:outline-none ${paymentMethod === 'Card' ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/20 ring-1 ring-indigo-600' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'}`}>
+                  <label
+                    className={`relative flex cursor-pointer rounded-lg border py-2.5 px-3.5 transition-all duration-200 ${paymentMethod === 'Card'
+                        ? 'border-indigo-600 ring-2 ring-indigo-650/15'
+                        : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    style={{
+                      backgroundColor: paymentMethod === 'Card' ? '#f0f4ff' : '#ffffff',
+                      color: paymentMethod === 'Card' ? '#4f46e5' : '#475569'
+                    }}
+                  >
                     <input type="radio" name="paymentMethod" value="Card" className="sr-only" checked={paymentMethod === 'Card'} onChange={() => setPaymentMethod('Card')} />
-                    <span className="flex flex-1">
-                      <span className="flex flex-col">
-                        <span className="block text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                          <CreditCard size={18} className={paymentMethod === 'Card' ? 'text-indigo-600' : 'text-gray-400'} />
-                          Quẹt thẻ (POS)
-                        </span>
+                    <span className="flex flex-1 items-center gap-2.5">
+                      <CreditCard size={16} className={paymentMethod === 'Card' ? 'text-indigo-600' : 'text-slate-400'} />
+                      <span className="text-xs font-semibold">
+                        Quẹt thẻ (POS)
                       </span>
                     </span>
-                    <CheckCircle className={`h-5 w-5 ${paymentMethod === 'Card' ? 'text-indigo-600' : 'text-transparent'}`} />
+                    <CheckCircle className={`h-4.5 w-4.5 ${paymentMethod === 'Card' ? 'text-indigo-600' : 'text-transparent'}`} />
                   </label>
 
                   {/* Transfer / VietQR */}
-                  <label className={`relative flex cursor-pointer rounded-xl border p-4 shadow-sm focus:outline-none ${paymentMethod === 'BankTransfer' ? 'border-indigo-600 bg-indigo-50/50 dark:bg-indigo-900/20 ring-1 ring-indigo-600' : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'}`}>
+                  <label
+                    className={`relative flex cursor-pointer rounded-lg border py-2.5 px-3.5 transition-all duration-200 ${paymentMethod === 'BankTransfer'
+                        ? 'border-indigo-600 ring-2 ring-indigo-650/15'
+                        : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    style={{
+                      backgroundColor: paymentMethod === 'BankTransfer' ? '#f0f4ff' : '#ffffff',
+                      color: paymentMethod === 'BankTransfer' ? '#4f46e5' : '#475569'
+                    }}
+                  >
                     <input type="radio" name="paymentMethod" value="BankTransfer" className="sr-only" checked={paymentMethod === 'BankTransfer'} onChange={() => setPaymentMethod('BankTransfer')} />
-                    <span className="flex flex-1">
-                      <span className="flex flex-col">
-                        <span className="block text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                          <QrCode size={18} className={paymentMethod === 'BankTransfer' ? 'text-indigo-600' : 'text-gray-400'} />
-                          Chuyển khoản / VietQR
-                        </span>
+                    <span className="flex flex-1 items-center gap-2.5">
+                      <QrCode size={16} className={paymentMethod === 'BankTransfer' ? 'text-indigo-600' : 'text-slate-400'} />
+                      <span className="text-xs font-semibold">
+                        Chuyển khoản / VietQR
                       </span>
                     </span>
-                    <CheckCircle className={`h-5 w-5 ${paymentMethod === 'BankTransfer' ? 'text-indigo-600' : 'text-transparent'}`} />
+                    <CheckCircle className={`h-4.5 w-4.5 ${paymentMethod === 'BankTransfer' ? 'text-indigo-600' : 'text-transparent'}`} />
                   </label>
                 </div>
               </div>
 
               {/* QR Code Display for Bank Transfer */}
               {paymentMethod === 'BankTransfer' && (
-                <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center animate-in fade-in slide-in-from-top-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-4">Mã QR Chuyển khoản tự động</p>
+                <div
+                  className="p-5 rounded-2xl border border-indigo-100 flex flex-col items-center justify-center animate-in fade-in slide-in-from-top-4"
+                  style={{ backgroundColor: '#f8fafc' }}
+                >
+                  <p className="text-xs font-bold text-slate-550 uppercase tracking-wider mb-4" style={{ color: '#475569' }}>
+                    Mã QR Chuyển khoản tự động
+                  </p>
                   {isLoadingQr ? (
-                    <div className="h-48 w-48 flex items-center justify-center bg-gray-50 dark:bg-gray-900 rounded-xl">
+                    <div className="h-48 w-48 flex items-center justify-center bg-white rounded-xl border border-slate-100 shadow-sm">
                       <Loader2 className="animate-spin text-indigo-600" size={32} />
                     </div>
                   ) : qrCodeUrl ? (
-                    <img src={qrCodeUrl} alt="VietQR" className="h-48 w-48 object-contain rounded-xl" />
+                    <div className="p-3 bg-white rounded-xl border border-slate-100 shadow-sm">
+                      <img src={qrCodeUrl} alt="VietQR" className="h-48 w-48 object-contain rounded-lg" />
+                    </div>
                   ) : (
-                    <div className="h-48 w-48 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 rounded-xl text-gray-400 text-center px-4">
-                      <QrCode size={32} className="mb-2 opacity-50" />
-                      <span className="text-xs">Không thể tải mã QR lúc này</span>
+                    <div className="h-48 w-48 flex flex-col items-center justify-center bg-white rounded-xl border border-slate-100 shadow-sm text-slate-400 text-center px-4">
+                      <QrCode size={32} className="mb-2 opacity-50 text-indigo-500" />
+                      <span className="text-xs font-semibold">Không thể tải mã QR lúc này</span>
                     </div>
                   )}
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-4 text-center">
-                    Vui lòng yêu cầu khách hàng quét mã này. <br/> Nhấn xác nhận khi nhận được tiền.
+                  <p className="text-xs text-slate-500 mt-4 text-center leading-relaxed font-medium">
+                    Vui lòng yêu cầu khách hàng quét mã này. <br /> Nhấn xác nhận khi nhận được tiền.
                   </p>
                 </div>
               )}
@@ -210,19 +255,22 @@ const UnifiedPaymentDrawer = ({
           )}
 
           {step === 'success' && (
-            <div className="h-full flex flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in duration-500">
-              <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mb-6">
-                <CheckCircle className="text-emerald-500 w-12 h-12" />
+            <div className="h-full flex flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in duration-500 bg-white">
+              <div
+                className="w-20 h-20 rounded-full flex items-center justify-center mb-6 shadow-sm"
+                style={{ backgroundColor: '#ecfdf5' }}
+              >
+                <CheckCircle className="text-emerald-500 w-10 h-10" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Thanh toán thành công!</h2>
-              <p className="text-gray-500 dark:text-gray-400 mb-8">
-                Hợp đồng đã được kích hoạt.<br/>
+              <h2 className="text-xl font-bold mb-2 animate-bounce" style={{ color: '#0f172a' }}>Thanh toán thành công!</h2>
+              <p className="text-sm text-slate-500 mb-8 leading-relaxed font-medium">
+                Hợp đồng đã được kích hoạt.<br />
                 Thẻ hội viên đã sẵn sàng để sử dụng.
               </p>
-              
-              <button 
+
+              <button
                 onClick={onClose}
-                className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 font-medium rounded-xl transition-colors"
+                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all duration-150"
               >
                 Đóng
               </button>
@@ -232,11 +280,15 @@ const UnifiedPaymentDrawer = ({
 
         {/* Footer Actions */}
         {step === 'payment' && (
-          <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+          <div className="p-4 border-t border-slate-100 bg-slate-50">
             <button
               onClick={handleConfirmPayment}
               disabled={isProcessing}
-              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 px-4 rounded-xl font-medium transition-all focus:ring-4 focus:ring-indigo-600/20 disabled:opacity-70"
+              className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 px-4 rounded-xl font-semibold transition-all duration-150 focus:ring-4 focus:ring-indigo-650/20 disabled:opacity-70 shadow-md shadow-indigo-650/10"
+              style={{
+                backgroundColor: '#4f46e5',
+                color: '#ffffff'
+              }}
             >
               {isProcessing ? (
                 <>
@@ -256,3 +308,4 @@ const UnifiedPaymentDrawer = ({
 };
 
 export default UnifiedPaymentDrawer;
+

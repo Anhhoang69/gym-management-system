@@ -104,32 +104,72 @@ Hệ thống áp dụng hai lớp kiểm soát truy cập độc lập:
 
 Kết quả: LLM \textbf{chỉ biết} các tools nằm trong phạm vi quyền hạn của người dùng hiện tại. Đây là cơ chế bảo mật theo thiết kế (\textit{Security by Design}), không phụ thuộc vào validation thủ công.
 
-\begin{table}[H]
-\centering
-\renewcommand{\arraystretch}{1.3}
-\small
-\begin{tabular}{|l|c|c|c|c|c|c|}
+\begin{longtable}{|l|c|c|c|c|c|c|c|c|}
 \hline
-\textbf{Tool (ví dụ)} & \textbf{Member} & \textbf{Sales} & \textbf{PT} & \textbf{BranchAdmin} & \textbf{GymOwner} & \textbf{SuperAdmin} \\
+\textbf{Tên công cụ (Tool Name)} & \textbf{MB} & \textbf{SL} & \textbf{PT} & \textbf{HP} & \textbf{RC} & \textbf{BA} & \textbf{OW} & \textbf{AD} \\
 \hline
-get\_membership\_info    & \checkmark & & & & & \\
+\endfirsthead
+
 \hline
-generate\_fitness\_plan  & \checkmark & & & & & \\
+\textbf{Tên công cụ (Tool Name)} & \textbf{MB} & \textbf{SL} & \textbf{PT} & \textbf{HP} & \textbf{RC} & \textbf{BA} & \textbf{OW} & \textbf{AD} \\
 \hline
-get\_lead\_summary       & & \checkmark & & \checkmark & \checkmark & \checkmark \\
+\endhead
+
+get\_membership\_info & \checkmark & & & & & & & \\
 \hline
-get\_my\_teaching\_schedule & & & \checkmark & & & \\
+get\_available\_packages & \checkmark & & & & & & & \\
 \hline
-get\_branch\_revenue     & & & & \checkmark & \checkmark & \checkmark \\
+get\_my\_schedule & \checkmark & & & & & & & \\
 \hline
-get\_payroll\_overview   & & & & & \checkmark & \checkmark \\
+book\_class & \checkmark & & & & & & & \\
 \hline
-get\_system\_dashboard   & & & & & \checkmark & \checkmark \\
+cancel\_booking & \checkmark & & & & & & & \\
 \hline
-\end{tabular}
-\caption{Ma trận phân quyền công cụ AI (trích từ 25 tools)}
+get\_attendance\_summary & \checkmark & & & & & & & \\
+\hline
+generate\_fitness\_plan & \checkmark & & & & & & & \\
+\hline
+ask\_fitness\_coach & \checkmark & & & & & & & \\
+\hline
+get\_lead\_summary & & \checkmark & & & & \checkmark & \checkmark & \checkmark \\
+\hline
+get\_lead\_pipeline & & \checkmark & & & & \checkmark & \checkmark & \checkmark \\
+\hline
+get\_sales\_funnel & & \checkmark & & & & \checkmark & \checkmark & \checkmark \\
+\hline
+contract\_lookup & & \checkmark & & & \checkmark & \checkmark & \checkmark & \checkmark \\
+\hline
+get\_class\_roster & & & \checkmark & \checkmark & & \checkmark & \checkmark & \checkmark \\
+\hline
+get\_member\_training\_overview & & & \checkmark & \checkmark & & \checkmark & \checkmark & \checkmark \\
+\hline
+get\_my\_teaching\_schedule & & & \checkmark & \checkmark & & & & \\
+\hline
+get\_pt\_performance & & & & \checkmark & & \checkmark & \checkmark & \checkmark \\
+\hline
+checkin\_lookup & & & & & \checkmark & \checkmark & \checkmark & \checkmark \\
+\hline
+booking\_lookup & & & & & \checkmark & \checkmark & \checkmark & \checkmark \\
+\hline
+member\_lookup & & \checkmark & & & \checkmark & \checkmark & \checkmark & \checkmark \\
+\hline
+get\_checkin\_report & & & & & & \checkmark & \checkmark & \checkmark \\
+\hline
+get\_branch\_revenue & & & & & & \checkmark & \checkmark & \checkmark \\
+\hline
+get\_branch\_payroll & & & & & & \checkmark & \checkmark & \checkmark \\
+\hline
+get\_global\_revenue & & & & & & & \checkmark & \checkmark \\
+\hline
+get\_system\_dashboard & & & & & & & \checkmark & \checkmark \\
+\hline
+get\_payroll\_overview & & & & & & & \checkmark & \checkmark \\
+\hline
+\caption{Ma trận phân quyền chi tiết cho tất cả 25 công cụ AI}
 \label{tab:ai-rbac}
-\end{table}
+\end{longtable}
+\noindent \textit{Ký hiệu viết tắt:} MB (Member), SL (Sales), PT (PT), HP (HeadPT), RC (Receptionist), BA (BranchAdmin), OW (GymOwner), AD (SuperAdmin).
+
 
 % ---- Hybrid Wrapper Pattern ----
 \subsubsection{Hybrid Wrapper Pattern}

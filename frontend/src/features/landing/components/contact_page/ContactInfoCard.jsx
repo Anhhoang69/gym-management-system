@@ -10,9 +10,9 @@ export default function ContactInfoCard({ title, content }) {
         {title}
       </h4>
 
-      <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: 'var(--text-primary)' }}>
+      <div className="text-sm leading-relaxed whitespace-pre-line" style={{ color: 'var(--text-primary)' }}>
         {content}
-      </p>
+      </div>
     </div>
   );
 }

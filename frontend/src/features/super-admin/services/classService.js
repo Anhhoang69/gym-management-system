@@ -62,3 +62,24 @@ export const getMyBookings = async () => {
   const res = await api.get("/api/classes/my-bookings")
   return res.data.data
 }
+
+// GET /api/classes/{id}/members
+// Lấy danh sách member trong lớp (PT/Staff)
+export const getClassMembers = async (id) => {
+  const res = await api.get(`/api/classes/${id}/members`)
+  return res.data.data
+}
+
+// PATCH /api/classes/{id}/class-checkin
+// Điểm danh member vào lớp học
+export const checkInClassMember = async (id, memberUserId) => {
+  const res = await api.patch(`/api/classes/${id}/class-checkin`, { memberUserId })
+  return res.data.data
+}
+
+// PATCH /api/classes/class-bookings/{classId}/members/{memberId}/session-note
+// Ghi chú buổi tập của member
+export const updateSessionNote = async (classId, memberId, sessionNote) => {
+  const res = await api.patch(`/api/classes/class-bookings/${classId}/members/${memberId}/session-note`, { sessionNote })
+  return res.data.data
+}
