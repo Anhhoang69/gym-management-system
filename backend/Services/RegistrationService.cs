@@ -132,11 +132,17 @@ public class RegistrationService : IRegistrationService
 
             await transaction.CommitAsync();
 
-            // 5. Gửi email chào + mật khẩu tạm (ngoài transaction — lỗi không rollback)
+            // 5. Gửi email xác nhận đăng ký: tài khoản + hóa đơn (ngoài transaction — lỗi không rollback)
             try
             {
                 if (!string.IsNullOrWhiteSpace(user.Email))
-                    await _emailService.SendActivationAsync(user.Email, user.FullName ?? dto.FullName, tempPassword);
+                    await _emailService.SendRegistrationConfirmationAsync(
+                        user.Email,
+                        user.FullName ?? dto.FullName,
+                        tempPassword,
+                        package.Name,
+                        invoice.TotalAmount,
+                        invoiceCode);
                 else if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
                     await _smsService.SendActivationAsync(user.PhoneNumber, user.FullName ?? dto.FullName, tempPassword);
             }

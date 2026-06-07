@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle, CreditCard, Banknote, QrCode, Loader2 } from 'lucide-react';
+import { X, CheckCircle, CreditCard, Banknote, QrCode, Loader2, Gift, Zap, BadgeCheck, Sparkles } from 'lucide-react';
 import { getInvoiceQr, collectPayment } from '../../services/invoiceService';
 import { activateContract } from '../../services/contractService';
 
@@ -151,79 +151,102 @@ const UnifiedPaymentDrawer = ({
                 </div>
               )}
 
-              {/* Payment Methods */}
-              <div>
-                <h3 className="text-[9px] font-bold mb-2 uppercase tracking-widest" style={{ color: '#94a3b8' }}>
-                  Phương thức thanh toán
-                </h3>
-                <div className="grid gap-2">
-                  {/* Cash */}
-                  <label
-                    className={`relative flex cursor-pointer rounded-lg border py-2.5 px-3.5 transition-all duration-200 ${paymentMethod === 'Cash'
-                        ? 'border-indigo-600 ring-2 ring-indigo-650/15'
-                        : 'border-slate-200 hover:border-slate-300'
-                      }`}
-                    style={{
-                      backgroundColor: paymentMethod === 'Cash' ? '#f0f4ff' : '#ffffff',
-                      color: paymentMethod === 'Cash' ? '#4f46e5' : '#475569'
-                    }}
+              {/* Free Package Banner */}
+              {totalAmountDue === 0 && (
+                <div
+                  className="rounded-xl p-4 border border-emerald-200 flex items-start gap-3 animate-in fade-in"
+                  style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)' }}
+                >
+                  <div
+                    className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+                    style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
                   >
-                    <input type="radio" name="paymentMethod" value="Cash" className="sr-only" checked={paymentMethod === 'Cash'} onChange={() => setPaymentMethod('Cash')} />
-                    <span className="flex flex-1 items-center gap-2.5">
-                      <Banknote size={16} className={paymentMethod === 'Cash' ? 'text-indigo-600' : 'text-slate-400'} />
-                      <span className="text-xs font-semibold">
-                        Tiền mặt
-                      </span>
-                    </span>
-                    <CheckCircle className={`h-4.5 w-4.5 ${paymentMethod === 'Cash' ? 'text-indigo-600' : 'text-transparent'}`} />
-                  </label>
-
-                  {/* Card */}
-                  <label
-                    className={`relative flex cursor-pointer rounded-lg border py-2.5 px-3.5 transition-all duration-200 ${paymentMethod === 'Card'
-                        ? 'border-indigo-600 ring-2 ring-indigo-650/15'
-                        : 'border-slate-200 hover:border-slate-300'
-                      }`}
-                    style={{
-                      backgroundColor: paymentMethod === 'Card' ? '#f0f4ff' : '#ffffff',
-                      color: paymentMethod === 'Card' ? '#4f46e5' : '#475569'
-                    }}
-                  >
-                    <input type="radio" name="paymentMethod" value="Card" className="sr-only" checked={paymentMethod === 'Card'} onChange={() => setPaymentMethod('Card')} />
-                    <span className="flex flex-1 items-center gap-2.5">
-                      <CreditCard size={16} className={paymentMethod === 'Card' ? 'text-indigo-600' : 'text-slate-400'} />
-                      <span className="text-xs font-semibold">
-                        Quẹt thẻ (POS)
-                      </span>
-                    </span>
-                    <CheckCircle className={`h-4.5 w-4.5 ${paymentMethod === 'Card' ? 'text-indigo-600' : 'text-transparent'}`} />
-                  </label>
-
-                  {/* Transfer / VietQR */}
-                  <label
-                    className={`relative flex cursor-pointer rounded-lg border py-2.5 px-3.5 transition-all duration-200 ${paymentMethod === 'BankTransfer'
-                        ? 'border-indigo-600 ring-2 ring-indigo-650/15'
-                        : 'border-slate-200 hover:border-slate-300'
-                      }`}
-                    style={{
-                      backgroundColor: paymentMethod === 'BankTransfer' ? '#f0f4ff' : '#ffffff',
-                      color: paymentMethod === 'BankTransfer' ? '#4f46e5' : '#475569'
-                    }}
-                  >
-                    <input type="radio" name="paymentMethod" value="BankTransfer" className="sr-only" checked={paymentMethod === 'BankTransfer'} onChange={() => setPaymentMethod('BankTransfer')} />
-                    <span className="flex flex-1 items-center gap-2.5">
-                      <QrCode size={16} className={paymentMethod === 'BankTransfer' ? 'text-indigo-600' : 'text-slate-400'} />
-                      <span className="text-xs font-semibold">
-                        Chuyển khoản / VietQR
-                      </span>
-                    </span>
-                    <CheckCircle className={`h-4.5 w-4.5 ${paymentMethod === 'BankTransfer' ? 'text-indigo-600' : 'text-transparent'}`} />
-                  </label>
+                    <Gift size={18} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-emerald-800 text-sm">Gói dùng thử miễn phí!</p>
+                    <p className="text-emerald-700 text-xs mt-1 leading-relaxed">
+                      Không cần thanh toán. Nhấn "Kích hoạt ngay" để cấp thẻ tập cho hội viên.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Payment Methods — chỉ hiển thị khi có phí */}
+              {totalAmountDue > 0 && (
+                <div>
+                  <h3 className="text-[9px] font-bold mb-2 uppercase tracking-widest" style={{ color: '#94a3b8' }}>
+                    Phương thức thanh toán
+                  </h3>
+                  <div className="grid gap-2">
+                    {/* Cash */}
+                    <label
+                      className={`relative flex cursor-pointer rounded-lg border py-2.5 px-3.5 transition-all duration-200 ${paymentMethod === 'Cash'
+                          ? 'border-indigo-600 ring-2 ring-indigo-650/15'
+                          : 'border-slate-200 hover:border-slate-300'
+                        }`}
+                      style={{
+                        backgroundColor: paymentMethod === 'Cash' ? '#f0f4ff' : '#ffffff',
+                        color: paymentMethod === 'Cash' ? '#4f46e5' : '#475569'
+                      }}
+                    >
+                      <input type="radio" name="paymentMethod" value="Cash" className="sr-only" checked={paymentMethod === 'Cash'} onChange={() => setPaymentMethod('Cash')} />
+                      <span className="flex flex-1 items-center gap-2.5">
+                        <Banknote size={16} className={paymentMethod === 'Cash' ? 'text-indigo-600' : 'text-slate-400'} />
+                        <span className="text-xs font-semibold">
+                          Tiền mặt
+                        </span>
+                      </span>
+                      <CheckCircle className={`h-4.5 w-4.5 ${paymentMethod === 'Cash' ? 'text-indigo-600' : 'text-transparent'}`} />
+                    </label>
+
+                    {/* Card */}
+                    <label
+                      className={`relative flex cursor-pointer rounded-lg border py-2.5 px-3.5 transition-all duration-200 ${paymentMethod === 'Card'
+                          ? 'border-indigo-600 ring-2 ring-indigo-650/15'
+                          : 'border-slate-200 hover:border-slate-300'
+                        }`}
+                      style={{
+                        backgroundColor: paymentMethod === 'Card' ? '#f0f4ff' : '#ffffff',
+                        color: paymentMethod === 'Card' ? '#4f46e5' : '#475569'
+                      }}
+                    >
+                      <input type="radio" name="paymentMethod" value="Card" className="sr-only" checked={paymentMethod === 'Card'} onChange={() => setPaymentMethod('Card')} />
+                      <span className="flex flex-1 items-center gap-2.5">
+                        <CreditCard size={16} className={paymentMethod === 'Card' ? 'text-indigo-600' : 'text-slate-400'} />
+                        <span className="text-xs font-semibold">
+                          Quẹt thẻ (POS)
+                        </span>
+                      </span>
+                      <CheckCircle className={`h-4.5 w-4.5 ${paymentMethod === 'Card' ? 'text-indigo-600' : 'text-transparent'}`} />
+                    </label>
+
+                    {/* Transfer / VietQR */}
+                    <label
+                      className={`relative flex cursor-pointer rounded-lg border py-2.5 px-3.5 transition-all duration-200 ${paymentMethod === 'BankTransfer'
+                          ? 'border-indigo-600 ring-2 ring-indigo-650/15'
+                          : 'border-slate-200 hover:border-slate-300'
+                        }`}
+                      style={{
+                        backgroundColor: paymentMethod === 'BankTransfer' ? '#f0f4ff' : '#ffffff',
+                        color: paymentMethod === 'BankTransfer' ? '#4f46e5' : '#475569'
+                      }}
+                    >
+                      <input type="radio" name="paymentMethod" value="BankTransfer" className="sr-only" checked={paymentMethod === 'BankTransfer'} onChange={() => setPaymentMethod('BankTransfer')} />
+                      <span className="flex flex-1 items-center gap-2.5">
+                        <QrCode size={16} className={paymentMethod === 'BankTransfer' ? 'text-indigo-600' : 'text-slate-400'} />
+                        <span className="text-xs font-semibold">
+                          Chuyển khoản / VietQR
+                        </span>
+                      </span>
+                      <CheckCircle className={`h-4.5 w-4.5 ${paymentMethod === 'BankTransfer' ? 'text-indigo-600' : 'text-transparent'}`} />
+                    </label>
+                  </div>
+                </div>
+              )}
 
               {/* QR Code Display for Bank Transfer */}
-              {paymentMethod === 'BankTransfer' && (
+              {paymentMethod === 'BankTransfer' && totalAmountDue > 0 && (
                 <div
                   className="p-5 rounded-2xl border border-indigo-100 flex flex-col items-center justify-center animate-in fade-in slide-in-from-top-4"
                   style={{ backgroundColor: '#f8fafc' }}
@@ -257,12 +280,16 @@ const UnifiedPaymentDrawer = ({
           {step === 'success' && (
             <div className="h-full flex flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in duration-500 bg-white">
               <div
-                className="w-20 h-20 rounded-full flex items-center justify-center mb-6 shadow-sm"
-                style={{ backgroundColor: '#ecfdf5' }}
+                className="w-20 h-20 rounded-full flex items-center justify-center mb-6 shadow-lg"
+                style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
               >
-                <CheckCircle className="text-emerald-500 w-10 h-10" />
+                <BadgeCheck className="text-white w-10 h-10" strokeWidth={1.5} />
               </div>
-              <h2 className="text-xl font-bold mb-2 animate-bounce" style={{ color: '#0f172a' }}>Thanh toán thành công!</h2>
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles size={16} className="text-amber-400" />
+                <h2 className="text-xl font-bold" style={{ color: '#0f172a' }}>Kích hoạt thành công!</h2>
+                <Sparkles size={16} className="text-amber-400" />
+              </div>
               <p className="text-sm text-slate-500 mb-8 leading-relaxed font-medium">
                 Hợp đồng đã được kích hoạt.<br />
                 Thẻ hội viên đã sẵn sàng để sử dụng.
@@ -292,11 +319,19 @@ const UnifiedPaymentDrawer = ({
             >
               {isProcessing ? (
                 <>
-                  <Loader2 className="animate-spin" size={20} />
+                  <Loader2 className="animate-spin" size={18} />
                   Đang xử lý...
                 </>
+              ) : totalAmountDue === 0 ? (
+                <>
+                  <Zap size={18} className="text-yellow-300" />
+                  Kích hoạt ngay &mdash; Miễn phí
+                </>
               ) : (
-                <>Xác nhận đã nhận {formatCurrency(totalAmountDue)}</>
+                <>
+                  <CheckCircle size={18} />
+                  Xác nhận đã nhận {formatCurrency(totalAmountDue)}
+                </>
               )}
             </button>
           </div>
