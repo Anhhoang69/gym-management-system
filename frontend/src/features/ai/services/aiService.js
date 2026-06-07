@@ -2,17 +2,14 @@ import api from "../../../shared/api/api"
 
 // ================= HELPER =================
 
-// 👉 clean markdown JSON
 const cleanJSONString = (text) => {
   if (!text) return text
-
   return text
     .replace(/```json/g, "")
     .replace(/```/g, "")
     .trim()
 }
 
-// 👉 try parse JSON
 const tryParseJSON = (text) => {
   try {
     return JSON.parse(text)
@@ -31,7 +28,6 @@ export const sendMessageToAI = async (message) => {
     }
 
     const res = await api.post("/api/ai/chat", { message })
-
     const { success, data, message: msg } = res.data
 
     if (!success) {
@@ -43,7 +39,7 @@ export const sendMessageToAI = async (message) => {
       message: data?.message || ""
     }
 
-    // 🔥 FIX: handle JSON even when backend gửi sai type
+    // handle JSON even when backend sends wrong type
     const cleaned = cleanJSONString(result.message)
     const parsed = tryParseJSON(cleaned)
 
@@ -51,7 +47,7 @@ export const sendMessageToAI = async (message) => {
       result = {
         type: "json",
         message: cleaned,
-        parsed // 👈 UI dùng cái này luôn
+        parsed
       }
     }
 
@@ -60,7 +56,6 @@ export const sendMessageToAI = async (message) => {
   } catch (error) {
     console.error("AI CHAT ERROR:", error)
 
-    // 🔥 handle 401
     if (error.response?.status === 401) {
       localStorage.clear()
       window.location.href = "/login"
@@ -76,6 +71,7 @@ export const sendMessageToAI = async (message) => {
 
 // ================= HISTORY =================
 
+// GET /api/ai/history
 export const getAIHistory = async (limit = 20) => {
   try {
     const res = await api.get("/api/ai/history", {
@@ -86,8 +82,8 @@ export const getAIHistory = async (limit = 20) => {
 
     if (!success) throw new Error("Failed to fetch history")
 
-    // 🔥 normalize + parse JSON luôn
-    return data.map((msg) => {
+    const list = Array.isArray(data) ? data : []
+    return list.map((msg) => {
       const cleaned = cleanJSONString(msg.message)
       const parsed = tryParseJSON(cleaned)
 
@@ -107,18 +103,55 @@ export const getAIHistory = async (limit = 20) => {
 
 // ================= RECOMMENDATIONS =================
 
+// GET /api/ai/recommendations  (Member only)
 export const getAIRecommendations = async () => {
   try {
     const res = await api.get("/api/ai/recommendations")
-
     const { success, data } = res.data
 
     if (!success) throw new Error("Failed to fetch recommendations")
 
-    return data // chuẩn rồi
+    return data || []
 
   } catch (error) {
     console.error("AI RECOMMEND ERROR:", error)
     return []
+  }
+}
+
+// ================= TOOLS DISCOVERY =================
+
+// GET /api/ai/tools  — RBAC-filtered, returns tools the current user may use
+export const getAvailableTools = async () => {
+  try {
+    const res = await api.get("/api/ai/tools")
+
+    // Backend returns plain array (not wrapped in ApiResponse for this endpoint)
+    const data = Array.isArray(res.data) ? res.data : (res.data?.data ?? [])
+
+    return data // [{ name, description, schema }]
+
+  } catch (error) {
+    console.error("AI TOOLS ERROR:", error)
+    return []
+  }
+}
+
+// ================= TOKEN USAGE =================
+
+// GET /api/ai/usage  (SuperAdmin / GymOwner only)
+export const getTokenUsage = async (days = 30) => {
+  try {
+    const res = await api.get("/api/ai/usage", {
+      params: { days }
+    })
+
+    const data = res.data?.data ?? res.data
+
+    return data
+
+  } catch (error) {
+    console.error("AI USAGE ERROR:", error)
+    return null
   }
 }

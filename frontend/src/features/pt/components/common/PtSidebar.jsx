@@ -5,6 +5,7 @@ import {
 } from "@coreui/react"
 
 import { NavLink } from "react-router-dom"
+import { Sparkles } from "lucide-react"
 
 function PtSidebar() {
     return (
@@ -39,6 +40,12 @@ function PtSidebar() {
                 <CNavItem>
                     <NavLink to="/pt/commissions" className="nav-link">
                         Hoa Hồng Cá Nhân
+                    </NavLink>
+                </CNavItem>
+                <CNavItem>
+                    <NavLink to="/ai" className="nav-link flex items-center gap-2">
+                        <Sparkles size={16} className="text-yellow-500 flex-shrink-0" />
+                        <span>Trợ Lý AI</span>
                     </NavLink>
                 </CNavItem>
             </CSidebarNav>
