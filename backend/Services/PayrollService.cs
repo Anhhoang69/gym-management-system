@@ -100,13 +100,13 @@ public class PayrollService : IPayrollService
 
             if (staff.Position == StaffPosition.PT || staff.Position == StaffPosition.HeadPT)
             {
-                sessions = await _context.ClassBookings
-                    .Include(b => b.Class)
-                    .CountAsync(b =>
-                        b.Class.TrainerStaffId == staff.UserId &&
-                        b.Status == BookingStatus.Attended &&
-                        b.Class.Date.Month == dto.Month &&
-                        b.Class.Date.Year == dto.Year);
+                sessions = await _context.Classes
+                    .CountAsync(c =>
+                        c.TrainerStaffId == staff.UserId &&
+                        c.Status == ClassStatus.Completed &&
+                        c.Bookings.Any(b => b.Status == BookingStatus.Attended) &&
+                        c.Date.Month == dto.Month &&
+                        c.Date.Year == dto.Year);
 
                 sessionCommission = sessions * formula.CommissionPerSession;
                 kpiBonus = sessions >= formula.KpiSessionThreshold ? formula.KpiBonus : 0m;
