@@ -38,7 +38,12 @@ function AdminPayrollPage() {
   const [activeTab, setActiveTab] = useState("payroll_records") // "payroll_records", "commission_records", "formulas", "analytics"
   const [formulas, setFormulas] = useState([])
   const [reports, setReports] = useState([])
+  const [allReports, setAllReports] = useState([])
   const [commissions, setCommissions] = useState([])
+  
+  // Pagination for Payroll
+  const [payrollPage, setPayrollPage] = useState(1)
+  const [payrollTotalPages, setPayrollTotalPages] = useState(1)
   
   const [selectedFormulaId, setSelectedFormulaId] = useState("")
   const [loading, setLoading] = useState(false)
@@ -95,15 +100,22 @@ function AdminPayrollPage() {
       const [yearStr, monthStr] = selectedPeriod.split("-")
       const month = parseInt(monthStr, 10)
       const year = parseInt(yearStr, 10)
-      const res = await getPayrollReports(month, year, {
+
+      // Fetch ALL reports (unpaginated) for summaries and charts
+      const allRes = await getPayrollReports(month, year, {
         position: filterPosition || undefined
       })
-      
-      let data = res.data || []
-      if (filterStatus) {
-        data = data.filter(r => r.status === filterStatus)
-      }
-      setReports(data)
+      setAllReports(allRes.data || [])
+
+      // Fetch PAGINATED reports for the table
+      const pagedRes = await getPayrollReports(month, year, {
+        position: filterPosition || undefined,
+        status: filterStatus || undefined,
+        page: payrollPage,
+        pageSize: 10
+      })
+      setReports(pagedRes.data?.items || [])
+      setPayrollTotalPages(pagedRes.data?.totalPages || 1)
     } catch (e) {
       console.error(e)
     } finally {
@@ -143,12 +155,16 @@ function AdminPayrollPage() {
   }, [])
 
   useEffect(() => {
+    setPayrollPage(1)
+  }, [selectedPeriod, filterPosition, filterStatus])
+
+  useEffect(() => {
     if (activeTab === "payroll_records" || activeTab === "analytics") {
       fetchReports()
     } else if (activeTab === "commission_records") {
       fetchCommissions()
     }
-  }, [activeTab, selectedPeriod, filterPosition, filterStatus, commPage])
+  }, [activeTab, selectedPeriod, filterPosition, filterStatus, commPage, payrollPage])
 
   // Handle Formula Creation
   const handleCreateFormula = async () => {
@@ -267,7 +283,7 @@ function AdminPayrollPage() {
   // Data processing for charts
   const positionDistribution = () => {
     const counts = {}
-    reports.forEach(r => {
+    allReports.forEach(r => {
       counts[r.position] = (counts[r.position] || 0) + (r.totalSalary || 0)
     })
     return {
@@ -382,7 +398,7 @@ function AdminPayrollPage() {
       {activeTab === "payroll_records" && (
         <div className="flex-grow-1 d-flex flex-column gap-3">
           {/* Summary Cards */}
-          <PayrollSummaryCards records={reports} />
+          <PayrollSummaryCards records={allReports} />
 
           {/* Action Toolbar */}
           <CCard className="border-0 shadow-sm rounded-4 flex-shrink-0">
@@ -491,6 +507,38 @@ function AdminPayrollPage() {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Payroll Pagination */}
+                  {payrollTotalPages > 1 && (
+                    <div className="d-flex justify-content-end p-3 border-top">
+                      <CPagination className="mb-0">
+                        <CPaginationItem
+                          disabled={payrollPage === 1}
+                          onClick={() => setPayrollPage(payrollPage - 1)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          ‹
+                        </CPaginationItem>
+                        {[...Array(payrollTotalPages)].map((_, idx) => (
+                          <CPaginationItem
+                            key={idx}
+                            active={payrollPage === idx + 1}
+                            onClick={() => setPayrollPage(idx + 1)}
+                            style={{ cursor: "pointer" }}
+                          >
+                            {idx + 1}
+                          </CPaginationItem>
+                        ))}
+                        <CPaginationItem
+                          disabled={payrollPage === payrollTotalPages}
+                          onClick={() => setPayrollPage(payrollPage + 1)}
+                          style={{ cursor: "pointer" }}
+                        >
+                          ›
+                        </CPaginationItem>
+                      </CPagination>
+                    </div>
+                  )}
                 )}
               </div>
             </CCardBody>

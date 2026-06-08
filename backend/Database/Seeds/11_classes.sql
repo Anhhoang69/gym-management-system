@@ -173,13 +173,8 @@ BEGIN
   FOR days_ago IN -14..84 LOOP
     class_date := (CURRENT_DATE - (days_ago || ' days')::interval)::date;
 
-    -- Pick 2 branches per day to keep spacing natural
-    FOR b_step IN 0..1 LOOP
-      branch_idx := ((((days_ago + 100) * 2 + b_step) % 6) + 1);
-      
-      -- Class Type cycling
-      c_type := class_types[(((days_ago + 100) * 3 + b_step * 7) % 6) + 1];
-
+    -- Generate classes for each branch to populate training session logs naturally
+    FOR branch_idx IN 1..6 LOOP
       -- Branch conditions for historical opening dates
       IF branch_idx = 6 AND days_ago > 30 THEN
         CONTINUE; -- DN opened 30 days ago
@@ -189,109 +184,118 @@ BEGIN
         CONTINUE; -- BD opened 120 days ago
       END IF;
 
-      -- Title & Description setup
-      CASE c_type
-        WHEN 'Yoga' THEN
-          title := 'Yoga Sức Sống ' || CASE WHEN b_step = 0 THEN 'Buổi Sáng' ELSE 'Thư Giãn' END;
-          description := 'Lớp tập trung vào hít thở, dẻo dai và phục hồi cơ thể.';
-          capacity := 20; min_capacity := 5;
-        WHEN 'Cardio' THEN
-          title := 'Cardio Đốt Mỡ ' || CASE WHEN b_step = 0 THEN 'Cường Độ Cao' ELSE 'Bền Bỉ' END;
-          description := 'Bài tập năng động giúp đốt cháy calo và tăng cường hệ tim mạch.';
-          capacity := 25; min_capacity := 5;
-        WHEN 'Zumba' THEN
-          title := 'Zumba Dance Party';
-          description := 'Vũ điệu Zumba sôi động trên nền nhạc Latin.';
-          capacity := 22; min_capacity := 5;
-        WHEN 'Crossfit' THEN
-          title := 'CrossFit WOD ' || CASE WHEN b_step = 0 THEN 'Sức Mạng' ELSE 'Thể Lực' END;
-          description := 'Kết hợp tạ, cardio cường độ cao theo bài WOD.';
-          capacity := 20; min_capacity := 5;
-        WHEN 'Boxing' THEN
-          title := 'Boxing Cơ Bản & Phản Xạ';
-          description := 'Học đấm, tự vệ và rèn luyện thể lực cốt lõi.';
-          capacity := 15; min_capacity := 4;
-        ELSE -- PersonalTraining
-          title := 'PT 1 kèm 1 - Chuyên sâu';
-          description := 'Buổi tập riêng biệt được cá nhân hóa bởi HLV chuyên nghiệp.';
-          capacity := 1; min_capacity := 1;
-      END CASE;
+      -- Generate 2 classes per branch per day (one group class, one PersonalTraining)
+      FOR b_step IN 0..1 LOOP
+        IF b_step = 0 THEN
+          c_type := class_types[(((days_ago + 100) * 3 + branch_idx * 7) % 5) + 1]; -- Yoga, Cardio, Zumba, Crossfit, Boxing
+        ELSE
+          c_type := 'PersonalTraining';
+        END IF;
 
-      -- Slot picking
-      slot_idx := ((((days_ago + 100) * 5 + b_step * 11) % 7) + 1);
-
-      -- Status
-      IF class_date < CURRENT_DATE THEN
-        c_status := CASE WHEN (days_ago + b_step) % 20 = 0 THEN 'Cancelled' ELSE 'Completed' END;
-      ELSE
-        c_status := 'Scheduled';
-      END IF;
-
-      -- PT assignment
-      IF branch_idx = 1 THEN
-        -- Q1 PTs
-        CASE (class_n % 10)
-          WHEN 0,1,2,3 THEN trainer_id := '00000000-0003-0000-0000-000000000005'::uuid; -- Đăng (40%)
-          WHEN 4,5,6   THEN trainer_id := '00000000-0003-0000-0000-000000000003'::uuid; -- Tuấn (30%)
-          ELSE              trainer_id := '00000000-0003-0000-0000-000000000010'::uuid; -- Châu (30%)
+        -- Title & Description setup
+        CASE c_type
+          WHEN 'Yoga' THEN
+            title := 'Yoga Sức Sống ' || CASE WHEN days_ago % 2 = 0 THEN 'Buổi Sáng' ELSE 'Thư Giãn' END;
+            description := 'Lớp tập trung vào hít thở, dẻo dai và phục hồi cơ thể.';
+            capacity := 20; min_capacity := 5;
+          WHEN 'Cardio' THEN
+            title := 'Cardio Đốt Mỡ ' || CASE WHEN days_ago % 2 = 0 THEN 'Cường Độ Cao' ELSE 'Bền Bỉ' END;
+            description := 'Bài tập năng động giúp đốt cháy calo và tăng cường hệ tim mạch.';
+            capacity := 25; min_capacity := 5;
+          WHEN 'Zumba' THEN
+            title := 'Zumba Dance Party';
+            description := 'Vũ điệu Zumba sôi động trên nền nhạc Latin.';
+            capacity := 22; min_capacity := 5;
+          WHEN 'Crossfit' THEN
+            title := 'CrossFit WOD ' || CASE WHEN days_ago % 2 = 0 THEN 'Sức Mạnh' ELSE 'Thể Lực' END;
+            description := 'Kết hợp tạ, cardio cường độ cao theo bài WOD.';
+            capacity := 20; min_capacity := 5;
+          WHEN 'Boxing' THEN
+            title := 'Boxing Cơ Bản & Phản Xạ';
+            description := 'Học đấm, tự vệ và rèn luyện thể lực cốt lõi.';
+            capacity := 15; min_capacity := 4;
+          ELSE -- PersonalTraining
+            title := 'PT 1 kèm 1 - Chuyên sâu';
+            description := 'Buổi tập riêng biệt được cá nhân hóa bởi HLV chuyên nghiệp.';
+            capacity := 1; min_capacity := 1;
         END CASE;
-      ELSIF branch_idx = 2 THEN
-        -- Q7 PTs
-        CASE (class_n % 10)
-          WHEN 0,1,2,3 THEN trainer_id := '00000000-0003-0000-0000-000000000009'::uuid; -- Phong (40%)
-          WHEN 4,5,6   THEN trainer_id := '00000000-0003-0000-0000-000000000004'::uuid; -- Mai (30%)
-          ELSE              trainer_id := '00000000-0003-0000-0000-000000000011'::uuid; -- Hưng (30%)
-        END CASE;
-      ELSE
-        -- Other branches: select PT/HeadPT dynamically
-        SELECT "UserId" INTO trainer_id
-        FROM "Staffs"
-        WHERE "BranchId" = branch_ids[branch_idx] AND "Position" IN ('PT', 'HeadPT')
-        ORDER BY ((class_n * 17) % 7)
-        LIMIT 1;
-      END IF;
 
-      -- Room assignment
-      IF c_type = 'Yoga' THEN
-        SELECT "RoomId" INTO room_id FROM "Rooms" WHERE "BranchId" = branch_ids[branch_idx] AND "Name" LIKE '%Yoga%' LIMIT 1;
-      ELSIF c_type = 'Zumba' THEN
-        SELECT "RoomId" INTO room_id FROM "Rooms" WHERE "BranchId" = branch_ids[branch_idx] AND ("Name" LIKE '%Zumba%' OR "Name" LIKE '%Yoga%' OR "Name" LIKE '%Group%') LIMIT 1;
-      ELSIF c_type = 'Crossfit' THEN
-        SELECT "RoomId" INTO room_id FROM "Rooms" WHERE "BranchId" = branch_ids[branch_idx] AND ("Name" LIKE '%CrossFit%' OR "Name" LIKE '%Gym%') LIMIT 1;
-      ELSIF c_type = 'Cardio' THEN
-        SELECT "RoomId" INTO room_id FROM "Rooms" WHERE "BranchId" = branch_ids[branch_idx] AND ("Name" LIKE '%Cardio%' OR "Name" LIKE '%Gym%') LIMIT 1;
-      ELSIF c_type = 'Boxing' THEN
-        SELECT "RoomId" INTO room_id FROM "Rooms" WHERE "BranchId" = branch_ids[branch_idx] AND ("Name" LIKE '%Boxing%' OR "Name" LIKE '%Gym%') LIMIT 1;
-      ELSE
-        SELECT "RoomId" INTO room_id FROM "Rooms" WHERE "BranchId" = branch_ids[branch_idx] AND "Name" LIKE '%Gym%' LIMIT 1;
-      END IF;
+        -- Slot picking
+        slot_idx := ((((days_ago + 100) * 5 + branch_idx * 13 + b_step * 11) % 7) + 1);
 
-      IF room_id IS NULL THEN
-        SELECT "RoomId" INTO room_id FROM "Rooms" WHERE "BranchId" = branch_ids[branch_idx] LIMIT 1;
-      END IF;
+        -- Status
+        IF class_date < CURRENT_DATE THEN
+          c_status := CASE WHEN (days_ago + b_step) % 20 = 0 THEN 'Cancelled' ELSE 'Completed' END;
+        ELSE
+          c_status := 'Scheduled';
+        END IF;
 
-      IF trainer_id IS NOT NULL AND room_id IS NOT NULL THEN
-        INSERT INTO "Classes"
-            ("ClassId","Title","Description","Date","StartTime","EndTime",
-             "ClassType","Status","Capacity","MinCapacity",
-             "TrainerStaffId","RoomId")
-        VALUES (
-            gen_random_uuid(),
-            title,
-            description,
-            class_date,
-            start_times[slot_idx]::time,
-            end_times[slot_idx]::time,
-            c_type,
-            c_status,
-            capacity,
-            min_capacity,
-            trainer_id,
-            room_id
-        );
-        class_n := class_n + 1;
-      END IF;
+        -- PT assignment
+        IF branch_idx = 1 THEN
+          -- Q1 PTs
+          CASE (class_n % 10)
+            WHEN 0,1,2,3 THEN trainer_id := '00000000-0003-0000-0000-000000000005'::uuid; -- Đăng (40%)
+            WHEN 4,5,6   THEN trainer_id := '00000000-0003-0000-0000-000000000003'::uuid; -- Tuấn (30%)
+            ELSE              trainer_id := '00000000-0003-0000-0000-000000000010'::uuid; -- Châu (30%)
+          END CASE;
+        ELSIF branch_idx = 2 THEN
+          -- Q7 PTs
+          CASE (class_n % 10)
+            WHEN 0,1,2,3 THEN trainer_id := '00000000-0003-0000-0000-000000000009'::uuid; -- Phong (40%)
+            WHEN 4,5,6   THEN trainer_id := '00000000-0003-0000-0000-000000000004'::uuid; -- Mai (30%)
+            ELSE              trainer_id := '00000000-0003-0000-0000-000000000011'::uuid; -- Hưng (30%)
+          END CASE;
+        ELSE
+          -- Other branches: select PT/HeadPT dynamically
+          SELECT "UserId" INTO trainer_id
+          FROM "Staffs"
+          WHERE "BranchId" = branch_ids[branch_idx] AND "Position" IN ('PT', 'HeadPT')
+          ORDER BY ((class_n * 17) % 7)
+          LIMIT 1;
+        END IF;
 
+        -- Room assignment
+        IF c_type = 'Yoga' THEN
+          SELECT "RoomId" INTO room_id FROM "Rooms" WHERE "BranchId" = branch_ids[branch_idx] AND "Name" LIKE '%Yoga%' LIMIT 1;
+        ELSIF c_type = 'Zumba' THEN
+          SELECT "RoomId" INTO room_id FROM "Rooms" WHERE "BranchId" = branch_ids[branch_idx] AND ("Name" LIKE '%Zumba%' OR "Name" LIKE '%Yoga%' OR "Name" LIKE '%Group%') LIMIT 1;
+        ELSIF c_type = 'Crossfit' THEN
+          SELECT "RoomId" INTO room_id FROM "Rooms" WHERE "BranchId" = branch_ids[branch_idx] AND ("Name" LIKE '%CrossFit%' OR "Name" LIKE '%Gym%') LIMIT 1;
+        ELSIF c_type = 'Cardio' THEN
+          SELECT "RoomId" INTO room_id FROM "Rooms" WHERE "BranchId" = branch_ids[branch_idx] AND ("Name" LIKE '%Cardio%' OR "Name" LIKE '%Gym%') LIMIT 1;
+        ELSIF c_type = 'Boxing' THEN
+          SELECT "RoomId" INTO room_id FROM "Rooms" WHERE "BranchId" = branch_ids[branch_idx] AND ("Name" LIKE '%Boxing%' OR "Name" LIKE '%Gym%') LIMIT 1;
+        ELSE
+          SELECT "RoomId" INTO room_id FROM "Rooms" WHERE "BranchId" = branch_ids[branch_idx] AND "Name" LIKE '%Gym%' LIMIT 1;
+        END IF;
+
+        IF room_id IS NULL THEN
+          SELECT "RoomId" INTO room_id FROM "Rooms" WHERE "BranchId" = branch_ids[branch_idx] LIMIT 1;
+        END IF;
+
+        IF trainer_id IS NOT NULL AND room_id IS NOT NULL THEN
+          INSERT INTO "Classes"
+              ("ClassId","Title","Description","Date","StartTime","EndTime",
+               "ClassType","Status","Capacity","MinCapacity",
+               "TrainerStaffId","RoomId")
+          VALUES (
+              gen_random_uuid(),
+              title,
+              description,
+              class_date,
+              start_times[slot_idx]::time,
+              end_times[slot_idx]::time,
+              c_type,
+              c_status,
+              capacity,
+              min_capacity,
+              trainer_id,
+              room_id
+          );
+          class_n := class_n + 1;
+        END IF;
+
+      END LOOP;
     END LOOP;
   END LOOP;
 END $$;

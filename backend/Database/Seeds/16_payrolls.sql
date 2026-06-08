@@ -264,14 +264,38 @@ BEGIN
       kpi_bonus  := 0;
       sales_comm := 0;
 
+      -- Fetch formula values dynamically for this period
+      SELECT "CommissionPerSession", "KpiSessionThreshold", "KpiBonus"
+      INTO comm_rate, kpi_thresh, kpi_b
+      FROM "PayrollFormulas"
+      WHERE "FormulaId" = formula_id;
+
       IF position IN ('PT', 'HeadPT') THEN
-        sess_count := 12 + ((s_idx * 3 + m_idx * 7) % 18); -- 12-29 sessions
+        -- Query actual completed sessions from Classes table where there is at least one Attended booking in that month/year
+        SELECT COUNT(*)
+        INTO sess_count
+        FROM "Classes" c
+        WHERE c."TrainerStaffId" = sid
+          AND c."Status" = 'Completed'
+          AND EXISTS (
+            SELECT 1 FROM "ClassBookings" cb 
+            WHERE cb."ClassId" = c."ClassId" 
+              AND cb."Status" = 'Attended'
+          )
+          AND EXTRACT(MONTH FROM c."Date") = period_month
+          AND EXTRACT(YEAR FROM c."Date") = period_year;
+
         sess_comm  := sess_count * comm_rate;
         kpi_bonus  := CASE WHEN sess_count >= kpi_thresh THEN kpi_b ELSE 0 END;
       ELSIF position = 'Sales' THEN
-        -- Sales commission ~5-15% of base salary simulation
-        sales_comm := base_sal * (0.05 + ((s_idx * m_idx % 10) * 0.01));
-        sales_comm := ROUND(sales_comm);
+        -- Query actual approved commission sum from Commissions table for this sales staff in this period
+        SELECT COALESCE(SUM("Amount"), 0)
+        INTO sales_comm
+        FROM "Commissions"
+        WHERE "StaffId" = sid
+          AND "Status" = 'Approved'
+          AND EXTRACT(MONTH FROM "CreatedAt") = period_month
+          AND EXTRACT(YEAR FROM "CreatedAt") = period_year;
       END IF;
 
       total_sal := base_sal + sess_comm + kpi_bonus + sales_comm;

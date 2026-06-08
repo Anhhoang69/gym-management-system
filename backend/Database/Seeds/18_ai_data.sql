@@ -99,7 +99,9 @@ VALUES
     '00000000-0004-0000-0000-000000000006',
     '{"memberName":"Võ Thị Phương","goal":"Sức khỏe tổng thể và giảm stress","currentPackage":"Elite","privatePtLeft":9,"groupPtLeft":8,"checkinsThisWeek":3,"lastChatTopic":"lớp Yoga và lợi ích","preferredTime":"morning","fitnessLevel":"intermediate","preferredClass":"Yoga,Zumba"}',
     NOW() - interval '10 days'
-);
+)
+ON CONFLICT ("MemberId") DO NOTHING;
+
 
 
 -- =====================================================
