@@ -1,5 +1,6 @@
 using backend.DTOs.Class;
 using backend.Enums;
+using backend.Helpers;
 
 namespace backend.Interfaces;
 
@@ -8,6 +9,11 @@ public interface IClassService
     Task<List<ClassScheduleDto>> GetScheduleAsync(
         DateOnly? startDate, DateOnly? endDate, DateOnly? date,
         Guid? roomId, Guid? trainerId, ClassType? classType, ClassStatus? status, Guid? branchId, Guid callerUserId);
+
+    Task<PagedResult<ClassScheduleDto>> GetPagedScheduleAsync(
+        DateOnly? startDate, DateOnly? endDate, DateOnly? date,
+        Guid? roomId, Guid? trainerId, ClassType? classType, ClassStatus? status, Guid? branchId, Guid callerUserId,
+        int page, int pageSize);
 
     Task<ClassDto?> GetClassAsync(Guid id);
 

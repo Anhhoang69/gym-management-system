@@ -29,7 +29,7 @@ public class ClassController : ControllerBase
         Description = "Trả về lịch lớp học theo filter. Dữ liệu được lọc theo vai trò (PT chỉ thấy lớp của mình, Member thấy thông tin booking cá nhân)."
     )]
     [AllowAnonymous] // Tạm thời để lấy token trong code
-    public async Task<ApiResponse<List<ClassScheduleDto>>> GetSchedule(
+    public async Task<IActionResult> GetSchedule(
         [FromQuery] DateOnly? startDate,
         [FromQuery] DateOnly? endDate,
         [FromQuery] DateOnly? date,
@@ -37,15 +37,24 @@ public class ClassController : ControllerBase
         [FromQuery] Guid? trainerId,
         [FromQuery] ClassType? classType,
         [FromQuery] ClassStatus? status,
-        [FromQuery] Guid? branchId)
+        [FromQuery] Guid? branchId,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize)
     {
         // Require auth, check explicitly to allow smooth fail if needed or just use GetRequiredUserId if [Authorize] is on class
         // Let's use User.GetRequiredUserId() since controller has [Authorize]
         var userId = User.GetRequiredUserId();
 
-        var result = await _service.GetScheduleAsync(startDate, endDate, date, roomId, trainerId, classType, status, branchId, userId);
-
-        return new ApiResponse<List<ClassScheduleDto>>(result);
+        if (page.HasValue && pageSize.HasValue)
+        {
+            var result = await _service.GetPagedScheduleAsync(startDate, endDate, date, roomId, trainerId, classType, status, branchId, userId, page.Value, pageSize.Value);
+            return Ok(new ApiResponse<object>(result));
+        }
+        else
+        {
+            var result = await _service.GetScheduleAsync(startDate, endDate, date, roomId, trainerId, classType, status, branchId, userId);
+            return Ok(new ApiResponse<object>(result));
+        }
     }
 
     // ================= DETAIL =================

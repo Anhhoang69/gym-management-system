@@ -46,7 +46,7 @@ public class PayrollOverviewTool : BaseAITool
             var year = GetInt(args, "year") ?? now.Year;
             var branchId = GetGuid(args, "branchId");
 
-            var records = await _payrollService.GetPayrollReportAsync(month, year, branchId, null, null);
+            var records = await _payrollService.GetPayrollReportAsync(month, year, branchId, null, null, null);
 
             if (!records.Any())
                 return ToolResult.Ok($"Chưa có bảng lương nào cho tháng {month}/{year}.");

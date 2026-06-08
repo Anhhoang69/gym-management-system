@@ -40,7 +40,7 @@ function PtSidebar() {
 
                 <CNavItem>
                     <NavLink to="/pt/commissions" className="nav-link">
-                        Hoa Hồng Cá Nhân
+                        Thù Lao Lớp Dạy
                     </NavLink>
                 </CNavItem>
             </CSidebarNav>

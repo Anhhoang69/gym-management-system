@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using backend.DTOs.Payroll;
+using backend.Enums;
 using backend.Extensions;
 using backend.Helpers;
 using backend.Interfaces;
@@ -61,10 +62,26 @@ public class PayrollController : ControllerBase
     [HttpGet("report")]
     [Authorize(Roles = AuthorizationRoles.AdminRoles)] // BranchAdmin, SuperAdmin
     [SwaggerOperation(Summary = "Xem báo cáo lương")]
-    public async Task<ApiResponse<List<PayrollRecordDto>>> GetReport([FromQuery] int? month, [FromQuery] int? year, [FromQuery] Guid? branchId, [FromQuery] Guid? staffId, [FromQuery] string? position)
+    public async Task<IActionResult> GetReport(
+        [FromQuery] int? month, 
+        [FromQuery] int? year, 
+        [FromQuery] Guid? branchId, 
+        [FromQuery] Guid? staffId, 
+        [FromQuery] string? position,
+        [FromQuery] PayrollStatus? status,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize)
     {
-        var result = await _service.GetPayrollReportAsync(month, year, branchId, staffId, position);
-        return new ApiResponse<List<PayrollRecordDto>>(result);
+        if (page.HasValue && pageSize.HasValue)
+        {
+            var result = await _service.GetPagedPayrollReportAsync(month, year, branchId, staffId, position, status, page.Value, pageSize.Value);
+            return Ok(new ApiResponse<object>(result));
+        }
+        else
+        {
+            var result = await _service.GetPayrollReportAsync(month, year, branchId, staffId, position, status);
+            return Ok(new ApiResponse<object>(result));
+        }
     }
 
     [HttpGet("my")]
