@@ -10,11 +10,13 @@ function OwnerSidebar() {
     return (
         <CSidebar
             visible
+            className="no-scrollbar"
             style={{
                 width: 240,
-                height: "100vh",
+                height: "100%",
                 borderRight: "1px solid #eee",
-                background: "var(--bg-third, #fff)"
+                background: "var(--bg-third, #fff)",
+                overflowY: "auto"
             }}
         >
             {/* Menu */}

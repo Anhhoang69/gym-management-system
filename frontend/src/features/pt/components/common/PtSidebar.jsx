@@ -11,10 +11,12 @@ function PtSidebar() {
     return (
         <CSidebar
             visible
+            className="no-scrollbar"
             style={{
                 width: 240,
-                height: "100vh",
-                borderRight: "1px solid #eee"
+                height: "100%",
+                borderRight: "1px solid #eee",
+                overflowY: "auto"
             }}
         >
             {/* Menu */}
@@ -40,7 +42,7 @@ function PtSidebar() {
 
                 <CNavItem>
                     <NavLink to="/pt/commissions" className="nav-link">
-                        Hoa Hồng Cá Nhân
+                        Thù Lao Lớp Dạy
                     </NavLink>
                 </CNavItem>
             </CSidebarNav>

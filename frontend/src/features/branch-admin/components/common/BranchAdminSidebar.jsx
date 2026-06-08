@@ -11,10 +11,12 @@ function BranchAdminSidebar() {
     return (
         <CSidebar
             visible
+            className="no-scrollbar"
             style={{
                 width: 240,
-                height: "100vh",
-                borderRight: "1px solid #eee"
+                height: "100%",
+                borderRight: "1px solid #eee",
+                overflowY: "auto"
             }}
         >
             {/* Menu */}

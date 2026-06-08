@@ -5,6 +5,7 @@ using AutoMapper.QueryableExtensions;
 using backend.Data;
 using backend.DTOs.Payroll;
 using backend.Enums;
+using backend.Helpers;
 using backend.Interfaces;
 using backend.Models;
 
@@ -100,13 +101,13 @@ public class PayrollService : IPayrollService
 
             if (staff.Position == StaffPosition.PT || staff.Position == StaffPosition.HeadPT)
             {
-                sessions = await _context.ClassBookings
-                    .Include(b => b.Class)
-                    .CountAsync(b =>
-                        b.Class.TrainerStaffId == staff.UserId &&
-                        b.Status == BookingStatus.Attended &&
-                        b.Class.Date.Month == dto.Month &&
-                        b.Class.Date.Year == dto.Year);
+                sessions = await _context.Classes
+                    .CountAsync(c =>
+                        c.TrainerStaffId == staff.UserId &&
+                        c.Status == ClassStatus.Completed &&
+                        c.Bookings.Any(b => b.Status == BookingStatus.Attended) &&
+                        c.Date.Month == dto.Month &&
+                        c.Date.Year == dto.Year);
 
                 sessionCommission = sessions * formula.CommissionPerSession;
                 kpiBonus = sessions >= formula.KpiSessionThreshold ? formula.KpiBonus : 0m;
@@ -147,7 +148,7 @@ public class PayrollService : IPayrollService
         return calculatedCount;
     }
 
-    public async Task<List<PayrollRecordDto>> GetPayrollReportAsync(int? month, int? year, Guid? branchId, Guid? staffId, string? position)
+    public async Task<List<PayrollRecordDto>> GetPayrollReportAsync(int? month, int? year, Guid? branchId, Guid? staffId, string? position, PayrollStatus? status)
     {
         var query = _context.PayrollRecords
             .Include(r => r.Staff).ThenInclude(s => s.User)
@@ -164,7 +165,46 @@ public class PayrollService : IPayrollService
             query = query.Where(r => r.Staff.Position == pos);
         }
 
+        if (status.HasValue)
+        {
+            query = query.Where(r => r.Status == status.Value);
+        }
+
         return await query.ProjectTo<PayrollRecordDto>(_mapper.ConfigurationProvider).ToListAsync();
+    }
+
+    public async Task<PagedResult<PayrollRecordDto>> GetPagedPayrollReportAsync(
+        int? month, int? year, Guid? branchId, Guid? staffId, string? position, PayrollStatus? status, int page, int pageSize)
+    {
+        var query = _context.PayrollRecords
+            .Include(r => r.Staff).ThenInclude(s => s.User)
+            .Include(r => r.Formula)
+            .AsQueryable();
+
+        if (month.HasValue) query = query.Where(r => r.PeriodMonth == month.Value);
+        if (year.HasValue) query = query.Where(r => r.PeriodYear == year.Value);
+        if (branchId.HasValue) query = query.Where(r => r.Staff.BranchId == branchId.Value);
+        if (staffId.HasValue) query = query.Where(r => r.StaffId == staffId.Value);
+
+        if (!string.IsNullOrEmpty(position) && Enum.TryParse<StaffPosition>(position, out var pos))
+        {
+            query = query.Where(r => r.Staff.Position == pos);
+        }
+
+        if (status.HasValue)
+        {
+            query = query.Where(r => r.Status == status.Value);
+        }
+
+        var total = await query.CountAsync();
+
+        var items = await query.OrderByDescending(r => r.CalculatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ProjectTo<PayrollRecordDto>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+
+        return new PagedResult<PayrollRecordDto>(items, total, page, pageSize);
     }
 
     public async Task<List<PayrollRecordDto>> GetMyPayrollAsync(Guid staffUserId, int? month, int? year)
@@ -215,7 +255,7 @@ public class PayrollService : IPayrollService
 
     public async Task<string> ExportPayrollCsvAsync(int month, int year, Guid? branchId)
     {
-        var records = await GetPayrollReportAsync(month, year, branchId, null, null);
+        var records = await GetPayrollReportAsync(month, year, branchId, null, null, null);
 
         var sb = new StringBuilder();
         sb.AppendLine("StaffId,StaffName,Position,PeriodMonth,PeriodYear,BaseSalary,SessionCount,SessionCommission,KpiBonus,SalesCommission,TotalSalary,Status");

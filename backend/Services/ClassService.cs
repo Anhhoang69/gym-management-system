@@ -6,6 +6,7 @@ using backend.DTOs.Class;
 using backend.Enums;
 using backend.Interfaces;
 using backend.Models;
+using backend.Helpers;
 
 namespace backend.Services;
 
@@ -86,6 +87,7 @@ public class ClassService : IClassService
                 BranchId = c.Room.BranchId,
                 BranchName = c.Room.Branch.Name,
                 BookedCount = c.Bookings.Count(b => b.Status == BookingStatus.Booked || b.Status == BookingStatus.Attended),
+                AttendedCount = c.Bookings.Count(b => b.Status == BookingStatus.Attended),
             };
             dto.IsFull = dto.BookedCount >= dto.Capacity;
 
@@ -99,6 +101,92 @@ public class ClassService : IClassService
 
             return dto;
         }).ToList();
+    }
+
+    public async Task<PagedResult<ClassScheduleDto>> GetPagedScheduleAsync(
+        DateOnly? startDate, DateOnly? endDate, DateOnly? date,
+        Guid? roomId, Guid? trainerId, ClassType? classType, ClassStatus? status, Guid? branchId, Guid callerUserId,
+        int page, int pageSize)
+    {
+        var query = _context.Classes
+            .Include(c => c.Trainer).ThenInclude(t => t.User)
+            .Include(c => c.Room).ThenInclude(r => r.Branch)
+            .Include(c => c.Bookings)
+            .AsNoTracking()
+            .AsQueryable();
+
+        if (date.HasValue) query = query.Where(c => c.Date == date.Value);
+        if (startDate.HasValue) query = query.Where(c => c.Date >= startDate.Value);
+        if (endDate.HasValue) query = query.Where(c => c.Date <= endDate.Value);
+        if (roomId.HasValue) query = query.Where(c => c.RoomId == roomId.Value);
+        if (classType.HasValue) query = query.Where(c => c.ClassType == classType.Value);
+        if (status.HasValue) query = query.Where(c => c.Status == status.Value);
+        if (branchId.HasValue) query = query.Where(c => c.Room.BranchId == branchId.Value);
+
+        bool isMember = await _context.UserRoles.AnyAsync(ur => ur.UserId == callerUserId && _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == backend.Helpers.AuthorizationRoles.Member));
+        bool isStaff = await _context.UserRoles.AnyAsync(ur => ur.UserId == callerUserId && _context.Roles.Any(r => r.Id == ur.RoleId && r.Name == backend.Helpers.AuthorizationRoles.Staff));
+
+        var staff = isStaff ? await _context.Staffs.AsNoTracking().FirstOrDefaultAsync(s => s.UserId == callerUserId) : null;
+
+        if (isStaff && staff?.Position == StaffPosition.PT)
+        {
+            query = query.Where(c => c.TrainerStaffId == callerUserId);
+        }
+        else if (trainerId.HasValue)
+        {
+            query = query.Where(c => c.TrainerStaffId == trainerId.Value);
+        }
+
+        if (isMember)
+        {
+            query = query.Where(c => c.Status == ClassStatus.Scheduled || c.Bookings.Any(b => b.MemberUserId == callerUserId));
+        }
+
+        var total = await query.CountAsync();
+
+        var classes = await query.OrderBy(c => c.Date).ThenBy(c => c.StartTime)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var dtos = classes.Select(c =>
+        {
+            var dto = new ClassScheduleDto
+            {
+                ClassId = c.ClassId,
+                Title = c.Title,
+                Description = c.Description,
+                Date = c.Date,
+                StartTime = c.StartTime,
+                EndTime = c.EndTime,
+                ClassType = c.ClassType,
+                Status = c.Status,
+                Capacity = c.Capacity,
+                MinCapacity = c.MinCapacity,
+                TrainerStaffId = c.TrainerStaffId,
+                TrainerName = c.Trainer.User.FullName ?? "",
+                RoomId = c.RoomId,
+                RoomName = c.Room.Name,
+                RoomNumber = c.Room.RoomNumber,
+                BranchId = c.Room.BranchId,
+                BranchName = c.Room.Branch.Name,
+                BookedCount = c.Bookings.Count(b => b.Status == BookingStatus.Booked || b.Status == BookingStatus.Attended),
+                AttendedCount = c.Bookings.Count(b => b.Status == BookingStatus.Attended),
+            };
+            dto.IsFull = dto.BookedCount >= dto.Capacity;
+
+            if (isMember)
+            {
+                var myBooking = c.Bookings.FirstOrDefault(b => b.MemberUserId == callerUserId);
+                dto.IsBooked = myBooking != null && myBooking.Status != BookingStatus.Cancelled;
+                dto.MyBookingStatus = myBooking?.Status;
+                dto.MySessionNote = myBooking?.SessionNote;
+            }
+
+            return dto;
+        }).ToList();
+
+        return new PagedResult<ClassScheduleDto>(dtos, total, page, pageSize);
     }
 
     // ================= DETAIL =================

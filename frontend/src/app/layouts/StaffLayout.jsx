@@ -6,10 +6,11 @@ function StaffLayout() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        height: "100vh",
         background: "#f5f6fa",
         display: "flex",
-        flexDirection: "column"
+        flexDirection: "column",
+        overflow: "hidden"
       }}
     >
 
@@ -20,7 +21,8 @@ function StaffLayout() {
       <div
         style={{
           flex: 1,
-          display: "flex"
+          display: "flex",
+          overflow: "hidden"
         }}
       >
 
@@ -29,6 +31,7 @@ function StaffLayout() {
 
         {/* CONTENT */}
         <div
+          className="no-scrollbar"
           style={{
             flex: 1,
             padding: 25,

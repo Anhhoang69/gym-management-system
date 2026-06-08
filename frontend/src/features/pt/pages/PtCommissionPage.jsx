@@ -5,8 +5,6 @@ import {
     CRow,
     CCol,
     CBadge,
-    CFormSelect,
-    CFormLabel,
     CTable,
     CTableHead,
     CTableRow,
@@ -16,122 +14,147 @@ import {
     CPagination,
     CPaginationItem
 } from "@coreui/react"
-import { DollarSign, Percent, Award, Calendar } from "lucide-react"
+import { DollarSign, BookOpen, Award, TrendingUp } from "lucide-react"
 import moment from "moment"
-import { getMyCommissions } from "../../../shared/services/commissionService"
-import Pagination from "../../../shared/components/Pagination"
+import { getMyPayroll } from "../../../shared/services/payrollService"
+import { getClasses } from "../../super-admin/services/classService"
+import PeriodPicker from "../../../shared/components/payroll/PeriodPicker"
 
 function PtCommissionPage() {
-    const [commissions, setCommissions] = useState([])
+    const [classes, setClasses] = useState([])
+    const [allCompletedClasses, setAllCompletedClasses] = useState([])
+    const [payrollSlip, setPayrollSlip] = useState(null)
     const [loading, setLoading] = useState(false)
-    const [pagination, setPagination] = useState({ totalPages: 1, totalItems: 0 })
-    
+
     const currentDate = new Date()
-    const [filters, setFilters] = useState({
-        month: String(currentDate.getMonth() + 1),
-        year: String(currentDate.getFullYear()),
-        page: 1,
-        pageSize: 10
-    })
+    const defaultPeriod = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`
+    const [selectedPeriod, setSelectedPeriod] = useState(defaultPeriod)
 
-    useEffect(() => {
-        fetchCommissions()
-    }, [filters.month, filters.year, filters.page])
+    const [currentPage, setCurrentPage] = useState(1)
+    const [totalPages, setTotalPages] = useState(1)
+    const pageSize = 10
 
-    const fetchCommissions = async () => {
+    const fetchCommissionData = async () => {
         setLoading(true)
         try {
-            const res = await getMyCommissions({
-                month: filters.month ? parseInt(filters.month, 10) : undefined,
-                year: filters.year ? parseInt(filters.year, 10) : undefined,
-                page: filters.page,
-                pageSize: filters.pageSize
+            const [yearStr, monthStr] = selectedPeriod.split("-")
+            const month = parseInt(monthStr, 10)
+            const year = parseInt(yearStr, 10)
+
+            // 1. Fetch PT's payroll record for this period to get sessionCommission and kpiBonus
+            const payrollRes = await getMyPayroll(month, year)
+            const slip = payrollRes.data && payrollRes.data.length > 0 ? payrollRes.data[0] : null
+            setPayrollSlip(slip)
+
+            // 2. Fetch completed classes taught by this PT in this month
+            // Calculate start and end dates of the selected month
+            const startDate = `${year}-${String(month).padStart(2, "0")}-01`
+            // Handle last day of month
+            const lastDay = new Date(year, month, 0).getDate()
+            const endDate = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`
+
+            // Fetch ALL completed classes for this month to calculate statistics
+            const allRes = await getClasses({
+                startDate,
+                endDate,
+                status: "Completed"
             })
-            if (res?.success) {
-                setCommissions(res.data?.items || [])
-                setPagination({
-                    totalPages: res.data?.totalPages || 1,
-                    totalItems: res.data?.totalItems || 0
-                })
-            } else {
-                setCommissions([])
-                setPagination({ totalPages: 1, totalItems: 0 })
-            }
+            setAllCompletedClasses(allRes || [])
+
+            // Fetch PAGINATED completed classes for display in the table
+            const pagedRes = await getClasses({
+                startDate,
+                endDate,
+                status: "Completed",
+                page: currentPage,
+                pageSize: pageSize
+            })
+            setClasses(pagedRes?.items || [])
+            setTotalPages(pagedRes?.totalPages || 1)
         } catch (error) {
-            console.error("Failed to load PT commissions", error)
+            console.error("Failed to load PT commission statistics", error)
         } finally {
             setLoading(false)
         }
     }
 
+    useEffect(() => {
+        fetchCommissionData()
+    }, [selectedPeriod, currentPage])
+
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0)
     }
 
-    const getStatusBadge = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'approved':
-            case 'paid':
-                return <CBadge color="success">Đã duyệt</CBadge>
-            case 'pending':
-                return <CBadge color="warning" className="text-dark">Chờ duyệt</CBadge>
-            case 'rejected':
-                return <CBadge color="danger">Bị từ chối</CBadge>
-            default:
-                return <CBadge color="secondary">{status || 'N/A'}</CBadge>
-        }
-    }
+    // Calculations
+    const sessionRate = payrollSlip && payrollSlip.sessionCount > 0
+        ? Math.round((payrollSlip.sessionCommission || 0) / payrollSlip.sessionCount)
+        : 170000 // Default fallback unit commission per session if payroll not computed yet
 
-    // Calculations based on current page's visible items
-    const pageTotalAmount = commissions.reduce((sum, item) => sum + (item.amount || 0), 0)
-    const pageTotalContracts = commissions.length
-    const pageAvgPercent = pageTotalContracts > 0 ? (commissions.reduce((sum, item) => sum + (item.percent || 0), 0) / pageTotalContracts).toFixed(1) : 0
+    const totalSessionsTaught = allCompletedClasses.filter(c => (c.attendedCount || 0) > 0).length
+    const totalAttendedCount = allCompletedClasses.reduce((sum, c) => sum + (c.attendedCount || 0), 0)
+    const totalSessionCommission = payrollSlip ? payrollSlip.sessionCommission : (totalSessionsTaught * sessionRate)
+    const kpiBonus = payrollSlip ? payrollSlip.kpiBonus : 0
+    const totalPayout = totalSessionCommission + kpiBonus
 
     return (
         <div className="container-fluid p-0 d-flex flex-column gap-4">
             {/* Page Header */}
             <div>
-                <h3 className="fw-bold mb-1">Hoa Hồng Cá Nhân</h3>
-                <p className="text-muted mb-0">Xem và quản lý các khoản hoa hồng tích lũy từ việc huấn luyện cá nhân và các gói dịch vụ.</p>
+                <h3 className="fw-bold mb-1">Thống Kê Thù Lao Lớp Dạy</h3>
+                <p className="text-muted mb-0">Theo dõi thù lao tích lũy từ các buổi dạy và thưởng đạt chỉ tiêu KPI dạy học cá nhân.</p>
             </div>
 
             {/* Statistics Cards */}
             <CRow className="g-3">
-                <CCol md={4} sm={6} xs={12}>
+                <CCol md={3} sm={6} xs={12}>
                     <CCard className="border-0 shadow-sm rounded-4 h-100 bg-white" style={{ borderLeft: "4px solid #4f46e5" }}>
                         <CCardBody className="d-flex align-items-center gap-3">
                             <div className="p-3 rounded-3" style={{ backgroundColor: "#e0e7ff", color: "#4f46e5" }}>
-                                <DollarSign size={24} />
+                                <BookOpen size={24} />
                             </div>
                             <div>
-                                <small className="text-muted fw-semibold">Tổng Hoa Hồng (Trang này)</small>
-                                <h4 className="fw-bold mb-0 mt-1 text-indigo-600">{formatCurrency(pageTotalAmount)}</h4>
+                                <small className="text-muted fw-semibold">Tổng Số Lớp Dạy</small>
+                                <h4 className="fw-bold mb-0 mt-1" style={{ color: "#312e81" }}>{totalSessionsTaught} lớp</h4>
                             </div>
                         </CCardBody>
                     </CCard>
                 </CCol>
-                <CCol md={4} sm={6} xs={12}>
+                <CCol md={3} sm={6} xs={12}>
                     <CCard className="border-0 shadow-sm rounded-4 h-100 bg-white" style={{ borderLeft: "4px solid #10b981" }}>
                         <CCardBody className="d-flex align-items-center gap-3">
                             <div className="p-3 rounded-3" style={{ backgroundColor: "#d1fae5", color: "#10b981" }}>
-                                <Award size={24} />
+                                <TrendingUp size={24} />
                             </div>
                             <div>
-                                <small className="text-muted fw-semibold">Số Hợp Đồng (Trang này)</small>
-                                <h4 className="fw-bold mb-0 mt-1 text-success">{pageTotalContracts} hợp đồng</h4>
+                                <small className="text-muted fw-semibold">Lượt Học Viên Tham Gia</small>
+                                <h4 className="fw-bold mb-0 mt-1" style={{ color: "#065f46" }}>{totalAttendedCount} lượt</h4>
                             </div>
                         </CCardBody>
                     </CCard>
                 </CCol>
-                <CCol md={4} sm={12} xs={12}>
+                <CCol md={3} sm={6} xs={12}>
                     <CCard className="border-0 shadow-sm rounded-4 h-100 bg-white" style={{ borderLeft: "4px solid #f59e0b" }}>
                         <CCardBody className="d-flex align-items-center gap-3">
                             <div className="p-3 rounded-3" style={{ backgroundColor: "#fef3c7", color: "#f59e0b" }}>
-                                <Percent size={24} />
+                                <Award size={24} />
                             </div>
                             <div>
-                                <small className="text-muted fw-semibold">Tỉ Lệ Trung Bình (Trang này)</small>
-                                <h4 className="fw-bold mb-0 mt-1 text-warning">{pageAvgPercent}%</h4>
+                                <small className="text-muted fw-semibold">Thưởng Đạt KPI Buổi</small>
+                                <h4 className="fw-bold mb-0 mt-1" style={{ color: "#92400e" }}>{formatCurrency(kpiBonus)}</h4>
+                            </div>
+                        </CCardBody>
+                    </CCard>
+                </CCol>
+                <CCol md={3} sm={6} xs={12}>
+                    <CCard className="border-0 shadow-sm rounded-4 h-100 bg-white" style={{ borderLeft: "4px solid #059669" }}>
+                        <CCardBody className="d-flex align-items-center gap-3">
+                            <div className="p-3 rounded-3" style={{ backgroundColor: "#ecfdf5", color: "#059669" }}>
+                                <DollarSign size={24} />
+                            </div>
+                            <div>
+                                <small className="text-muted fw-semibold">Tổng Thù Lao Lớp Dạy</small>
+                                <h4 className="fw-bold mb-0 mt-1 text-success">{formatCurrency(totalPayout)}</h4>
                             </div>
                         </CCardBody>
                     </CCard>
@@ -142,33 +165,24 @@ function PtCommissionPage() {
             <CCard className="border-0 shadow-sm rounded-4">
                 <CCardBody className="p-3">
                     <CRow className="align-items-end g-3">
-                        <CCol md={3} sm={6} xs={12}>
-                            <CFormLabel className="small fw-bold mb-1">Chọn Tháng</CFormLabel>
-                            <CFormSelect
-                                value={filters.month}
-                                onChange={(e) => setFilters({ ...filters, month: e.target.value, page: 1 })}
-                            >
-                                <option value="">Tất cả các tháng</option>
-                                {[...Array(12)].map((_, i) => (
-                                    <option key={i + 1} value={i + 1}>
-                                        Tháng {String(i + 1).padStart(2, "0")}
-                                    </option>
-                                ))}
-                            </CFormSelect>
+                        <CCol md={4} xs={12}>
+                            <label className="small fw-bold mb-1">Chọn Kỳ Đối Soát</label>
+                            <PeriodPicker
+                                value={selectedPeriod}
+                                onChange={(val) => {
+                                    setSelectedPeriod(val)
+                                    setCurrentPage(1)
+                                }}
+                            />
                         </CCol>
-                        <CCol md={3} sm={6} xs={12}>
-                            <CFormLabel className="small fw-bold mb-1">Chọn Năm</CFormLabel>
-                            <CFormSelect
-                                value={filters.year}
-                                onChange={(e) => setFilters({ ...filters, year: e.target.value, page: 1 })}
-                            >
-                                <option value="">Tất cả các năm</option>
-                                <option value="2024">Năm 2024</option>
-                                <option value="2025">Năm 2025</option>
-                                <option value="2026">Năm 2026</option>
-                                <option value="2027">Năm 2027</option>
-                            </CFormSelect>
-                        </CCol>
+                        {payrollSlip && (
+                            <CCol md={8} xs={12} className="d-flex align-items-center justify-content-md-end gap-2">
+                                <span className="text-muted small">Trạng thái kỳ lương:</span>
+                                {payrollSlip.status === "Paid" && <CBadge color="dark">Đã Thanh Toán</CBadge>}
+                                {payrollSlip.status === "Approved" && <CBadge color="success">Đã Phê Duyệt</CBadge>}
+                                {payrollSlip.status === "Draft" && <CBadge color="warning" className="text-dark">Chờ Phê Duyệt</CBadge>}
+                            </CCol>
+                        )}
                     </CRow>
                 </CCardBody>
             </CCard>
@@ -177,10 +191,10 @@ function PtCommissionPage() {
             <CCard className="border-0 shadow-sm rounded-4 overflow-hidden">
                 <CCardBody className="p-0">
                     {loading ? (
-                        <div className="text-center py-5">Đang tải lịch sử hoa hồng...</div>
-                    ) : commissions.length === 0 ? (
+                        <div className="text-center py-5">Đang tải lịch sử lớp dạy...</div>
+                    ) : classes.length === 0 ? (
                         <div className="text-center py-5 text-muted">
-                            Chưa có dữ liệu hoa hồng được ghi nhận cho kỳ này.
+                            Chưa có lớp dạy nào hoàn thành được ghi nhận trong kỳ này.
                         </div>
                     ) : (
                         <>
@@ -188,53 +202,81 @@ function PtCommissionPage() {
                                 <CTable align="middle" className="mb-0 table-hover" responsive>
                                     <CTableHead color="light">
                                         <CTableRow>
-                                            <CTableHeaderCell className="py-3 px-4">Mã Hợp Đồng</CTableHeaderCell>
-                                            <CTableHeaderCell className="py-3">Hội Viên</CTableHeaderCell>
-                                            <CTableHeaderCell className="py-3">Gói Tập</CTableHeaderCell>
-                                            <CTableHeaderCell className="py-3 text-center">Tỷ Lệ</CTableHeaderCell>
-                                            <CTableHeaderCell className="py-3 text-end">Số Tiền</CTableHeaderCell>
-                                            <CTableHeaderCell className="py-3 text-center">Trạng Thái</CTableHeaderCell>
-                                            <CTableHeaderCell className="py-3 px-4 text-center">Ngày Tạo</CTableHeaderCell>
+                                            <CTableHeaderCell className="py-3 px-4">Ngày Dạy</CTableHeaderCell>
+                                            <CTableHeaderCell className="py-3">Tên Lớp Học</CTableHeaderCell>
+                                            <CTableHeaderCell className="py-3">Loại Lớp</CTableHeaderCell>
+                                            <CTableHeaderCell className="py-3 text-center">Đã Đăng Ký</CTableHeaderCell>
+                                            <CTableHeaderCell className="py-3 text-center">Đã Điểm Danh</CTableHeaderCell>
+                                            <CTableHeaderCell className="py-3 text-end">Đơn Giá / Buổi</CTableHeaderCell>
+                                            <CTableHeaderCell className="py-3 px-4 text-end">Thành Tiền</CTableHeaderCell>
                                         </CTableRow>
                                     </CTableHead>
                                     <CTableBody>
-                                        {commissions.map((item) => (
-                                            <CTableRow key={item.commissionId}>
-                                                <CTableDataCell className="py-3 px-4 fw-semibold text-muted small">
-                                                    #{item.contractId?.substring(0, 8).toUpperCase() || 'N/A'}
-                                                </CTableDataCell>
-                                                <CTableDataCell className="py-3 fw-bold text-dark">
-                                                    {item.memberName || 'N/A'}
-                                                </CTableDataCell>
-                                                <CTableDataCell className="py-3">
-                                                    {item.packageName || 'N/A'}
-                                                </CTableDataCell>
-                                                <CTableDataCell className="py-3 text-center fw-semibold text-secondary">
-                                                    {item.percent}%
-                                                </CTableDataCell>
-                                                <CTableDataCell className="py-3 text-end text-primary fw-bold">
-                                                    {formatCurrency(item.amount)}
-                                                </CTableDataCell>
-                                                <CTableDataCell className="py-3 text-center">
-                                                    {getStatusBadge(item.status)}
-                                                </CTableDataCell>
-                                                <CTableDataCell className="py-3 px-4 text-center text-muted small">
-                                                    {moment(item.createdAt).format("DD/MM/YYYY HH:mm")}
-                                                </CTableDataCell>
-                                            </CTableRow>
-                                        ))}
+                                        {classes.map((c) => {
+                                            const classEarnings = (c.attendedCount || 0) > 0 ? sessionRate : 0
+                                            return (
+                                                <CTableRow key={c.classId}>
+                                                    <CTableDataCell className="py-3 px-4 fw-semibold text-muted">
+                                                        {moment(c.date).format("DD/MM/YYYY")} ({c.startTime.substring(0, 5)} - {c.endTime.substring(0, 5)})
+                                                    </CTableDataCell>
+                                                    <CTableDataCell className="py-3 fw-bold text-dark">
+                                                        {c.title}
+                                                    </CTableDataCell>
+                                                    <CTableDataCell className="py-3">
+                                                        {c.classType === "PersonalTraining" ? (
+                                                            <CBadge color="info">Huấn Luyện 1-1</CBadge>
+                                                        ) : (
+                                                            <CBadge color="primary">Lớp Nhóm</CBadge>
+                                                        )}
+                                                    </CTableDataCell>
+                                                    <CTableDataCell className="py-3 text-center fw-semibold text-secondary">
+                                                        {c.bookedCount} / {c.capacity}
+                                                    </CTableDataCell>
+                                                    <CTableDataCell className="py-3 text-center fw-bold text-success">
+                                                        {c.attendedCount || 0} HV
+                                                    </CTableDataCell>
+                                                    <CTableDataCell className="py-3 text-end text-secondary">
+                                                        {formatCurrency(sessionRate)}
+                                                    </CTableDataCell>
+                                                    <CTableDataCell className="py-3 px-4 text-end text-primary fw-bold">
+                                                        {formatCurrency(classEarnings)}
+                                                    </CTableDataCell>
+                                                </CTableRow>
+                                            )
+                                        })}
                                     </CTableBody>
                                 </CTable>
                             </div>
 
                             {/* Pagination */}
-                            {pagination.totalPages > 1 && (
+                            {totalPages > 1 && (
                                 <div className="d-flex justify-content-end p-4 border-top">
-                                    <Pagination
-                                        currentPage={filters.page}
-                                        totalPages={pagination.totalPages}
-                                        onChange={(newPage) => setFilters({...filters, page: newPage})}
-                                    />
+                                    <CPagination className="mb-0">
+                                        <CPaginationItem 
+                                            disabled={currentPage === 1}
+                                            onClick={() => setCurrentPage(currentPage - 1)}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            ‹
+                                        </CPaginationItem>
+                                        {[...Array(totalPages)].map((_, idx) => (
+                                            <CPaginationItem 
+                                                key={idx} 
+                                                active={currentPage === idx + 1}
+                                                onClick={() => setCurrentPage(idx + 1)}
+                                                style={{ cursor: 'pointer' }}
+                                            >
+                                                {idx + 1}
+                                            </CPaginationItem>
+                                        ))}
+                                        <CPaginationItem 
+                                            disabled={currentPage === totalPages}
+                                            onClick={() => setCurrentPage(currentPage + 1)}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            ›
+                                        </CPaginationItem>
+                                    </CPagination>
                                 </div>
                             )}
                         </>

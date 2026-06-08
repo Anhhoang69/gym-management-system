@@ -82,6 +82,9 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 \echo '[18] Seeding AI data...'
 \i 18_ai_data.sql
 
+\echo '[20] Seeding AI usage logs (Token + Tool execution)...'
+\i 20_ai_logs.sql
+
 \echo '[99] Seeding Demo data...'
 \i 99_demo_data.sql
 

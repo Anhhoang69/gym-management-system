@@ -59,6 +59,68 @@ VALUES
     NOW() - interval '2 hours'
 );
 
+
+-- =====================================================
+-- CONTRACT ADJUSTS BULK GENERATION (10+ records)
+-- =====================================================
+DO $$
+DECLARE
+  contract_rec record;
+  pkg_elite    uuid := 'cccccccc-0001-0000-0000-000000000003'::uuid;
+  pkg_premium  uuid := 'cccccccc-0001-0000-0000-000000000002'::uuid;
+  pkg_basic    uuid := 'cccccccc-0001-0000-0000-000000000001'::uuid;
+  
+  adjust_action text;
+  new_pkg      uuid;
+  k            int := 0;
+BEGIN
+  FOR contract_rec IN
+    SELECT "ContractId", "PackageId", "StaffId", "CreatedAt", "Status"
+    FROM "Contracts"
+    WHERE "Status" = 'Active' OR "Status" = 'Expired'
+    LIMIT 12
+  LOOP
+    k := k + 1;
+    
+    -- Cycle through adjust action types
+    CASE (k % 4)
+      WHEN 0 THEN 
+        adjust_action := 'Freeze';
+        new_pkg := contract_rec."PackageId";
+      WHEN 1 THEN 
+        adjust_action := 'Resume';
+        new_pkg := contract_rec."PackageId";
+      WHEN 2 THEN 
+        adjust_action := 'Upgrade';
+        new_pkg := CASE WHEN contract_rec."PackageId" = pkg_basic THEN pkg_premium ELSE pkg_elite END;
+      ELSE 
+        adjust_action := 'Extend';
+        new_pkg := contract_rec."PackageId";
+    END CASE;
+
+    INSERT INTO "ContractAdjusts"
+        ("ContractAdjustId","ContractId","OldPackageId","NewPackageId",
+         "ActionType","ProrationAmount","ChangeFeeAmount","Status",
+         "EffectiveFrom","EffectiveTo","ApprovedByStaffId","ApprovedAt","CreatedAt")
+    VALUES (
+        gen_random_uuid(),
+        contract_rec."ContractId",
+        contract_rec."PackageId",
+        new_pkg,
+        adjust_action,
+        CASE WHEN adjust_action = 'Upgrade' THEN 500000 ELSE 0 END,
+        CASE WHEN adjust_action = 'Upgrade' THEN 100000 WHEN adjust_action = 'Freeze' THEN 50000 ELSE 0 END,
+        'Approved',
+        contract_rec."CreatedAt" + interval '10 days',
+        CASE WHEN adjust_action = 'Freeze' THEN contract_rec."CreatedAt" + interval '20 days' ELSE null END,
+        contract_rec."StaffId",
+        contract_rec."CreatedAt" + interval '9 hours 30 minutes',
+        contract_rec."CreatedAt" + interval '9 hours'
+    );
+  END LOOP;
+END $$;
+
+
 -- =====================================================
 -- THÊM ATTENDANCE CHO DASHBOARD STATS
 -- (Thêm dữ liệu tháng trước để có số liệu đủ đẹp)

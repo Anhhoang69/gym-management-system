@@ -6,10 +6,11 @@ function PtLayout() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        height: "100vh",
         background: "#f5f6fa",
         display: "flex",
-        flexDirection: "column"
+        flexDirection: "column",
+        overflow: "hidden"
       }}
     >
       <PtHeader />
@@ -17,12 +18,14 @@ function PtLayout() {
       <div
         style={{
           flex: 1,
-          display: "flex"
+          display: "flex",
+          overflow: "hidden"
         }}
       >
         <PtSidebar />
 
         <main
+          className="no-scrollbar"
           style={{
             flex: 1,
             padding: 25,

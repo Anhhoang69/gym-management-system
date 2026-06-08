@@ -28,6 +28,7 @@ public class ClassScheduleDto
     public int MinCapacity { get; set; }
 
     public int BookedCount { get; set; }
+    public int AttendedCount { get; set; }
 
     public bool IsFull { get; set; }
 
