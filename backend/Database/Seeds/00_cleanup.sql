@@ -9,6 +9,8 @@
 -- =====================================================
 -- AI / SYSTEM
 -- =====================================================
+DELETE FROM "AIToolExecutionLogs";
+DELETE FROM "AITokenUsageLogs";
 DELETE FROM "AIContextCaches";
 DELETE FROM "AIRecommendations";
 DELETE FROM "ChatHistories";

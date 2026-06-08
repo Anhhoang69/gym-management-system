@@ -42,6 +42,7 @@ import StaffProfilePage from '../../features/staff/pages/StaffProfilePage.jsx';
 import StaffAttendancePage from '../../features/staff/pages/StaffAttendancePage.jsx';
 import StaffPaymentPage from '../../features/staff/pages/StaffPaymentPage.jsx';
 import StaffCommissionPage from '../../features/staff/pages/StaffCommissionPage.jsx';
+import StaffPayrollPage from '../../features/staff/pages/StaffPayrollPage.jsx';
 import PtDashboardPage from '../../features/pt/pages/PtDashboardPage.jsx';
 import PtProfilePage from '../../features/pt/pages/PtProfilePage.jsx';
 import PtClassManagementPage from '../../features/pt/pages/PtClassManagementPage.jsx';
@@ -108,6 +109,7 @@ export default function AppRouter() {
           <Route path="leads" element={<LeadManagementPage />} />
           <Route path="payments" element={<StaffPaymentPage />} />
           <Route path="commissions" element={<StaffCommissionPage />} />
+          <Route path="payroll" element={<StaffPayrollPage />} />
         </Route>
 
         {/* PT Dashboard */}
@@ -116,7 +118,6 @@ export default function AppRouter() {
           <Route path="profile" element={<PtProfilePage />} />
           <Route path="payroll" element={<PtPayrollPage />} />
           <Route path="classes" element={<PtClassManagementPage />} />
-          <Route path="leads" element={<LeadManagementPage />} />
           <Route path="commissions" element={<PtCommissionPage />} />
         </Route>
 

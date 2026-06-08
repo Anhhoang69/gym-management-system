@@ -196,6 +196,7 @@ builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Revenue.Sys
 // ── Payroll Tools ─────────────────────────────────────────────────────
 builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Payroll.BranchPayrollTool>();
 builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Payroll.PayrollOverviewTool>();
+builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Payroll.PersonalPayrollTool>();
 
 // ── Contract Tools ────────────────────────────────────────────────────
 builder.Services.AddScoped<backend.AI.Core.IAITool, backend.AI.Tools.Contract.ContractLookupTool>();

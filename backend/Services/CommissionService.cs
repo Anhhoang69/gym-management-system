@@ -88,4 +88,57 @@ public class CommissionService : ICommissionService
 
         return new PagedResult<CommissionListDto>(items, total, page, pageSize);
     }
+
+    public async Task<PagedResult<CommissionAdminDto>> GetCommissionsAdminAsync(
+        Guid callerUserId, int? month, int? year, Guid? staffId, Guid? branchId, int page, int pageSize)
+    {
+        var caller = await _context.Staffs.FirstOrDefaultAsync(s => s.UserId == callerUserId);
+        var q = _context.Commissions
+            .Include(c => c.Staff).ThenInclude(s => s.User)
+            .Include(c => c.Contract).ThenInclude(ct => ct.Member).ThenInclude(m => m.User)
+            .Include(c => c.Contract).ThenInclude(ct => ct.Package)
+            .AsQueryable();
+
+        // BranchAdmin only views their own branch
+        if (caller != null && caller.Position == StaffPosition.BranchAdmin)
+        {
+            q = q.Where(c => c.Staff.BranchId == caller.BranchId);
+        }
+        else if (branchId.HasValue)
+        {
+            q = q.Where(c => c.Staff.BranchId == branchId.Value);
+        }
+
+        if (staffId.HasValue)
+            q = q.Where(c => c.StaffId == staffId.Value);
+
+        if (month.HasValue)
+            q = q.Where(c => c.CreatedAt.Month == month.Value);
+
+        if (year.HasValue)
+            q = q.Where(c => c.CreatedAt.Year == year.Value);
+
+        var total = await q.CountAsync();
+
+        var items = await q.OrderByDescending(c => c.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(c => new CommissionAdminDto
+            {
+                CommissionId = c.CommissionId,
+                StaffId = c.StaffId,
+                StaffName = c.Staff.User.FullName ?? "Unknown",
+                StaffPosition = c.Staff.Position.ToString(),
+                ContractId = c.ContractId,
+                MemberName = c.Contract.Member.User.FullName ?? "Unknown",
+                PackageName = c.Contract.Package.Name,
+                Percent = c.Percent,
+                Amount = c.Amount,
+                Status = c.Status,
+                CreatedAt = c.CreatedAt
+            })
+            .ToListAsync();
+
+        return new PagedResult<CommissionAdminDto>(items, total, page, pageSize);
+    }
 }

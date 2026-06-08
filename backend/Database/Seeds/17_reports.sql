@@ -212,3 +212,198 @@ VALUES
     '00000000-0003-0000-0000-000000000001',
     NOW() - interval '1 day', NOW() - interval '2 days'
 );
+
+
+-- =====================================================
+-- AUDIT LOGS & LOGIN HISTORIES BULK GENERATION
+-- =====================================================
+DO $$
+DECLARE
+  staff_ids uuid[];
+  user_ids  uuid[];
+  branch_ids uuid[];
+  
+  s_count   int;
+  u_count   int;
+  b_count   int;
+  
+  action_types text[] := ARRAY['CREATE', 'UPDATE', 'DELETE'];
+  entity_types text[] := ARRAY['Contract', 'Payment', 'Invoice', 'Member', 'Branch', 'Class'];
+  
+  log_created timestamptz;
+BEGIN
+  -- Get arrays
+  SELECT ARRAY(SELECT "UserId" FROM "Staffs") INTO staff_ids;
+  SELECT ARRAY(SELECT "Id" FROM "AspNetUsers") INTO user_ids;
+  SELECT ARRAY(SELECT "BranchId" FROM "Branches") INTO branch_ids;
+  
+  s_count := array_length(staff_ids, 1);
+  u_count := array_length(user_ids, 1);
+  b_count := array_length(branch_ids, 1);
+
+  -- 1. Generate 30 AuditLogs
+  FOR k IN 1..30 LOOP
+    log_created := NOW() - (k || ' days')::interval - (k || ' hours')::interval;
+    INSERT INTO "AuditLogs"
+        ("AuditLogId","UserId","EntityType","EntityId","Action",
+         "OldValue","NewValue","CreatedAt","BranchId")
+    VALUES (
+        gen_random_uuid(),
+        staff_ids[(k % s_count) + 1],
+        entity_types[(k % 6) + 1],
+        gen_random_uuid(), -- dummy entity id
+        action_types[(k % 3) + 1],
+        CASE WHEN k % 2 = 0 THEN '{"status":"Pending"}' ELSE null END,
+        '{"status":"Updated","updatedBy":"system"}',
+        log_created,
+        branch_ids[(k % b_count) + 1]
+    );
+  END LOOP;
+
+  -- 2. Generate 20 LoginHistories
+  FOR k IN 1..20 LOOP
+    INSERT INTO "LoginHistories"
+        ("LoginHistoryId","UserId","IpAddress","UserAgent","LoginAt","IsRevoked")
+    VALUES (
+        gen_random_uuid(),
+        user_ids[(k % u_count) + 1],
+        '192.168.2.' || (10 + k)::text,
+        'Mozilla/5.0 Chrome/' || (110 + k)::text || '.0.0.0 Safari/537.36',
+        NOW() - (k * 6 || ' hours')::interval,
+        false
+    );
+  END LOOP;
+END $$;
+
+
+-- =====================================================
+-- REQUESTS BULK GENERATION (Yêu cầu hỗ trợ / phê duyệt)
+-- =====================================================
+DO $$
+DECLARE
+  user_ids uuid[];
+  staff_ids uuid[];
+  branch_ids uuid[];
+  contract_ids uuid[];
+  class_ids uuid[];
+  
+  u_count int;
+  s_count int;
+  b_count int;
+  c_count int;
+  cl_count int;
+  
+  req_created timestamptz;
+  req_status text;
+  req_type text;
+  req_cat text;
+  req_title text;
+  req_desc text;
+  req_resp text;
+  
+  rel_type text;
+  rel_id uuid;
+  handler_id uuid;
+  resolved timestamptz;
+BEGIN
+  -- Lấy danh sách ID
+  SELECT ARRAY(SELECT "Id" FROM "AspNetUsers") INTO user_ids;
+  SELECT ARRAY(SELECT "UserId" FROM "Staffs") INTO staff_ids;
+  SELECT ARRAY(SELECT "BranchId" FROM "Branches") INTO branch_ids;
+  SELECT ARRAY(SELECT "ContractId" FROM "Contracts") INTO contract_ids;
+  SELECT ARRAY(SELECT "ClassId" FROM "Classes") INTO class_ids;
+  
+  u_count := array_length(user_ids, 1);
+  s_count := array_length(staff_ids, 1);
+  b_count := array_length(branch_ids, 1);
+  c_count := array_length(contract_ids, 1);
+  cl_count := array_length(class_ids, 1);
+
+  FOR k IN 1..35 LOOP
+    req_created := NOW() - (k * 2 || ' days')::interval - (k || ' hours')::interval;
+    
+    -- Xoay vòng loại và danh mục yêu cầu
+    CASE (k % 4)
+      WHEN 0 THEN
+        req_type := 'Support';
+        req_cat := 'ContractChange';
+        req_title := 'Yêu cầu đổi gói tập sang chi nhánh khác';
+        req_desc := 'Tôi mới chuyển nhà sang quận khác và muốn đổi chi nhánh chính của hợp đồng sang chi nhánh gần nhất.';
+        rel_type := 'Contract';
+        rel_id := contract_ids[(k % c_count) + 1];
+      WHEN 1 THEN
+        req_type := 'Complaint';
+        req_cat := 'ContractChange';
+        req_title := 'Phàn nàn về thái độ phục vụ của nhân viên';
+        req_desc := 'Nhân viên quầy lễ tân chi nhánh có thái độ không thân thiện khi tôi hỏi về lịch tập PT. Đề xuất chấn chỉnh.';
+        rel_type := 'Branch';
+        rel_id := branch_ids[(k % b_count) + 1];
+      WHEN 2 THEN
+        req_type := 'Approval';
+        req_cat := 'RefundRequest';
+        req_title := 'Yêu cầu phê duyệt hoàn trả học phí lớp đặc biệt';
+        req_desc := 'Khách hàng yêu cầu hoàn phí do lớp PT bị hủy từ phía trung tâm. Đã nộp đủ hóa đơn đính kèm.';
+        rel_type := 'Contract';
+        rel_id := contract_ids[(k % c_count) + 1];
+      ELSE
+        req_type := 'Support';
+        req_cat := 'RefundRequest';
+        req_title := 'Lỗi thanh toán trùng hai lần hóa đơn';
+        req_desc := 'Tôi thanh toán gói cước qua QR code nhưng hệ thống trừ tiền 2 lần. Vui lòng kiểm tra và hoàn tiền lại.';
+        rel_type := 'Class';
+        rel_id := class_ids[(k % cl_count) + 1];
+    END CASE;
+
+    -- Xoay vòng trạng thái và phản hồi
+    CASE (k % 5)
+      WHEN 0 THEN
+        req_status := 'Pending';
+        req_resp := null;
+        handler_id := null;
+        resolved := null;
+      WHEN 1 THEN
+        req_status := 'InProgress';
+        req_resp := 'Bộ phận chăm sóc khách hàng đang kiểm tra giao dịch với ngân hàng liên kết.';
+        handler_id := staff_ids[(k % s_count) + 1];
+        resolved := null;
+      WHEN 2 THEN
+        req_status := 'Resolved';
+        req_resp := 'Đã xử lý điều chỉnh trên hệ thống. Hợp đồng của quý khách đã được chuyển chi nhánh thành công.';
+        handler_id := staff_ids[(k % s_count) + 1];
+        resolved := req_created + interval '1 day';
+      WHEN 3 THEN
+        req_status := 'Approved';
+        req_resp := 'Yêu cầu hoàn tiền đã được phê duyệt bởi Quản lý phòng tập. Tiền sẽ được hoàn về tài khoản trong 3 ngày làm việc.';
+        handler_id := staff_ids[(k % s_count) + 1];
+        resolved := req_created + interval '12 hours';
+      ELSE
+        req_status := 'Rejected';
+        req_resp := 'Không đồng ý phê duyệt hoàn tiền do vi phạm điều khoản hợp đồng (đã quá hạn 7 ngày đổi trả).';
+        handler_id := staff_ids[(k % s_count) + 1];
+        resolved := req_created + interval '2 days';
+    END CASE;
+
+    INSERT INTO "Requests"
+        ("RequestId","UserId","Type","Category","Title","Description",
+         "Status","ResponseMessage","AttachmentUrl","Payload",
+         "RelatedEntityType","RelatedEntityId",
+         "HandledByUserId","ResolvedAt","CreatedAt")
+    VALUES (
+        gen_random_uuid(),
+        user_ids[(k % u_count) + 1],
+        req_type,
+        req_cat,
+        req_title || ' (Mã ' || k || ')',
+        req_desc,
+        req_status,
+        req_resp,
+        CASE WHEN k % 3 = 0 THEN 'http://example.com/attachments/req_' || k || '.png' ELSE null END,
+        CASE WHEN req_cat = 'RefundRequest' THEN '{"refundAmount": 500000}' ELSE null END,
+        rel_type,
+        rel_id,
+        handler_id,
+        resolved,
+        req_created
+    );
+  END LOOP;
+END $$;

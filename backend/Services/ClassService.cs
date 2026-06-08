@@ -86,6 +86,7 @@ public class ClassService : IClassService
                 BranchId = c.Room.BranchId,
                 BranchName = c.Room.Branch.Name,
                 BookedCount = c.Bookings.Count(b => b.Status == BookingStatus.Booked || b.Status == BookingStatus.Attended),
+                AttendedCount = c.Bookings.Count(b => b.Status == BookingStatus.Attended),
             };
             dto.IsFull = dto.BookedCount >= dto.Capacity;
 

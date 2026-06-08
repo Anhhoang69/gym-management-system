@@ -154,3 +154,147 @@ VALUES
 
 -- Thông báo 10: Thẻ hết hạn (member Bích)
 (gen_random_uuid(), 'ffffffff-0002-0000-0000-000000000010', '00000000-0004-0000-0000-000000000002', false, null, false, NOW() - interval '7 days');
+
+
+-- =====================================================
+-- NOTIFICATIONS BULK GENERATION (150+ Notifications & 800+ Recipients)
+-- =====================================================
+DO $$
+DECLARE
+  types       text[] := ARRAY['Info', 'System', 'Approval', 'Contract', 'Payment', 'Promotion', 'Schedule', 'Payroll'];
+  
+  -- Members and staff arrays
+  member_ids  uuid[];
+  staff_ids   uuid[];
+  m_count     int;
+  s_count     int;
+  
+  -- Loop variables
+  n_id        uuid;
+  n_type      text;
+  n_title     text;
+  n_msg       text;
+  n_days_ago  int;
+  n_created   timestamptz;
+  
+  rec_user_id uuid;
+  rec_is_read boolean;
+  rec_read_at timestamptz;
+  
+  num_recipients int;
+  start_idx   int;
+BEGIN
+  -- Query all member and staff IDs
+  SELECT ARRAY(SELECT "UserId" FROM "Members") INTO member_ids;
+  SELECT ARRAY(SELECT "UserId" FROM "Staffs") INTO staff_ids;
+  
+  m_count := array_length(member_ids, 1);
+  s_count := array_length(staff_ids, 1);
+
+  FOR k IN 11..150 LOOP
+    -- Cycle type
+    n_type := types[(k % 8) + 1];
+    n_days_ago := (k % 30) + 1; -- 1 to 30 days ago
+    n_created := NOW() - (n_days_ago || ' days')::interval;
+
+    -- Setup Title & Message based on Type
+    CASE n_type
+      WHEN 'Info' THEN
+        n_title := 'Nhắc nhở tập luyện định kỳ';
+        n_msg := 'Bạn đã không check-in trong 3 ngày qua. Đừng bỏ lỡ lịch tập để duy trì thể hình đẹp nhé!';
+      WHEN 'System' THEN
+        n_title := 'Cập nhật hệ thống thành công';
+        n_msg := 'Hệ thống GymFit đã cập nhật phiên bản mới v2.6 với nhiều tính năng thông minh hơn.';
+      WHEN 'Approval' THEN
+        n_title := 'Yêu cầu của bạn đã được duyệt';
+        n_msg := 'Yêu cầu điều chỉnh lịch tập hoặc gói hội viên của bạn đã được admin chi nhánh phê duyệt.';
+      WHEN 'Contract' THEN
+        n_title := 'Hạn hợp đồng hội viên';
+        n_msg := 'Hợp đồng tập luyện của bạn sắp kết thúc. Vui lòng liên hệ quầy lễ tân để gia hạn gói mới.';
+      WHEN 'Payment' THEN
+        n_title := 'Hóa đơn đã thanh toán';
+        n_msg := 'Thanh toán của bạn cho gói dịch vụ tại GymFit đã được ghi nhận thành công trên hệ thống.';
+      WHEN 'Promotion' THEN
+        n_title := 'Ưu đãi đặc biệt mùa hè';
+        n_msg := 'Chương trình ưu đãi giảm giá lên tới 15% cho khách hàng đăng ký mới gói Premium và Elite.';
+      WHEN 'Schedule' THEN
+        n_title := 'Lịch học thay đổi';
+        n_msg := 'Lớp học nhóm của bạn đã được điều chỉnh thời gian hoặc huấn luyện viên mới. Vui lòng kiểm tra lại lịch.';
+      ELSE -- Payroll
+        n_title := 'Thông báo bảng lương mới';
+        n_msg := 'Bảng lương và hoa hồng tháng của bạn đã được tổng hợp xong và gửi đi xét duyệt.';
+    END CASE;
+
+    n_id := gen_random_uuid();
+    INSERT INTO "Notifications"
+        ("NotificationId","Title","Message","Type","SenderId","ActionUrl","CreatedAt")
+    VALUES (
+        n_id,
+        n_title,
+        n_msg,
+        n_type,
+        CASE WHEN n_type IN ('Schedule', 'Approval', 'Payment') THEN staff_ids[(k % s_count) + 1] ELSE null END,
+        CASE WHEN n_type = 'Payment' THEN '/membership' WHEN n_type = 'Schedule' THEN '/classes' ELSE null END,
+        n_created
+    );
+
+    -- Recipients assignment
+    IF n_type IN ('System', 'Promotion') THEN
+      -- Broadcast to multiple users (e.g. 25-30 members)
+      num_recipients := 25 + (k % 6); -- 25 to 30 recipients
+      start_idx := (k * 17) % m_count;
+      FOR r IN 0..(num_recipients - 1) LOOP
+        rec_user_id := member_ids[((start_idx + r) % m_count) + 1];
+        rec_is_read := (r % 3 != 0); -- 66% read rate
+        rec_read_at := CASE WHEN rec_is_read THEN n_created + interval '2 hours' ELSE null END;
+        
+        INSERT INTO "NotificationRecipients"
+            ("NotificationRecipientId","NotificationId","UserId","IsRead","ReadAt","IsDeleted","CreatedAt")
+        VALUES (
+            gen_random_uuid(),
+            n_id,
+            rec_user_id,
+            rec_is_read,
+            rec_read_at,
+            false,
+            n_created
+        );
+      END LOOP;
+    ELSIF n_type = 'Payroll' THEN
+      -- Sent to 1 staff member
+      rec_user_id := staff_ids[(k % s_count) + 1];
+      rec_is_read := (k % 2 = 0);
+      rec_read_at := CASE WHEN rec_is_read THEN n_created + interval '1 hour' ELSE null END;
+      
+      INSERT INTO "NotificationRecipients"
+          ("NotificationRecipientId","NotificationId","UserId","IsRead","ReadAt","IsDeleted","CreatedAt")
+      VALUES (
+          gen_random_uuid(),
+          n_id,
+          rec_user_id,
+          rec_is_read,
+          rec_read_at,
+          false,
+          n_created
+      );
+    ELSE
+      -- Sent to 1 member
+      rec_user_id := member_ids[(k % m_count) + 1];
+      rec_is_read := (k % 2 = 0);
+      rec_read_at := CASE WHEN rec_is_read THEN n_created + interval '1 hour' ELSE null END;
+
+      INSERT INTO "NotificationRecipients"
+          ("NotificationRecipientId","NotificationId","UserId","IsRead","ReadAt","IsDeleted","CreatedAt")
+      VALUES (
+          gen_random_uuid(),
+          n_id,
+          rec_user_id,
+          rec_is_read,
+          rec_read_at,
+          false,
+          n_created
+      );
+    END IF;
+
+  END LOOP;
+END $$;
