@@ -33,12 +33,6 @@ function PtSidebar() {
                 </CNavItem>
 
                 <CNavItem>
-                    <NavLink to="/pt/leads" className="nav-link">
-                        Khách Hàng Tiềm Năng
-                    </NavLink>
-                </CNavItem>
-
-                <CNavItem>
                     <NavLink to="/pt/payroll" className="nav-link">
                         Lương Cá Nhân
                     </NavLink>
