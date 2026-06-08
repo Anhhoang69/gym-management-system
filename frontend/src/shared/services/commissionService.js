@@ -12,3 +12,18 @@ export const getMyCommissions = async ({ month, year, page = 1, pageSize = 20 } 
     return { success: false, message: e.response?.data?.message || "Lỗi tải danh sách hoa hồng" }
   }
 }
+
+export const getCommissionsAdmin = async ({ month, year, staffId, branchId, page = 1, pageSize = 20 } = {}) => {
+  try {
+    const params = { page, pageSize }
+    if (month) params.month = month
+    if (year) params.year = year
+    if (staffId) params.staffId = staffId
+    if (branchId) params.branchId = branchId
+    const res = await api.get("/api/commissions", { params })
+    return res.data
+  } catch (e) {
+    console.error("Failed to get admin commissions", e)
+    return { success: false, message: e.response?.data?.message || "Lỗi tải danh sách hoa hồng admin" }
+  }
+}

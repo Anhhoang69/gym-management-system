@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import {
   CCard,
   CCardBody,
@@ -12,7 +12,7 @@ import { getMyPayroll } from "../../../shared/services/payrollService"
 import PeriodPicker from "../../../shared/components/payroll/PeriodPicker"
 import PayslipDetailModal from "../../../shared/components/payroll/PayslipDetailModal"
 
-function PtPayrollPage() {
+function StaffPayrollPage() {
   const [slips, setSlips] = useState([])
   const [loading, setLoading] = useState(false)
   
@@ -68,8 +68,8 @@ function PtPayrollPage() {
     <div className="d-flex flex-column gap-4" style={{ minHeight: "calc(100vh - 120px)" }}>
       {/* Header */}
       <div>
-        <h3 className="fw-bold mb-1">Lương & Thù Lao Cá Nhân</h3>
-        <p className="text-muted mb-0">Theo dõi chi tiết các khoản thù lao nhận được theo số giờ làm việc và số lớp huấn luyện.</p>
+        <h3 className="fw-bold mb-1">Lương & Thu Nhập Cá Nhân</h3>
+        <p className="text-muted mb-0">Theo dõi chi tiết các khoản lương cố định và hoa hồng doanh số tích lũy hàng tháng.</p>
       </div>
 
       <CCard className="border-0 shadow-sm rounded-4 flex-shrink-0">
@@ -103,8 +103,8 @@ function PtPayrollPage() {
                     <tr>
                       <th className="py-3 px-4">Kỳ Lương (Period)</th>
                       <th className="py-3">Lương Cơ Bản</th>
-                      <th className="py-3">Số Lớp Đã Dạy</th>
-                      <th className="py-3 text-end">Tổng Thù Lao</th>
+                      <th className="py-3">Hoa Hồng Doanh Số</th>
+                      <th className="py-3 text-end">Tổng Thù Lao (NET)</th>
                       <th className="py-3 text-center">Trạng Thái</th>
                       <th className="py-3 px-4 text-center" style={{ width: "120px" }}>Chi Tiết</th>
                     </tr>
@@ -114,7 +114,9 @@ function PtPayrollPage() {
                       <tr key={slip.payrollId}>
                         <td className="py-3 px-4 fw-bold text-dark">{slip.periodMonth}/{slip.periodYear}</td>
                         <td className="py-3">{formatCurrency(slip.baseSalary)}</td>
-                        <td className="py-3">{slip.sessionCount} lớp</td>
+                        <td className="py-3 text-success fw-semibold">
+                          {slip.salesCommission > 0 ? `+${formatCurrency(slip.salesCommission)}` : "-"}
+                        </td>
                         <td className="py-3 text-end text-primary fw-bold">
                           {formatCurrency(slip.totalSalary)}
                         </td>
@@ -151,4 +153,4 @@ function PtPayrollPage() {
   )
 }
 
-export default PtPayrollPage
+export default StaffPayrollPage

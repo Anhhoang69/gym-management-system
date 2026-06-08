@@ -96,7 +96,7 @@ public class ReportsController : ControllerBase
     {
         var callerUserId = User.GetRequiredUserId();
         var csvContent = await _service.ExportCsvAsync(reportType, query, callerUserId);
-        
+
         var fileName = $"{reportType}_report_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv";
         return File(Encoding.UTF8.GetBytes(csvContent), "text/csv", fileName);
     }
