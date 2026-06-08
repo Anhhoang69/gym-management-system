@@ -3,113 +3,37 @@
 -- Seed dữ liệu AI: ChatHistories, AIRecommendations, AIContextCaches
 -- =====================================================
 
--- =====================================================
+-- =====================================================-- =====================================================
 -- CHAT HISTORIES (AI Assistant conversations)
--- Role: "user" hoặc "assistant"
+-- UserId = MemberId for members, UserRole = 'Member'
 -- =====================================================
 INSERT INTO "ChatHistories"
-    ("Id","MemberId","Role","Message","CreatedAt")
+    ("Id","UserId","MemberId","UserRole","Role","Message","CreatedAt")
 VALUES
 
--- =====================================================
--- Cuộc trò chuyện 1: Member An - Hỏi về giảm mỡ
--- =====================================================
-(
-    gen_random_uuid(),
-    '00000000-0004-0000-0000-000000000001',
-    'user',
-    'Tôi muốn giảm 5kg trong 2 tháng, bạn có thể tư vấn chế độ tập luyện không?',
-    NOW() - interval '20 days'
-),
-(
-    gen_random_uuid(),
-    '00000000-0004-0000-0000-000000000001',
-    'assistant',
-    'Chào Nguyễn Văn An! Để giảm 5kg trong 2 tháng là hoàn toàn khả thi với kế hoạch phù hợp. Tôi đề xuất:\n\n**Lịch tập 5 buổi/tuần:**\n- Thứ 2, 4: Cardio cường độ vừa (45 phút)\n- Thứ 3, 5: Tập tạ toàn thân (60 phút)\n- Thứ 7: Yoga hoặc nhóm lớp học (60 phút)\n\n**Dinh dưỡng:**\n- Giảm 300-500 kcal/ngày so với mức duy trì\n- Tăng protein (1.6-2g/kg cân nặng)\n- Uống đủ 2-3 lít nước/ngày\n\nBạn có câu hỏi gì thêm không?',
-    NOW() - interval '20 days'
-),
-(
-    gen_random_uuid(),
-    '00000000-0004-0000-0000-000000000001',
-    'user',
-    'Tôi nên ăn gì trước và sau khi tập gym?',
-    NOW() - interval '20 days'
-),
-(
-    gen_random_uuid(),
-    '00000000-0004-0000-0000-000000000001',
-    'assistant',
-    'Rất tốt! Dinh dưỡng quanh buổi tập rất quan trọng:\n\n**Trước tập (1-2 tiếng):**\n- Carbs phức hợp: cơm, bánh mì nguyên cám, khoai lang\n- Protein nhẹ: ức gà, trứng luộc\n- Tránh đồ béo và chất xơ cao\n\n**Sau tập (30-60 phút):**\n- Protein nhanh: whey protein, trứng, ức gà\n- Carbs: cơm, bánh mì\n- Ví dụ: 2 quả trứng + 1 bát cơm\n\nBạn đang tập vào buổi sáng hay buổi tối?',
-    NOW() - interval '20 days'
-),
+-- Cuộc trò chuyện 1: Member An - Giảm mỡ
+(gen_random_uuid(),'00000000-0004-0000-0000-000000000001','00000000-0004-0000-0000-000000000001','Member','user','Tôi muốn giảm 5kg trong 2 tháng, bạn có thể tư vấn chế độ tập luyện không?',NOW()-interval '20 days'),
+(gen_random_uuid(),'00000000-0004-0000-0000-000000000001','00000000-0004-0000-0000-000000000001','Member','assistant','Chào Nguyễn Văn An! Để giảm 5kg trong 2 tháng là hoàn toàn khả thi với kế hoạch phù hợp. Tôi đề xuất:\n\n**Lịch tập 5 buổi/tuần:**\n- Thứ 2, 4: Cardio cường độ vừa (45 phút)\n- Thứ 3, 5: Tập tạ toàn thân (60 phút)\n- Thứ 7: Yoga hoặc nhóm lớp học (60 phút)\n\n**Dinh dưỡng:**\n- Giảm 300-500 kcal/ngày so với mức duy trì\n- Tăng protein (1.6-2g/kg cân nặng)\n- Uống đủ 2-3 lít nước/ngày\n\nBạn có câu hỏi gì thêm không?',NOW()-interval '20 days'),
+(gen_random_uuid(),'00000000-0004-0000-0000-000000000001','00000000-0004-0000-0000-000000000001','Member','user','Tôi nên ăn gì trước và sau khi tập gym?',NOW()-interval '20 days'),
+(gen_random_uuid(),'00000000-0004-0000-0000-000000000001','00000000-0004-0000-0000-000000000001','Member','assistant','Rất tốt! Dinh dưỡng quanh buổi tập rất quan trọng:\n\n**Trước tập (1-2 tiếng):**\n- Carbs phức hợp: cơm, bánh mì nguyên cám, khoai lang\n- Protein nhẹ: ức gà, trứng luộc\n\n**Sau tập (30-60 phút):**\n- Protein nhanh: whey protein, trứng, ức gà\n- Carbs: cơm, bánh mì\n- Ví dụ: 2 quả trứng + 1 bát cơm\n\nBạn đang tập vào buổi sáng hay buổi tối?',NOW()-interval '20 days'),
 
--- =====================================================
 -- Cuộc trò chuyện 2: Member Cường - Tăng cơ
--- =====================================================
-(
-    gen_random_uuid(),
-    '00000000-0004-0000-0000-000000000003',
-    'user',
-    'Tôi đang dùng gói Elite và muốn tăng cơ bắp tối đa. Cần tập như thế nào?',
-    NOW() - interval '15 days'
-),
-(
-    gen_random_uuid(),
-    '00000000-0004-0000-0000-000000000003',
-    'assistant',
-    'Xin chào Lê Đức Cường! Với gói Elite bạn đang sử dụng, bạn có 12 buổi PT/tháng – đây là lợi thế rất lớn!\n\n**Chương trình tăng cơ Push-Pull-Legs (6 ngày/tuần):**\n- Thứ 2: Push (Ngực, Vai, Tay sau)\n- Thứ 3: Pull (Lưng, Tay trước)\n- Thứ 4: Legs (Chân, Bắp chân)\n- Thứ 5-7: Lặp lại\n- Chủ nhật: Nghỉ ngơi\n\n**Dinh dưỡng tăng cơ:**\n- Tăng thêm 300-500 kcal/ngày\n- Protein: 2-2.2g/kg cân nặng\n- Ưu tiên thịt bò, ức gà, cá, trứng, đậu nành\n\nHuấn luyện viên Đỗ Hải Đăng sẽ hỗ trợ bạn thiết kế program cụ thể trong buổi PT nhé!',
-    NOW() - interval '15 days'
-),
-(
-    gen_random_uuid(),
-    '00000000-0004-0000-0000-000000000003',
-    'user',
-    'Tôi nên dùng thực phẩm bổ sung gì không?',
-    NOW() - interval '14 days'
-),
-(
-    gen_random_uuid(),
-    '00000000-0004-0000-0000-000000000003',
-    'assistant',
-    'Về thực phẩm bổ sung cho mục tiêu tăng cơ:\n\n**Cần thiết:**\n- **Whey Protein:** 25-30g sau tập, giúp phục hồi cơ nhanh\n- **Creatine Monohydrate:** 3-5g/ngày, tăng sức mạnh và khối lượng cơ\n\n**Tùy chọn:**\n- **BCAA:** Uống trong buổi tập để giảm đau cơ\n- **Vitamin D & Omega-3:** Hỗ trợ sức khỏe tổng thể\n\n**Lưu ý:** Thực phẩm bổ sung chỉ chiếm 10-20% kết quả. Chế độ tập luyện và dinh dưỡng từ thực phẩm tự nhiên là nền tảng. Bạn có cân nặng và chiều cao để tôi tính toán chính xác hơn không?',
-    NOW() - interval '14 days'
-),
+(gen_random_uuid(),'00000000-0004-0000-0000-000000000003','00000000-0004-0000-0000-000000000003','Member','user','Tôi đang dùng gói Elite và muốn tăng cơ bắp tối đa. Cần tập như thế nào?',NOW()-interval '15 days'),
+(gen_random_uuid(),'00000000-0004-0000-0000-000000000003','00000000-0004-0000-0000-000000000003','Member','assistant','Xin chào Lê Đức Cường! Với gói Elite bạn đang sử dụng, bạn có 12 buổi PT/tháng.\n\n**Chương trình Push-Pull-Legs (6 ngày/tuần):**\n- Thứ 2: Push (Ngực, Vai, Tay sau)\n- Thứ 3: Pull (Lưng, Tay trước)\n- Thứ 4: Legs (Chân, Bắp chân)\n- Thứ 5-7: Lặp lại\n- Chủ nhật: Nghỉ ngơi\n\n**Dinh dưỡng tăng cơ:**\n- Tăng thêm 300-500 kcal/ngày\n- Protein: 2-2.2g/kg cân nặng\n\nHuấn luyện viên Đỗ Hải Đăng sẽ hỗ trợ bạn nhé!',NOW()-interval '15 days'),
+(gen_random_uuid(),'00000000-0004-0000-0000-000000000003','00000000-0004-0000-0000-000000000003','Member','user','Tôi nên dùng thực phẩm bổ sung gì không?',NOW()-interval '14 days'),
+(gen_random_uuid(),'00000000-0004-0000-0000-000000000003','00000000-0004-0000-0000-000000000003','Member','assistant','Về thực phẩm bổ sung cho mục tiêu tăng cơ:\n\n**Cần thiết:**\n- **Whey Protein:** 25-30g sau tập\n- **Creatine Monohydrate:** 3-5g/ngày\n\n**Tùy chọn:**\n- **BCAA:** Uống trong buổi tập\n- **Vitamin D & Omega-3:** Hỗ trợ sức khỏe tổng thể\n\nBạn có cân nặng và chiều cao để tôi tính toán chính xác hơn không?',NOW()-interval '14 days'),
 
--- =====================================================
 -- Cuộc trò chuyện 3: Member Phương - Yoga & sức khỏe
--- =====================================================
-(
-    gen_random_uuid(),
-    '00000000-0004-0000-0000-000000000006',
-    'user',
-    'Tôi muốn biết lợi ích của Yoga và nên tập lớp nào?',
-    NOW() - interval '10 days'
-),
-(
-    gen_random_uuid(),
-    '00000000-0004-0000-0000-000000000006',
-    'assistant',
-    'Chào Võ Thị Phương! Yoga mang lại rất nhiều lợi ích tuyệt vời:\n\n**Lợi ích thể chất:**\n- Tăng độ dẻo dai và linh hoạt\n- Cải thiện tư thế cơ thể\n- Tăng sức mạnh cơ bắp (đặc biệt core)\n- Giảm đau lưng mãn tính\n\n**Lợi ích tinh thần:**\n- Giảm stress và lo âu đáng kể\n- Cải thiện chất lượng giấc ngủ\n- Tăng khả năng tập trung\n\n**Lớp phù hợp tại GymFit:**\n- 🌅 **Yoga Thư Giãn Buổi Sáng** - Mỗi thứ 2, 4, 6 lúc 07:00 (phòng Yoga Q1)\n- 🌙 **Yoga Nâng Cao** - Thứ 3, 5 lúc 19:00 (phòng Yoga VIP Q7)\n\nBạn thích tập buổi sáng hay buổi tối?',
-    NOW() - interval '10 days'
-),
+(gen_random_uuid(),'00000000-0004-0000-0000-000000000006','00000000-0004-0000-0000-000000000006','Member','user','Tôi muốn biết lợi ích của Yoga và nên tập lớp nào?',NOW()-interval '10 days'),
+(gen_random_uuid(),'00000000-0004-0000-0000-000000000006','00000000-0004-0000-0000-000000000006','Member','assistant','Chào Võ Thị Phương! Yoga mang lại rất nhiều lợi ích:\n\n**Thể chất:**\n- Tăng độ dẻo dai, cải thiện tư thế\n- Tăng sức mạnh core, giảm đau lưng\n\n**Tinh thần:**\n- Giảm stress, cải thiện giấc ngủ\n\n**Lớp phù hợp tại GymFit:**\n- Yoga Buổi Sáng (T2,T4,T6 07:00)\n- Yoga Nâng Cao (T3,T5 19:00)\n\nBạn thích tập buổi sáng hay tối?',NOW()-interval '10 days'),
 
--- =====================================================
 -- Cuộc trò chuyện 4: Member Bích - Hỏi về gói
--- =====================================================
-(
-    gen_random_uuid(),
-    '00000000-0004-0000-0000-000000000002',
-    'user',
-    'Tôi đang dùng gói Premium, nên nâng cấp lên Elite không?',
-    NOW() - interval '5 days'
-),
-(
-    gen_random_uuid(),
-    '00000000-0004-0000-0000-000000000002',
-    'assistant',
-    'Chào Trần Thị Bích! Hãy để tôi giúp bạn so sánh:\n\n**Gói Premium (đang dùng):**\n- 4 buổi PT cá nhân/tháng\n- 4 buổi lớp nhóm/tháng\n- Check-in đa chi nhánh\n\n**Gói Elite:**\n- 12 buổi PT cá nhân/tháng (+8 buổi)\n- 12 buổi lớp nhóm/tháng\n- Phòng tắm VIP\n- Tư vấn sức khỏe định kỳ\n- Ưu tiên đặt lịch\n\n**Nên nâng cấp nếu:**\n✅ Bạn muốn tập cường độ cao hơn\n✅ Muốn PT hướng dẫn nhiều buổi hơn\n✅ Cần lịch tập linh hoạt hơn\n\n**Phí nâng cấp:** Theo chính sách, bạn chỉ trả phần chênh lệch theo số ngày còn lại của hợp đồng hiện tại.\n\nBạn có muốn tôi tính toán chi phí cụ thể không?',
-    NOW() - interval '5 days'
-);
+(gen_random_uuid(),'00000000-0004-0000-0000-000000000002','00000000-0004-0000-0000-000000000002','Member','user','Tôi đang dùng gói Premium, nên nâng cấp lên Elite không?',NOW()-interval '5 days'),
+(gen_random_uuid(),'00000000-0004-0000-0000-000000000002','00000000-0004-0000-0000-000000000002','Member','assistant','Chào Trần Thị Bích! Để tôi so sánh:\n\n**Premium:** 4 buổi PT + 4 buổi nhóm/tháng\n**Elite:** 12 buổi PT + 12 buổi nhóm + VIP amenities\n\n**Nên nâng cấp nếu:**\n✅ Muốn tập cường độ cao hơn\n✅ Cần nhiều buổi PT hơn\n✅ Muốn lịch tập linh hoạt\n\nBạn có muốn tôi tính chi phí nâng cấp cụ thể không?',NOW()-interval '5 days'),
+
+-- Cuộc trò chuyện 5: Staff Q1 - Hỏi về Dashboard
+(gen_random_uuid(),'00000000-0003-0000-0000-000000000006',NULL,'Staff','user','Tháng này doanh thu Q1 đạt bao nhiêu so với tháng trước?',NOW()-interval '2 days'),
+(gen_random_uuid(),'00000000-0003-0000-0000-000000000006',NULL,'Staff','assistant','Dựa trên dữ liệu hệ thống, chi nhánh Quận 1 tháng này đã đạt doanh thu tốt với nhiều hợp đồng mới được ký kết. Dashboard Revenue Analytics sẽ cho bạn thấy chi tiết so sánh month-over-month. Bạn có muốn tôi phân tích xu hướng cụ thể không?',NOW()-interval '2 days');
 
 -- =====================================================
 -- AI RECOMMENDATIONS (Kế hoạch tập được AI tạo ra)
@@ -176,3 +100,119 @@ VALUES
     '{"memberName":"Võ Thị Phương","goal":"Sức khỏe tổng thể và giảm stress","currentPackage":"Elite","privatePtLeft":9,"groupPtLeft":8,"checkinsThisWeek":3,"lastChatTopic":"lớp Yoga và lợi ích","preferredTime":"morning","fitnessLevel":"intermediate","preferredClass":"Yoga,Zumba"}',
     NOW() - interval '10 days'
 );
+
+
+-- =====================================================
+-- AI DATA BULK GENERATION (ChatHistories, Recommendations, Caches)
+-- =====================================================
+DO $$
+DECLARE
+  member_ids uuid[];
+  staff_ids  uuid[];
+  owner_id   uuid := '00000000-0002-0000-0000-000000000001'::uuid;
+  
+  m_count    int;
+  s_count    int;
+  member_id  uuid;
+  staff_id   uuid;
+  
+  -- Conversations prompts
+  user_prompts text[] := ARRAY[
+    'Lịch tập của tôi tuần này thế nào?',
+    'Tôi còn bao nhiêu buổi PT cá nhân?',
+    'Làm thế nào để giảm cân hiệu quả?',
+    'Cho tôi xem lịch sử check-in tháng này.',
+    'Tôi có thể đổi lịch học lớp Yoga không?'
+  ];
+  
+  ai_responses text[] := ARRAY[
+    'Chào bạn! Lịch tập tuần này của bạn gồm 3 lớp Yoga và 2 buổi PT cá nhân.',
+    'Chào bạn! Bạn còn lại 6 buổi PT cá nhân chưa sử dụng trong hợp đồng hiện tại.',
+    'Chào bạn! Để giảm cân, bạn nên kết hợp tập HIIT với giảm 300 kcal khẩu phần ăn hàng ngày.',
+    'Chào bạn! Tháng này bạn đã check-in thành công 12 lần tại các chi nhánh.',
+    'Chào bạn! Bạn có thể tự đổi lịch trên ứng dụng trước giờ học 2 tiếng.'
+  ];
+
+  staff_prompts text[] := ARRAY[
+    'Báo cáo doanh thu tuần này của chi nhánh?',
+    'Danh sách leads chưa liên hệ hôm nay?',
+    'Danh sách PT đang rảnh giờ cao điểm?'
+  ];
+  
+  staff_responses text[] := ARRAY[
+    'Doanh thu tuần này của chi nhánh đạt 12.5 triệu VNĐ, tăng 8% so với tuần trước.',
+    'Có 5 leads mới chưa được liên hệ hôm nay. Tôi đã gửi danh sách qua email.',
+    'PT Đăng và PT Tuấn đang rảnh từ 14:00 đến 16:00 hôm nay.'
+  ];
+  
+  n_days_ago int;
+  created_at timestamptz;
+BEGIN
+  SELECT ARRAY(SELECT "UserId" FROM "Members") INTO member_ids;
+  SELECT ARRAY(SELECT "UserId" FROM "Staffs") INTO staff_ids;
+  
+  m_count := array_length(member_ids, 1);
+  s_count := array_length(staff_ids, 1);
+
+  -- 1. Generate ChatHistories (250+ messages)
+  -- Member chats
+  FOR k IN 1..100 LOOP
+    member_id := member_ids[(k % m_count) + 1];
+    n_days_ago := (k % 25) + 1;
+    created_at := NOW() - (n_days_ago || ' days')::interval;
+
+    -- User message
+    INSERT INTO "ChatHistories" ("Id","UserId","MemberId","UserRole","Role","Message","CreatedAt")
+    VALUES (gen_random_uuid(), member_id, member_id, 'Member', 'user', user_prompts[(k % 5) + 1], created_at);
+    
+    -- Assistant response
+    INSERT INTO "ChatHistories" ("Id","UserId","MemberId","UserRole","Role","Message","CreatedAt")
+    VALUES (gen_random_uuid(), member_id, member_id, 'Member', 'assistant', ai_responses[(k % 5) + 1], created_at + interval '1 minute');
+  END LOOP;
+
+  -- Staff chats
+  FOR k IN 1..20 LOOP
+    staff_id := staff_ids[(k % s_count) + 1];
+    n_days_ago := (k % 15) + 1;
+    created_at := NOW() - (n_days_ago || ' days')::interval;
+
+    -- User message
+    INSERT INTO "ChatHistories" ("Id","UserId","MemberId","UserRole","Role","Message","CreatedAt")
+    VALUES (gen_random_uuid(), staff_id, null, 'Staff', 'user', staff_prompts[(k % 3) + 1], created_at);
+    
+    -- Assistant response
+    INSERT INTO "ChatHistories" ("Id","UserId","MemberId","UserRole","Role","Message","CreatedAt")
+    VALUES (gen_random_uuid(), staff_id, null, 'Staff', 'assistant', staff_responses[(k % 3) + 1], created_at + interval '1 minute');
+  END LOOP;
+
+  -- 2. Generate AIRecommendations (30+ records)
+  FOR k IN 11..45 LOOP
+    member_id := member_ids[(k % m_count) + 1];
+    INSERT INTO "AIRecommendations"
+        ("Id","MemberId","Goal","Intent","RawJson","WorkoutPlan","NutritionAdvice","CreatedAt")
+    VALUES (
+        gen_random_uuid(),
+        member_id,
+        CASE WHEN k % 2 = 0 THEN 'Tăng cơ bắp tay' ELSE 'Cải thiện tim mạch' END,
+        'fitness',
+        '{"goal":"gain","intensity":"moderate"}',
+        'Lịch tập đề xuất: 3 buổi tạ/tuần với các bài đa khớp (Squat, Deadlift, Bench Press). Tập trung tăng tạ lũy tiến.',
+        'Dinh dưỡng đề xuất: Bổ sung 2.0g protein/kg trọng lượng cơ thể. Uống nhiều nước và ngủ đủ 8 tiếng.',
+        NOW() - (k % 15 || ' days')::interval
+    );
+  END LOOP;
+
+  -- 3. Generate AIContextCaches (50+ records)
+  FOR k IN 11..65 LOOP
+    member_id := member_ids[(k % m_count) + 1];
+    INSERT INTO "AIContextCaches"
+        ("MemberId","CachedContext","UpdatedAt")
+    VALUES (
+        member_id,
+        '{"memberName":"Member ' || k::text || '","goal":"Tập luyện đều đặn","currentPackage":"Basic","checkinsThisWeek":3}',
+        NOW() - (k % 10 || ' days')::interval
+    )
+    ON CONFLICT ("MemberId") DO UPDATE 
+    SET "CachedContext" = EXCLUDED."CachedContext", "UpdatedAt" = EXCLUDED."UpdatedAt";
+  END LOOP;
+END $$;
