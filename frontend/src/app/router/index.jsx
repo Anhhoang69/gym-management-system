@@ -116,7 +116,6 @@ export default function AppRouter() {
           <Route path="profile" element={<PtProfilePage />} />
           <Route path="payroll" element={<PtPayrollPage />} />
           <Route path="classes" element={<PtClassManagementPage />} />
-          <Route path="leads" element={<LeadManagementPage />} />
           <Route path="commissions" element={<PtCommissionPage />} />
         </Route>
 
