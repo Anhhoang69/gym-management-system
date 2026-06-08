@@ -74,7 +74,7 @@ function PtCommissionPage() {
 
     const totalSessionsTaught = classes.length
     const totalAttendedCount = classes.reduce((sum, c) => sum + (c.attendedCount || 0), 0)
-    const totalSessionCommission = payrollSlip ? payrollSlip.sessionCommission : (totalAttendedCount * sessionRate)
+    const totalSessionCommission = payrollSlip ? payrollSlip.sessionCommission : (totalSessionsTaught * sessionRate)
     const kpiBonus = payrollSlip ? payrollSlip.kpiBonus : 0
     const totalPayout = totalSessionCommission + kpiBonus
 
@@ -184,13 +184,13 @@ function PtCommissionPage() {
                                         <CTableHeaderCell className="py-3">Loại Lớp</CTableHeaderCell>
                                         <CTableHeaderCell className="py-3 text-center">Đã Đăng Ký</CTableHeaderCell>
                                         <CTableHeaderCell className="py-3 text-center">Đã Điểm Danh</CTableHeaderCell>
-                                        <CTableHeaderCell className="py-3 text-end">Đơn Giá Hoa Hồng</CTableHeaderCell>
+                                        <CTableHeaderCell className="py-3 text-end">Đơn Giá / Buổi</CTableHeaderCell>
                                         <CTableHeaderCell className="py-3 px-4 text-end">Thành Tiền</CTableHeaderCell>
                                     </CTableRow>
                                 </CTableHead>
                                 <CTableBody>
                                     {classes.map((c) => {
-                                        const classEarnings = (c.attendedCount || 0) * sessionRate
+                                        const classEarnings = sessionRate
                                         return (
                                             <CTableRow key={c.classId}>
                                                 <CTableDataCell className="py-3 px-4 fw-semibold text-muted">
