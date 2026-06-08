@@ -95,12 +95,6 @@ function Sidebar() {
                 </CNavItem>
 
                 <CNavItem>
-                    <NavLink to="/admin/sales" className="nav-link">
-                        Quản Lý Bán Hàng
-                    </NavLink>
-                </CNavItem>
-
-                <CNavItem>
                     <NavLink to="/admin/attendance" className="nav-link">
                         Quản Lý Điểm Danh
                     </NavLink>

@@ -27,9 +27,13 @@ function DashboardPage() {
         const currentUser = storedUser ? JSON.parse(storedUser) : null
         const myBranchId = currentUser?.branchId || ""
 
+        const currentYear = new Date().getFullYear()
+        const fromDate = `${currentYear}-01-01T00:00:00Z`
+        const toDate = `${currentYear}-12-31T23:59:59Z`
+
         const [overview, revenue] = await Promise.all([
           getOverview(myBranchId),
-          getRevenueReport({ month: new Date().getMonth() + 1, year: new Date().getFullYear(), branchId: myBranchId })
+          getRevenueReport({ fromDate, toDate, branchId: myBranchId })
         ])
         setOverviewData(overview)
         setRevenueData(revenue)
@@ -106,7 +110,7 @@ function DashboardPage() {
               <RevenueChart revenueData={revenueData} />
             </div>
             <div className="col-md-6">
-              <MemberDistribution />
+              <MemberDistribution revenueData={revenueData} />
             </div>
           </div>
 
