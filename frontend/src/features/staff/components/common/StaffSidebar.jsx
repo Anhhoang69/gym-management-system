@@ -54,12 +54,6 @@ function StaffSidebar() {
               </CNavItem>
 
               <CNavItem>
-                  <NavLink to="/staff/payments" className="nav-link">
-                      Thanh Toán
-                  </NavLink>
-              </CNavItem>
-
-              <CNavItem>
                   <NavLink to="/staff/commissions" className="nav-link">
                       Hoa Hồng
                   </NavLink>

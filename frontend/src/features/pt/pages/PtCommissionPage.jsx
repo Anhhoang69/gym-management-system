@@ -19,6 +19,7 @@ import {
 import { DollarSign, Percent, Award, Calendar } from "lucide-react"
 import moment from "moment"
 import { getMyCommissions } from "../../../shared/services/commissionService"
+import Pagination from "../../../shared/components/Pagination"
 
 function PtCommissionPage() {
     const [commissions, setCommissions] = useState([])
@@ -229,32 +230,11 @@ function PtCommissionPage() {
                             {/* Pagination */}
                             {pagination.totalPages > 1 && (
                                 <div className="d-flex justify-content-end p-4 border-top">
-                                    <CPagination className="mb-0">
-                                        <CPaginationItem 
-                                            disabled={filters.page === 1}
-                                            onClick={() => setFilters({...filters, page: filters.page - 1})}
-                                            style={{ cursor: 'pointer' }}
-                                        >
-                                            ‹
-                                        </CPaginationItem>
-                                        {[...Array(pagination.totalPages)].map((_, idx) => (
-                                            <CPaginationItem 
-                                                key={idx} 
-                                                active={filters.page === idx + 1}
-                                                onClick={() => setFilters({...filters, page: idx + 1})}
-                                                style={{ cursor: 'pointer' }}
-                                            >
-                                                {idx + 1}
-                                            </CPaginationItem>
-                                        ))}
-                                        <CPaginationItem 
-                                            disabled={filters.page === pagination.totalPages}
-                                            onClick={() => setFilters({...filters, page: filters.page + 1})}
-                                            style={{ cursor: 'pointer' }}
-                                        >
-                                            ›
-                                        </CPaginationItem>
-                                    </CPagination>
+                                    <Pagination
+                                        currentPage={filters.page}
+                                        totalPages={pagination.totalPages}
+                                        onChange={(newPage) => setFilters({...filters, page: newPage})}
+                                    />
                                 </div>
                             )}
                         </>

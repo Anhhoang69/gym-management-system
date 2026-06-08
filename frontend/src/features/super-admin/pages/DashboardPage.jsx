@@ -2,9 +2,7 @@ import { useState, useEffect } from "react"
 import StatsCards from "../components/common/StatsCards"
 import RevenueChart from "../components/dashboard/RevenueChart"
 import MemberDistribution from "../components/dashboard/MemberDistribution"
-import RecentMembers from "../components/dashboard/RecentMembers"
-import RecentActivities from "../components/dashboard/RecentActivities"
-import SystemAlerts from "../components/dashboard/SystemAlerts"
+import AdminRequestsTable from "../components/dashboard/AdminRequestsTable"
 import { getOverview, getRevenueReport } from "../services/reportService"
 
 import {
@@ -23,9 +21,13 @@ function DashboardPage() {
     const fetchData = async () => {
       try {
         setLoading(true)
+        const currentYear = new Date().getFullYear()
+        const fromDate = `${currentYear}-01-01T00:00:00Z`
+        const toDate = `${currentYear}-12-31T23:59:59Z`
+
         const [overview, revenue] = await Promise.all([
           getOverview(),
-          getRevenueReport({ month: new Date().getMonth() + 1, year: new Date().getFullYear() })
+          getRevenueReport({ fromDate, toDate })
         ])
         setOverviewData(overview)
         setRevenueData(revenue)
@@ -78,7 +80,7 @@ function DashboardPage() {
   ] : []
 
   return (
-    <div>
+    <div style={{ height: "calc(100vh - 130px)", overflowY: "auto", overflowX: "hidden", paddingRight: "8px" }}>
 
       {/* Header */}
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -102,26 +104,12 @@ function DashboardPage() {
               <RevenueChart revenueData={revenueData} />
             </div>
             <div className="col-md-6">
-              <MemberDistribution />
+              <MemberDistribution revenueData={revenueData} />
             </div>
           </div>
 
-          {/* Members + Activities */}
-          <div className="row mt-4">
-            <div className="col-md-6">
-              <RecentMembers />
-            </div>
-            <div className="col-md-6">
-              <RecentActivities />
-            </div>
-          </div>
-
-          {/* Alerts */}
-          <div className="row mt-4">
-            <div className="col-md-6">
-              <SystemAlerts />
-            </div>
-          </div>
+          {/* Request Table */}
+          <AdminRequestsTable />
         </>
       )}
 

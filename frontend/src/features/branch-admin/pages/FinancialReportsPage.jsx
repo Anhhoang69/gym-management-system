@@ -115,8 +115,18 @@ function FinancialReportsPage() {
             <h3 className="fw-bold mb-1">Hệ Thống Báo Cáo</h3>
           </div>
 
-          <div className="d-flex gap-2">
-            <button className="btn btn-outline-primary" onClick={handleExport}>
+          <div className="d-flex gap-2 align-items-center">
+            <select
+              className="form-select form-select-sm"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              style={{ width: "160px" }}
+            >
+              <option value="month">Tháng này</option>
+              <option value="quarter">Quý này</option>
+              <option value="year">Đầu năm đến nay</option>
+            </select>
+            <button className="btn btn-outline-primary btn-sm" onClick={handleExport}>
               Xuất CSV
             </button>
           </div>

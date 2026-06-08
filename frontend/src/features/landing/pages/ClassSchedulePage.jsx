@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 import { Calendar, momentLocalizer } from 'react-big-calendar'
 import moment from 'moment'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
-import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaUserTie, FaTimes, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa'
+import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaUserTie, FaTimes, FaCheckCircle, FaExclamationCircle, FaExclamationTriangle, FaCommentAlt } from 'react-icons/fa'
 
 import { getClasses } from "../../super-admin/services/classService"
 import { getMyBookings, cancelBooking } from "../services/memberService"
@@ -20,6 +20,20 @@ export default function ClassSchedulePage() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [currentView, setCurrentView] = useState('week')
   const [loading, setLoading] = useState(true)
+
+  // Cancellation Modal States
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
+  const [targetBooking, setTargetBooking] = useState(null)
+  const [cancelReason, setCancelReason] = useState("Bận lịch cá nhân")
+  const [submittingCancel, setSubmittingCancel] = useState(false)
+
+  const quickReasons = [
+    "Bận lịch cá nhân",
+    "Lý do sức khỏe",
+    "Thay đổi kế hoạch",
+    "Thời tiết xấu/Di chuyển"
+  ]
 
   const cleanClassTitle = (title) => {
     if (!title) return "";
@@ -64,9 +78,9 @@ export default function ClassSchedulePage() {
     return booking.startTime;
   };
 
-  const loadClasses = async () => {
+  const loadClasses = async (silent = false) => {
     try {
-      setLoading(true)
+      if (!silent) setLoading(true)
       const data = await getClasses()
 
       // Fetch bookings if user is logged in
@@ -82,7 +96,7 @@ export default function ClassSchedulePage() {
       setMyBookings(bookingsData || []);
 
       const bookedClassIds = (bookingsData || [])
-        .filter(b => b.status !== 'Cancelled')
+        .filter(b => b.status !== 'Cancelled' && b.bookingStatus !== 'Cancelled')
         .map(b => b.classId);
 
       const mappedEvents = data.map(cls => {
@@ -104,7 +118,7 @@ export default function ClassSchedulePage() {
     } catch (err) {
       console.error("Failed to load classes", err)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -120,19 +134,25 @@ export default function ClassSchedulePage() {
     setShowDetailModal(true)
   }
 
-  const handleCancelBooking = async (booking) => {
-    const cleanTitle = cleanClassTitle(booking.className || booking.title || 'này');
-    if (window.confirm(`Bạn có chắc chắn muốn hủy đặt chỗ cho lớp học "${cleanTitle}"?`)) {
-      try {
-        setLoading(true)
-        await cancelBooking(booking.classId, "Người dùng hủy từ Lớp học")
-        await loadClasses()
-      } catch (err) {
-        console.error(err)
-        alert(err.response?.data?.message || "Có lỗi xảy ra khi hủy đặt chỗ.")
-      } finally {
-        setLoading(false)
-      }
+  const handleCancelBooking = (booking) => {
+    setTargetBooking(booking)
+    setCancelReason("Bận lịch cá nhân")
+    setIsCancelModalOpen(true)
+  }
+
+  const handleConfirmCancel = async () => {
+    if (!targetBooking) return
+    setSubmittingCancel(true)
+    try {
+      await cancelBooking(targetBooking.classId, cancelReason || "Người dùng hủy từ Lớp học")
+      setIsCancelModalOpen(false)
+      setIsSuccessModalOpen(true)
+      await loadClasses(true)
+    } catch (err) {
+      console.error(err)
+      alert(err.response?.data?.message || "Có lỗi xảy ra khi hủy đặt chỗ.")
+    } finally {
+      setSubmittingCancel(false)
     }
   }
 
@@ -246,7 +266,7 @@ export default function ClassSchedulePage() {
               Lớp đã đăng ký
             </span>
             <span className="bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 px-1.5 py-0.2 rounded-full font-bold" style={{ fontSize: '9px' }}>
-              {myBookings.filter(b => b.status !== 'Cancelled').length} lớp
+              {myBookings.filter(b => b.status !== 'Cancelled' && b.bookingStatus !== 'Cancelled').length} lớp
             </span>
           </h3>
 
@@ -255,7 +275,7 @@ export default function ClassSchedulePage() {
               <div className="py-10 text-center text-[var(--text-secondary)]">
                 <p className="text-xs">Vui lòng đăng nhập để xem các lớp đã đặt chỗ.</p>
               </div>
-            ) : myBookings.filter(b => b.status !== 'Cancelled').length === 0 ? (
+            ) : myBookings.filter(b => b.status !== 'Cancelled' && b.bookingStatus !== 'Cancelled').length === 0 ? (
               <div className="py-10 text-center text-[var(--text-secondary)] flex flex-col items-center gap-1.5">
                 <div className="w-10 h-10 rounded-full bg-[var(--hover)] flex items-center justify-center text-purple-500/60 mb-0.5">
                   <FaCalendarAlt size={16} />
@@ -265,7 +285,7 @@ export default function ClassSchedulePage() {
               </div>
             ) : (
               myBookings
-                .filter(b => b.status !== 'Cancelled')
+                .filter(b => b.status !== 'Cancelled' && b.bookingStatus !== 'Cancelled')
                 .map((booking, index) => {
                   const isCompleted = booking.status === 'Completed';
                   return (
@@ -326,8 +346,119 @@ export default function ClassSchedulePage() {
         visible={showDetailModal}
         setVisible={setShowDetailModal}
         classData={selectedEvent}
-        onRefresh={loadClasses}
+        onRefresh={() => loadClasses(true)}
       />
+
+      {/* 1. Custom Cancellation Reason Modal */}
+      {isCancelModalOpen && targetBooking && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300">
+          <div 
+            className="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-[var(--border)] animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Red-Gradient Header */}
+            <div className="bg-gradient-to-r from-red-600 to-rose-500 p-5 text-white flex items-center gap-3">
+              <span className="bg-white/20 p-2 rounded-xl text-white">
+                <FaExclamationTriangle size={20} />
+              </span>
+              <div>
+                <h3 className="font-bold text-base">Hủy đặt chỗ lớp học</h3>
+                <p className="text-[10px] text-white/80 font-medium">Bạn đang hủy đặt chỗ cho lớp {cleanClassTitle(targetBooking.className || targetBooking.title)}</p>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5">
+              <p className="text-xs text-[var(--text-secondary)] mb-4 font-medium leading-relaxed">
+                Xin vui lòng chọn hoặc nhập lý do để chúng tôi cải thiện chất lượng phục vụ tốt hơn:
+              </p>
+
+              {/* Quick Select Suggestion Chips */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {quickReasons.map((reason) => (
+                  <button
+                    key={reason}
+                    type="button"
+                    onClick={() => setCancelReason(reason)}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all duration-200 cursor-pointer ${
+                      cancelReason === reason
+                        ? 'bg-red-50 dark:bg-rose-950/20 text-rose-500 border-rose-200 dark:border-rose-900/40 shadow-sm'
+                        : 'bg-[var(--bg-third)] text-[var(--text-secondary)] border-[var(--border)] hover:bg-[var(--hover)]'
+                    }`}
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
+
+              {/* Main Custom Textarea */}
+              <div className="relative mb-5">
+                <span className="absolute top-3 left-3 text-gray-400">
+                  <FaCommentAlt size={12} />
+                </span>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  placeholder="Nhập lý do khác của bạn ở đây..."
+                  className="w-full pl-8 pr-3 py-2 text-xs border border-[var(--border)] rounded-xl bg-[var(--bg-third)] focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-[var(--text-primary)] transition-all resize-none h-20"
+                  maxLength={150}
+                />
+                <div className="text-right text-[10px] text-gray-400 mt-1">
+                  {cancelReason.length}/150 ký tự
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setIsCancelModalOpen(false)}
+                  disabled={submittingCancel}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-[var(--text-secondary)] border border-[var(--border)] hover:bg-[var(--hover)] transition-all cursor-pointer"
+                >
+                  Quay lại
+                </button>
+                <button
+                  onClick={handleConfirmCancel}
+                  disabled={submittingCancel}
+                  className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-red-600 to-rose-500 hover:from-red-700 hover:to-rose-600 shadow-md shadow-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  {submittingCancel ? (
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : "Xác nhận hủy"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Success Notification Modal */}
+      {isSuccessModalOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300">
+          <div 
+            className="bg-[var(--bg-secondary)] rounded-2xl shadow-2xl w-full max-w-xs text-center p-6 border border-[var(--border)] animate-scale-in flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Pulsing Green Check Icon */}
+            <div className="w-14 h-14 rounded-full bg-emerald-50 dark:bg-emerald-950/20 text-emerald-500 flex items-center justify-center mb-4 shadow-inner relative">
+              <span className="absolute inset-0 rounded-full bg-emerald-500/10 animate-ping opacity-75"></span>
+              <FaCheckCircle size={28} className="relative z-10" />
+            </div>
+
+            <h3 className="font-bold text-sm text-[var(--text-primary)] mb-1">Hủy đặt chỗ thành công!</h3>
+            <p className="text-xs text-[var(--text-secondary)] mb-5 px-2 leading-relaxed">
+              Vị trí của bạn đã được giải phóng. Bạn có thể chọn và đăng ký lớp học khác bất kỳ lúc nào!
+            </p>
+
+            <button
+              onClick={() => setIsSuccessModalOpen(false)}
+              className="w-full py-2 rounded-xl text-xs font-bold text-black bg-yellow-500 hover:bg-yellow-600 shadow-md shadow-yellow-500/20 hover:shadow-lg transition-all cursor-pointer"
+            >
+              Đồng ý
+            </button>
+          </div>
+        </div>
+      )}
 
       <style>{`
         /* Hide start/end time label inside calendar events */

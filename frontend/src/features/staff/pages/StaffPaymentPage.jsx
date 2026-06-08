@@ -18,6 +18,7 @@ import {
 import moment from "moment"
 import { getPayments } from "../services/paymentService"
 import { Search } from "lucide-react"
+import Pagination from "../../../shared/components/Pagination"
 
 function StaffPaymentPage() {
     const [payments, setPayments] = useState([])
@@ -166,29 +167,11 @@ function StaffPaymentPage() {
                             {/* Pagination */}
                             {pagination.totalPages > 1 && (
                                 <div className="d-flex justify-content-end mt-4">
-                                    <CPagination>
-                                        <CPaginationItem 
-                                            disabled={filters.page === 1}
-                                            onClick={() => setFilters({...filters, page: filters.page - 1})}
-                                        >
-                                            ‹
-                                        </CPaginationItem>
-                                        {[...Array(pagination.totalPages)].map((_, idx) => (
-                                            <CPaginationItem 
-                                                key={idx} 
-                                                active={filters.page === idx + 1}
-                                                onClick={() => setFilters({...filters, page: idx + 1})}
-                                            >
-                                                {idx + 1}
-                                            </CPaginationItem>
-                                        ))}
-                                        <CPaginationItem 
-                                            disabled={filters.page === pagination.totalPages}
-                                            onClick={() => setFilters({...filters, page: filters.page + 1})}
-                                        >
-                                            ›
-                                        </CPaginationItem>
-                                    </CPagination>
+                                    <Pagination
+                                        currentPage={filters.page}
+                                        totalPages={pagination.totalPages}
+                                        onChange={(newPage) => setFilters({...filters, page: newPage})}
+                                    />
                                 </div>
                             )}
                         </>

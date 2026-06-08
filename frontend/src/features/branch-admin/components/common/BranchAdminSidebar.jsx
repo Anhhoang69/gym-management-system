@@ -75,12 +75,6 @@ function BranchAdminSidebar() {
                 </CNavItem>
 
                 <CNavItem>
-                    <NavLink to="/branch-admin/sales" className="nav-link">
-                        Quản Lý Bán Hàng
-                    </NavLink>
-                </CNavItem>
-
-                <CNavItem>
                     <NavLink to="/branch-admin/reports" className="nav-link">
                         Báo Cáo Tài Chính
                     </NavLink>

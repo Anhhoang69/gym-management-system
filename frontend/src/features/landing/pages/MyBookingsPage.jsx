@@ -135,8 +135,8 @@ export default function MyBookingsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-2">
               {paginatedBookings.map((booking) => {
-                const isCancelled = booking.status === 'Cancelled';
-                const isCompleted = booking.status === 'Completed';
+                const isCancelled = booking.bookingStatus === 'Cancelled' || booking.status === 'Cancelled';
+                const isCompleted = booking.bookingStatus === 'Attended' || booking.status === 'Completed';
                 
                 return (
                   <div 
