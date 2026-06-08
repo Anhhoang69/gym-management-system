@@ -91,7 +91,7 @@ function PtCommissionPage() {
         ? Math.round((payrollSlip.sessionCommission || 0) / payrollSlip.sessionCount)
         : 170000 // Default fallback unit commission per session if payroll not computed yet
 
-    const totalSessionsTaught = allCompletedClasses.length
+    const totalSessionsTaught = allCompletedClasses.filter(c => (c.attendedCount || 0) > 0).length
     const totalAttendedCount = allCompletedClasses.reduce((sum, c) => sum + (c.attendedCount || 0), 0)
     const totalSessionCommission = payrollSlip ? payrollSlip.sessionCommission : (totalSessionsTaught * sessionRate)
     const kpiBonus = payrollSlip ? payrollSlip.kpiBonus : 0
@@ -213,7 +213,7 @@ function PtCommissionPage() {
                                     </CTableHead>
                                     <CTableBody>
                                         {classes.map((c) => {
-                                            const classEarnings = sessionRate
+                                            const classEarnings = (c.attendedCount || 0) > 0 ? sessionRate : 0
                                             return (
                                                 <CTableRow key={c.classId}>
                                                     <CTableDataCell className="py-3 px-4 fw-semibold text-muted">

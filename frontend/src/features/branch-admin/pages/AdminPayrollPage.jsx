@@ -306,7 +306,8 @@ function AdminPayrollPage() {
                 ) : reports.length === 0 ? (
                   <div className="text-center py-5 text-muted">Chưa có dữ liệu báo cáo thù lao cho kỳ lương này.</div>
                 ) : (
-                  <div className="table-responsive">
+                  <>
+                    <div className="table-responsive">
                     <table className="table table-hover align-middle mb-0" style={{ minWidth: "1200px" }}>
                       <thead className="table-light sticky-top">
                         <tr>
@@ -395,7 +396,8 @@ function AdminPayrollPage() {
                       </CPagination>
                     </div>
                   )}
-                )}
+                </>
+              )}
               </div>
             </CCardBody>
           </CCard>

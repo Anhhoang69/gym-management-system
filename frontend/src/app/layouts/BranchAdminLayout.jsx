@@ -46,10 +46,11 @@ function BranchAdminLayout() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        height: "100vh",
         background: "#f5f6fa",
         display: "flex",
-        flexDirection: "column"
+        flexDirection: "column",
+        overflow: "hidden"
       }}
     >
       {/* HEADER */}
@@ -59,7 +60,8 @@ function BranchAdminLayout() {
       <div
         style={{
           flex: 1,
-          display: "flex"
+          display: "flex",
+          overflow: "hidden"
         }}
       >
         {/* SIDEBAR */}
@@ -67,6 +69,7 @@ function BranchAdminLayout() {
 
         {/* CONTENT */}
         <div
+          className="no-scrollbar"
           style={{
             flex: 1,
             padding: 25,

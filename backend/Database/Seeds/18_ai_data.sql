@@ -49,8 +49,8 @@ VALUES
     'Giảm 5kg trong 2 tháng',
     'fitness',
     '{"goal":"weight_loss","duration":"2_months","intensity":"moderate","frequency":"5_days_week"}',
-    '## Kế Hoạch Tập Luyện - Giảm Mỡ\n\n**Tuần 1-4: Giai đoạn khởi động**\n- T2, T4: Cardio nhẹ 30 phút + Tập tạ toàn thân 30 phút\n- T3, T5: Tập tạ theo nhóm cơ (Ngực/Lưng luân phiên)\n- T7: Yoga hoặc bơi lội 45 phút\n\n**Tuần 5-8: Tăng cường độ**\n- Tăng thời gian Cardio lên 45 phút\n- Thêm HIIT 2 lần/tuần\n- Tiếp tục Yoga cuối tuần để phục hồi\n\n**Chỉ số cần theo dõi:**\n- Cân nặng: đo mỗi sáng thứ 2\n- Vòng bụng: đo 2 tuần/lần\n- Năng lượng và chất lượng giấc ngủ',
-    '## Chế Độ Dinh Dưỡng - Hỗ Trợ Giảm Mỡ\n\n**Mục tiêu:** Thâm hụt 400 kcal/ngày\n\n**Thực đơn mẫu:**\n- Sáng: 2 trứng luộc + bánh mì nguyên cám + 1 quả chuối\n- Trưa: Cơm gạo lứt + ức gà nướng + rau luộc\n- Chiều (trước tập): Whey protein + 1 quả táo\n- Tối (sau tập): Cơm + cá hồi + rau xào\n- Trước ngủ: 200ml sữa tách béo\n\n**Lưu ý quan trọng:**\n- Uống 2.5-3 lít nước/ngày\n- Tránh đường tinh luyện và đồ chiên\n- Ăn protein trước tiên trong mỗi bữa',
+    '{"Goal":"Giảm 5kg trong 2 tháng","DaysPerWeek":5,"Schedule":[{"Day":"Thứ 2","Focus":"Thân trên & Cardio ngắn","Exercises":[{"Name":"Push-Up (Hít đất)","Sets":3,"Reps":"12 - 15","Rest":"60s"},{"Name":"Dumbbell Shoulder Press (Đẩy vai)","Sets":3,"Reps":"12","Rest":"60s"},{"Name":"Lat Pulldown (Kéo xô máy)","Sets":3,"Reps":"12","Rest":"90s"}]},{"Day":"Thứ 3","Focus":"Cardio Đốt Mỡ","Exercises":[{"Name":"Chạy bộ trên máy","Sets":1,"Reps":"30 phút","Rest":"N/A"},{"Name":"Jumping Jacks","Sets":3,"Reps":"45s","Rest":"30s"}]},{"Day":"Thứ 4","Focus":"Nghỉ phục hồi","Exercises":[]},{"Day":"Thứ 5","Focus":"Thân dưới & Core","Exercises":[{"Name":"Squat (Gánh đùi)","Sets":4,"Reps":"12","Rest":"90s"},{"Name":"Plank","Sets":3,"Reps":"60s","Rest":"45s"}]},{"Day":"Thứ 6","Focus":"Cardio & giãn cơ","Exercises":[{"Name":"Đạp xe tĩnh","Sets":1,"Reps":"25 phút","Rest":"N/A"}]}]}',
+    '{"DailyCalories":1800,"Macros":{"Protein":135,"Carbs":180,"Fat":50},"MealPlan":[{"Meal":"Bữa sáng","Foods":"2 quả trứng luộc, 2 lát bánh mì đen, 1 quả chuối","Calories":400},{"Meal":"Bữa trưa","Foods":"150g ức gà nướng, 1 bát cơm lứt, súp lơ xanh","Calories":550},{"Meal":"Bữa xế","Foods":"1 muỗng Whey protein, 1 quả táo","Calories":200},{"Meal":"Bữa tối","Foods":"150g cá hồi áp chảo, măng tây, 1/2 củ khoai lang","Calories":650}]}',
     NOW() - interval '20 days'
 ),
 
@@ -61,8 +61,8 @@ VALUES
     'Tăng cơ bắp tối đa',
     'fitness',
     '{"goal":"muscle_gain","experience":"intermediate","frequency":"6_days_week","supplements":true}',
-    '## Kế Hoạch Tăng Cơ - Push Pull Legs\n\n**Lịch tập 6 ngày:**\n- T2 (Push): Bench Press 4x8, OHP 3x10, Tricep dips 3x12\n- T3 (Pull): Deadlift 4x6, Pull-up 4x10, Barbell Row 3x10\n- T4 (Legs): Squat 4x8, Leg Press 3x12, Romanian Deadlift 3x10\n- T5, T6, T7: Lặp lại T2-T4\n- CN: Nghỉ ngơi hoàn toàn\n\n**Progressive Overload:**\n- Tăng 2.5kg mỗi 2 tuần cho các bài Squat, Deadlift, Bench\n- Ghi chép số tạ và reps mỗi buổi tập\n\n**Với 12 buổi PT/tháng (gói Elite):**\n- HLV sẽ điều chỉnh form và cường độ\n- Check-in tiến độ mỗi 2 tuần',
-    '## Dinh Dưỡng Tăng Cơ\n\n**Mục tiêu:** Surplus 300-400 kcal/ngày\n**Protein:** 170-180g/ngày (85kg × 2g)\n\n**Thực đơn mẫu cho ngày tập:**\n- Sáng: 4 trứng + yến mạch + chuối\n- Tiền tập (2h trước): Cơm + ức gà 200g\n- Trong tập: BCAA + nước\n- Hậu tập ngay: Whey 30g + chuối\n- Bữa chính tối: Cơm gạo lứt + thịt bò 200g + rau\n- Trước ngủ: Casein protein hoặc phô mai cottage\n\n**Thực phẩm bổ sung đề xuất:**\n- Creatine Monohydrate: 5g/ngày\n- Whey Protein: 1-2 lần/ngày\n- Vitamin D3: 2000IU/ngày',
+    '{"Goal":"Tăng cơ bắp tối đa","DaysPerWeek":6,"Schedule":[{"Day":"Thứ 2 (Push)","Focus":"Ngực, Vai, Tay sau","Exercises":[{"Name":"Bench Press (Đẩy ngực)","Sets":4,"Reps":"8 - 10","Rest":"90s"},{"Name":"Overhead Press (Đẩy vai tạ đòn)","Sets":3,"Reps":"10","Rest":"90s"},{"Name":"Tricep Pushdown (Kéo tay sau)","Sets":3,"Reps":"12","Rest":"60s"}]},{"Day":"Thứ 3 (Pull)","Focus":"Lưng, Tay trước","Exercises":[{"Name":"Deadlift (Kéo tạ đòn)","Sets":4,"Reps":"6 - 8","Rest":"120s"},{"Name":"Pull-Up (Hít xà đơn)","Sets":4,"Reps":"10","Rest":"90s"},{"Name":"Barbell Curl (Cuốn tạ đòn)","Sets":3,"Reps":"12","Rest":"60s"}]},{"Day":"Thứ 4 (Legs)","Focus":"Đùi & Mông","Exercises":[{"Name":"Barbell Squat (Gánh tạ đòn đùi)","Sets":4,"Reps":"8","Rest":"120s"},{"Name":"Leg Press (Đạp đùi máy)","Sets":3,"Reps":"12","Rest":"90s"}]}]}',
+    '{"DailyCalories":2800,"Macros":{"Protein":180,"Carbs":350,"Fat":80},"MealPlan":[{"Meal":"Bữa sáng","Foods":"4 lòng trắng trứng + 2 lòng đỏ xào, 100g yến mạch, 1 quả chuối","Calories":650},{"Meal":"Bữa trưa","Foods":"200g thịt bò phi lê, 2 bát cơm gạo lứt, rau cải luộc","Calories":850},{"Meal":"Bữa xế (Pre-workout)","Foods":"1 củ khoai lang, 150g ức gà, BCAA","Calories":350},{"Meal":"Hậu tập","Foods":"1 muỗng Whey Protein + 1 quả chuối","Calories":250},{"Meal":"Bữa tối","Foods":"200g cá hồi áp chảo, măng tây, cơm lứt","Calories":700}]}',
     NOW() - interval '15 days'
 ),
 
@@ -73,8 +73,8 @@ VALUES
     'Cải thiện sức khỏe tổng thể và giảm stress',
     'fitness',
     '{"goal":"wellness","preference":"yoga_zumba","intensity":"low_to_moderate"}',
-    '## Kế Hoạch Sức Khỏe & Yoga\n\n**Lịch tập kết hợp (5 buổi/tuần):**\n- T2, T5 (07:00): Yoga Buổi Sáng 60 phút - Tập trung vào hít thở và thư giãn\n- T3 (19:00): Zumba 60 phút - Vui vẻ, đốt calo\n- T6 (08:00): Yoga Nâng Cao 90 phút - Tư thế cân bằng\n- T7 (09:00): Zumba Weekend - Nhạc sôi động\n\n**Thêm vào:**\n- Thiền định 10 phút mỗi sáng\n- Đi bộ 20-30 phút buổi tối\n\n**Mục tiêu theo dõi:**\n- Chất lượng giấc ngủ (app Sleep Tracker)\n- Mức độ stress (thang 1-10 mỗi ngày)\n- Độ dẻo dai: chụp ảnh pose trước/sau 1 tháng',
-    '## Dinh Dưỡng Cho Sức Khỏe Tổng Thể\n\n**Nguyên tắc:**\n- Ăn đủ 3 bữa chính, không bỏ bữa\n- 50% rau và trái cây trong mỗi bữa\n- Giảm đường và thức ăn chế biến sẵn\n\n**Thực phẩm tốt cho Yoga:**\n- Trước tập nhẹ: Trái cây, bánh mì nướng\n- Sau tập: Sinh tố rau xanh + protein\n- Thường xuyên: Nghệ, gừng, trà xanh\n\n**Bổ sung nên có:**\n- Magnesium: 300mg/ngày (tốt cho giấc ngủ và cơ bắp)\n- Omega-3: 1000mg/ngày\n- Vitamin C: 500mg/ngày',
+    '{"Goal":"Cải thiện sức khỏe tổng thể và giảm stress","DaysPerWeek":5,"Schedule":[{"Day":"Thứ 2","Focus":"Yoga Buổi Sáng","Exercises":[{"Name":"Chào mặt trời","Sets":5,"Reps":"10 phút","Rest":"N/A"},{"Name":"Tư thế chiến binh","Sets":3,"Reps":"45s","Rest":"30s"}]},{"Day":"Thứ 3","Focus":"Zumba Dance","Exercises":[{"Name":"Lớp Zumba sôi động","Sets":1,"Reps":"60 phút","Rest":"N/A"}]}]}',
+    '{"DailyCalories":1600,"Macros":{"Protein":100,"Carbs":200,"Fat":45},"MealPlan":[{"Meal":"Bữa sáng","Foods":"Sinh tố bơ chuối + hạt chia, 1 lát bánh mì nướng","Calories":350},{"Meal":"Bữa trưa","Foods":"Salad ức gà xé, trứng luộc, dầu olive","Calories":450},{"Meal":"Bữa tối","Foods":"150g cá hồi hấp gừng, súp lơ xanh, cơm lứt","Calories":500}]}',
     NOW() - interval '10 days'
 );
 
@@ -190,18 +190,33 @@ BEGIN
   -- 2. Generate AIRecommendations (30+ records)
   FOR k IN 11..45 LOOP
     member_id := member_ids[(k % m_count) + 1];
-    INSERT INTO "AIRecommendations"
-        ("Id","MemberId","Goal","Intent","RawJson","WorkoutPlan","NutritionAdvice","CreatedAt")
-    VALUES (
-        gen_random_uuid(),
-        member_id,
-        CASE WHEN k % 2 = 0 THEN 'Tăng cơ bắp tay' ELSE 'Cải thiện tim mạch' END,
-        'fitness',
-        '{"goal":"gain","intensity":"moderate"}',
-        'Lịch tập đề xuất: 3 buổi tạ/tuần với các bài đa khớp (Squat, Deadlift, Bench Press). Tập trung tăng tạ lũy tiến.',
-        'Dinh dưỡng đề xuất: Bổ sung 2.0g protein/kg trọng lượng cơ thể. Uống nhiều nước và ngủ đủ 8 tiếng.',
-        NOW() - (k % 15 || ' days')::interval
-    );
+    IF k % 2 = 0 THEN
+      INSERT INTO "AIRecommendations"
+          ("Id","MemberId","Goal","Intent","RawJson","WorkoutPlan","NutritionAdvice","CreatedAt")
+      VALUES (
+          gen_random_uuid(),
+          member_id,
+          'Tăng cơ bắp tay',
+          'fitness',
+          '{"goal":"muscle_gain","intensity":"moderate","frequency":"3_days_week"}',
+          '{"Goal":"Tăng cơ bắp tay","DaysPerWeek":3,"Schedule":[{"Day":"Thứ 2","Focus":"Tay trước & Tay sau","Exercises":[{"Name":"Barbell Curl (Cuốn tạ đòn)","Sets":4,"Reps":"10 - 12","Rest":"60s"},{"Name":"Tricep Pushdown (Kéo tay sau)","Sets":4,"Reps":"12","Rest":"60s"},{"Name":"Hammer Curl (Cuốn tạ búa)","Sets":3,"Reps":"12","Rest":"60s"}]},{"Day":"Thứ 4","Focus":"Lưng & Cẳng tay","Exercises":[{"Name":"Lat Pulldown (Kéo xô máy)","Sets":4,"Reps":"10","Rest":"90s"},{"Name":"Dumbbell Row (Kéo tạ đơn)","Sets":3,"Reps":"12","Rest":"90s"}]},{"Day":"Thứ 6","Focus":"Ngực & Vai","Exercises":[{"Name":"Bench Press (Đẩy ngực)","Sets":4,"Reps":"8 - 10","Rest":"90s"},{"Name":"Dumbbell Lateral Raise (Dang tạ vai)","Sets":3,"Reps":"15","Rest":"60s"}]}]}',
+          '{"DailyCalories":2500,"Macros":{"Protein":150,"Carbs":300,"Fat":70},"MealPlan":[{"Meal":"Bữa sáng","Foods":"3 quả trứng luộc, 2 lát bánh mì nguyên cám","Calories":450},{"Meal":"Bữa trưa","Foods":"200g ức gà, 2 bát cơm trắng, rau xanh","Calories":700},{"Meal":"Bữa tối","Foods":"150g thịt bò phi lê, 1.5 bát cơm lứt, súp lơ xanh","Calories":750},{"Meal":"Bữa phụ","Foods":"1 muỗng Whey protein, 1 quả chuối","Calories":300}]}',
+          NOW() - (k % 15 || ' days')::interval
+      );
+    ELSE
+      INSERT INTO "AIRecommendations"
+          ("Id","MemberId","Goal","Intent","RawJson","WorkoutPlan","NutritionAdvice","CreatedAt")
+      VALUES (
+          gen_random_uuid(),
+          member_id,
+          'Cải thiện tim mạch',
+          'fitness',
+          '{"goal":"cardio","intensity":"moderate","frequency":"3_days_week"}',
+          '{"Goal":"Cải thiện tim mạch","DaysPerWeek":3,"Schedule":[{"Day":"Thứ 3","Focus":"HIIT & Core","Exercises":[{"Name":"Chạy bộ biến tốc trên máy","Sets":1,"Reps":"20 phút","Rest":"N/A"},{"Name":"Jumping Jacks","Sets":3,"Reps":"45s","Rest":"30s"},{"Name":"Plank","Sets":3,"Reps":"60s","Rest":"45s"}]},{"Day":"Thứ 5","Focus":"Đạp xe & Giãn cơ","Exercises":[{"Name":"Đạp xe tĩnh","Sets":1,"Reps":"30 phút","Rest":"N/A"},{"Name":"Giãn cơ toàn thân","Sets":1,"Reps":"10 phút","Rest":"N/A"}]},{"Day":"Thứ 7","Focus":"Lớp nhảy Zumba","Exercises":[{"Name":"Tham gia lớp nhảy Zumba","Sets":1,"Reps":"60 phút","Rest":"N/A"}]}]}',
+          '{"DailyCalories":1800,"Macros":{"Protein":120,"Carbs":200,"Fat":50},"MealPlan":[{"Meal":"Bữa sáng","Foods":"1 bát cháo yến mạch, 1 quả táo","Calories":350},{"Meal":"Bữa trưa","Foods":"150g cá áp chảo, 1 bát cơm lứt, salad trộn","Calories":500},{"Meal":"Bữa tối","Foods":"150g ức gà luộc, canh rau củ, 1/2 củ khoai lang","Calories":450},{"Meal":"Bữa phụ","Foods":"1 hũ sữa chua hy lạp, hạt hạnh nhân","Calories":200}]}',
+          NOW() - (k % 15 || ' days')::interval
+      );
+    END IF;
   END LOOP;
 
   -- 3. Generate AIContextCaches (50+ records)
