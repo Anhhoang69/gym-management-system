@@ -4,6 +4,7 @@ using backend.DTOs.Register;
 using backend.Enums;
 using backend.Interfaces;
 using backend.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,17 +16,23 @@ public class RegistrationService : IRegistrationService
     private readonly UserManager<User> _userManager;
     private readonly IEmailService _emailService;
     private readonly ISmsService _smsService;
+    private readonly IVNPayService _vnpay;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public RegistrationService(
         ApplicationDbContext context,
         UserManager<User> userManager,
         IEmailService emailService,
-        ISmsService smsService)
+        ISmsService smsService,
+        IVNPayService vnpay,
+        IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _userManager = userManager;
         _emailService = emailService;
         _smsService = smsService;
+        _vnpay = vnpay;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<RegisterResultDto> RegisterMemberAsync(RegisterMemberDto dto)
@@ -132,7 +139,28 @@ public class RegistrationService : IRegistrationService
 
             await transaction.CommitAsync();
 
-            // 5. Gửi email xác nhận đăng ký: tài khoản + hóa đơn (ngoài transaction — lỗi không rollback)
+            // 5. Tạo VNPay URL (ngoài transaction — nếu fail vẫn trả về register OK)
+            string? paymentUrl = null;
+            string? txnRef = null;
+            DateTime? paymentExpiredAt = null;
+
+            if (invoice.TotalAmount > 0) // Gói free không cần VNPay
+            {
+                try
+                {
+                    var clientIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+                    var vnpResult = await _vnpay.CreatePaymentUrlAsync(invoice.InvoiceId, null, clientIp);
+                    paymentUrl = vnpResult.PaymentUrl;
+                    txnRef = vnpResult.TxnRef;
+                    paymentExpiredAt = vnpResult.ExpiredAt;
+                }
+                catch
+                {
+                    // VNPay URL creation failed — vẫn trả về register OK, user có thể tạo lại sau
+                }
+            }
+
+            // 6. Gửi email xác nhận đăng ký: tài khoản + hóa đơn + link VNPay (nếu có)
             try
             {
                 if (!string.IsNullOrWhiteSpace(user.Email))
@@ -142,7 +170,9 @@ public class RegistrationService : IRegistrationService
                         tempPassword,
                         package.Name,
                         invoice.TotalAmount,
-                        invoiceCode);
+                        invoiceCode,
+                        paymentUrl,
+                        paymentExpiredAt);
                 else if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
                     await _smsService.SendActivationAsync(user.PhoneNumber, user.FullName ?? dto.FullName, tempPassword);
             }
@@ -153,13 +183,19 @@ public class RegistrationService : IRegistrationService
 
             return new RegisterResultDto
             {
-                UserId         = user.Id,
-                Email          = user.Email!,
-                TempPassword   = tempPassword,
-                ContractId     = contract.ContractId,
-                InvoiceId      = invoice.InvoiceId,
-                TotalAmountDue = invoice.TotalAmount,
-                Message        = $"Account created. Please pay {invoice.TotalAmount:N0} VND (Invoice: {invoiceCode}) to activate membership."
+                UserId           = user.Id,
+                Email            = user.Email!,
+                TempPassword     = tempPassword,
+                ContractId       = contract.ContractId,
+                InvoiceId        = invoice.InvoiceId,
+                TotalAmountDue   = invoice.TotalAmount,
+                InvoiceCode      = invoiceCode,
+                PaymentUrl       = paymentUrl,
+                TxnRef           = txnRef,
+                PaymentExpiredAt = paymentExpiredAt,
+                Message          = paymentUrl != null
+                    ? $"Đăng ký thành công! Vui lòng thanh toán {invoice.TotalAmount:N0} VND qua link VNPay đính kèm để kích hoạt thẻ tập."
+                    : $"Đăng ký thành công! Vui lòng thanh toán {invoice.TotalAmount:N0} VND (Hóa đơn: {invoiceCode}) để kích hoạt thẻ tập."
             };
         }
         catch

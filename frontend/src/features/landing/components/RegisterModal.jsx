@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { FaTimes, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaVenusMars, FaBuilding, FaBox, FaDollarSign, FaCheckCircle, FaExclamationCircle } from "react-icons/fa"
 import { getPublicBranches, getPublicPackages, registerAccount } from "../services/publicService"
 
 export default function RegisterModal({ visible, setVisible, initialPackageId }) {
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [fetchingData, setFetchingData] = useState(false)
   const [error, setError] = useState(null)
@@ -193,8 +195,29 @@ export default function RegisterModal({ visible, setVisible, initialPackageId })
   }
 
   const handleCloseSuccess = () => {
+    const paymentUrl = successData?.paymentUrl
+    const invoiceCode = successData?.invoiceCode
+    const amount = successData?.totalAmountDue
+    const expiredAt = successData?.paymentExpiredAt
+    const invoiceId = successData?.invoiceId
+    const name = formData?.fullName
+
     setSuccessData(null)
     setVisible(false)
+
+    if (paymentUrl) {
+      const params = new URLSearchParams({
+        paymentUrl,
+        invoiceCode: invoiceCode || "",
+        amount: amount ? String(amount) : "",
+        expiredAt: expiredAt || "",
+        invoiceId: invoiceId || "",
+        name: name || ""
+      })
+      navigate(`/payment/vnpay/confirm?${params.toString()}`)
+    } else {
+      navigate("/login")
+    }
   }
 
   // Handle get selected pricing object
@@ -575,7 +598,7 @@ export default function RegisterModal({ visible, setVisible, initialPackageId })
                 onClick={handleCloseSuccess}
                 className="w-full py-3.5 bg-yellow-500 hover:bg-yellow-600 text-black font-bold rounded-2xl transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] shadow-md hover:shadow-yellow-500/10 text-center text-sm"
               >
-                HOÀN TẤT & ĐÓNG
+                {successData?.paymentUrl ? "TIẾP TỤC THANH TOÁN" : "HOÀN TẤT & ĐÓNG"}
               </button>
             </div>
           </div>
