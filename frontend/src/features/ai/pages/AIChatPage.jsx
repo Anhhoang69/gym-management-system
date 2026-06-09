@@ -12,13 +12,22 @@ import OwnerSidebar from "../../gym-owner/components/common/OwnerSidebar"
 import LandingHeader from "../../landing/components/LandingHeader"
 import LandingFooter from "../../landing/components/LandingFooter"
 import api from "../../../shared/api/api"
+import { useLanguage } from "../../../shared/contexts/LanguageContext"
 
 /**
  * AIChatPageInner – Inner layout implementation.
  */
 function AIChatPageInner() {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const { locale } = useLanguage()
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem("user")
+      return stored ? JSON.parse(stored) : null
+    } catch {
+      return null
+    }
+  })
+  const [loading, setLoading] = useState(!user)
   const [globalErrors, setGlobalErrors] = useState([])
 
   useEffect(() => {
@@ -44,13 +53,13 @@ function AIChatPageInner() {
     const initUser = async () => {
       try {
         const stored = localStorage.getItem("user")
-        let parsedUser = null
-        if (stored) {
+        let parsedUser = user
+        if (stored && !parsedUser) {
           parsedUser = JSON.parse(stored)
           setUser(parsedUser)
         }
 
-        // Fetch fresh profile data to resolve roles/staffPosition accurately
+        // Fetch fresh profile data in background to resolve roles/staffPosition accurately
         const response = await api.get("/api/me")
         const meData = response.data?.data
         if (meData) {
@@ -85,7 +94,7 @@ function AIChatPageInner() {
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "var(--bg)" }}>
-        <div style={{ color: "var(--text-secondary)" }}>Đang tải...</div>
+        <div style={{ color: "var(--text-secondary)" }}>{locale === 'vi' ? 'Đang tải...' : 'Loading...'}</div>
       </div>
     )
   }

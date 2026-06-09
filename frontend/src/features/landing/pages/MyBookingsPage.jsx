@@ -1,8 +1,87 @@
 import { useState, useEffect } from 'react';
 import { getMyBookings, cancelBooking } from '../services/memberService';
 import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaUserTie, FaTimes, FaCheckCircle, FaExclamationTriangle, FaCommentAlt } from 'react-icons/fa';
+import { useLanguage } from '../../../shared/contexts/LanguageContext';
+
+const bookingsTranslations = {
+  vi: {
+    title: "Lớp học của tôi",
+    totalLabel: "Tổng số: {count} lớp đã đặt",
+    loading: "Đang tải lịch đặt chỗ...",
+    noClassesTitle: "Chưa có lớp học nào",
+    noClassesDesc: "Bạn chưa đăng ký tham gia lớp học nào. Hãy truy cập Lịch tập để chọn lớp phù hợp!",
+    statusCancelled: "Đã hủy",
+    statusCompleted: "Đã học",
+    statusUpcoming: "Sắp tới",
+    ptLabel: "PT: ",
+    roomLabel: "Phòng: ",
+    cancelBtn: "Hủy đặt chỗ",
+    showingLabel: "Hiển thị {start} - {end} của {total} lớp học đã đặt",
+    prevBtn: "Trước",
+    nextBtn: "Sau",
+    // Cancel Modal
+    cancelTitle: "Hủy đặt chỗ lớp học",
+    cancelSubtitle: "Bạn đang hủy đặt chỗ cho lớp {className}",
+    cancelPrompt: "Xin vui lòng chọn hoặc nhập lý do để chúng tôi cải thiện chất lượng phục vụ tốt hơn:",
+    charCount: "{count}/150 ký tự",
+    backBtn: "Quay lại",
+    confirmCancelBtn: "Xác nhận hủy",
+    customReasonPlaceholder: "Nhập lý do khác của bạn ở đây...",
+    // Reasons
+    reasonBusy: "Bận lịch cá nhân",
+    reasonHealth: "Lý do sức khỏe",
+    reasonPlans: "Thay đổi kế hoạch",
+    reasonCommute: "Thời tiết xấu/Di chuyển",
+    // Success Modal
+    successTitle: "Hủy đặt chỗ thành công!",
+    successMsg: "Vị trí của bạn đã được giải phóng. Bạn có thể chọn và đăng ký lớp học khác bất kỳ lúc nào!",
+    okBtn: "Đồng ý"
+  },
+  en: {
+    title: "My Bookings",
+    totalLabel: "Total: {count} classes booked",
+    loading: "Loading bookings...",
+    noClassesTitle: "No classes found",
+    noClassesDesc: "You haven't booked any classes yet. Visit the Schedule tab to join a class!",
+    statusCancelled: "Canceled",
+    statusCompleted: "Completed",
+    statusUpcoming: "Upcoming",
+    ptLabel: "PT: ",
+    roomLabel: "Room: ",
+    cancelBtn: "Cancel Booking",
+    showingLabel: "Showing {start} - {end} of {total} booked classes",
+    prevBtn: "Previous",
+    nextBtn: "Next",
+    // Cancel Modal
+    cancelTitle: "Cancel Class Booking",
+    cancelSubtitle: "You are canceling your booking for {className}",
+    cancelPrompt: "Please select or enter a reason to help us improve our service:",
+    charCount: "{count}/150 characters",
+    backBtn: "Back",
+    confirmCancelBtn: "Confirm Cancel",
+    customReasonPlaceholder: "Enter your custom reason here...",
+    // Reasons
+    reasonBusy: "Busy schedule",
+    reasonHealth: "Health issues",
+    reasonPlans: "Change of plans",
+    reasonCommute: "Bad weather/Commute",
+    // Success Modal
+    successTitle: "Booking Canceled!",
+    successMsg: "Your spot has been released. You can browse and book another class at any time!",
+    okBtn: "Dismiss"
+  }
+};
 
 export default function MyBookingsPage() {
+  const { locale } = useLanguage();
+  const tBook = (key, params = {}) => {
+    let text = bookingsTranslations[locale]?.[key] || bookingsTranslations.vi[key] || key;
+    Object.keys(params).forEach(pKey => {
+      text = text.replace(`{${pKey}}`, params[pKey]);
+    });
+    return text;
+  };
+
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -12,7 +91,7 @@ export default function MyBookingsPage() {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [targetBooking, setTargetBooking] = useState(null);
-  const [cancelReason, setCancelReason] = useState("Bận lịch cá nhân");
+  const [cancelReason, setCancelReason] = useState(tBook('reasonBusy'));
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -34,7 +113,7 @@ export default function MyBookingsPage() {
 
   const openCancelModal = (booking) => {
     setTargetBooking(booking);
-    setCancelReason("Bận lịch cá nhân");
+    setCancelReason(tBook('reasonBusy'));
     setIsCancelModalOpen(true);
   };
 
@@ -63,7 +142,7 @@ export default function MyBookingsPage() {
       if (isTimeOnly) {
         const combined = new Date(`${cleanDate}T${booking.startTime}`);
         if (!isNaN(combined.getTime())) {
-          return combined.toLocaleString('vi-VN', {
+          return combined.toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
             hour: '2-digit',
             minute: '2-digit',
             day: '2-digit',
@@ -76,7 +155,7 @@ export default function MyBookingsPage() {
     
     const dateObj = new Date(booking.startTime);
     if (!isNaN(dateObj.getTime())) {
-      return dateObj.toLocaleString('vi-VN', {
+      return dateObj.toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
         hour: '2-digit',
         minute: '2-digit',
         day: '2-digit',
@@ -95,10 +174,10 @@ export default function MyBookingsPage() {
   );
 
   const quickReasons = [
-    "Bận lịch cá nhân",
-    "Lý do sức khỏe",
-    "Thay đổi kế hoạch",
-    "Thời tiết xấu/Di chuyển"
+    tBook('reasonBusy'),
+    tBook('reasonHealth'),
+    tBook('reasonPlans'),
+    tBook('reasonCommute')
   ];
 
   return (
@@ -109,12 +188,13 @@ export default function MyBookingsPage() {
           <span className="p-2 rounded-xl bg-yellow-500/10 text-yellow-500 flex items-center justify-center">
             <FaCalendarAlt size={16} />
           </span>
-          Lớp học của tôi
+          {tBook('title')}
         </h2>
         <div className="text-xs font-semibold text-[var(--text-secondary)] bg-[var(--surface)] border border-[var(--border)] px-2.5 py-1 rounded-lg shadow-sm">
-          Tổng số: <span className="text-yellow-500 font-bold">{bookings.length}</span> lớp đã đặt
+          {tBook('totalLabel', { count: bookings.length })}
         </div>
       </div>
+
 
       {/* Main content grid area */}
       <div className="flex-grow overflow-hidden flex flex-col justify-between">
@@ -122,15 +202,15 @@ export default function MyBookingsPage() {
           {loading ? (
             <div className="h-48 flex flex-col items-center justify-center text-[var(--text-secondary)] gap-3 bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-sm">
               <div className="w-8 h-8 border-3 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-sm font-semibold">Đang tải lịch đặt chỗ...</p>
+              <p className="text-sm font-semibold">{tBook('loading')}</p>
             </div>
           ) : bookings.length === 0 ? (
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-10 text-center text-[var(--text-secondary)] shadow-sm flex flex-col items-center gap-2 max-w-lg mx-auto mt-6">
               <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400 dark:text-gray-500 mb-1">
                 <FaCalendarAlt size={24} />
               </div>
-              <h3 className="text-base font-bold text-[var(--text-primary)]">Chưa có lớp học nào</h3>
-              <p className="text-xs text-[var(--text-secondary)] max-w-xs">Bạn chưa đăng ký tham gia lớp học nào. Hãy truy cập Lịch tập để chọn lớp phù hợp!</p>
+              <h3 className="text-base font-bold text-[var(--text-primary)]">{tBook('noClassesTitle')}</h3>
+              <p className="text-xs text-[var(--text-secondary)] max-w-xs">{tBook('noClassesDesc')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-2">
@@ -153,7 +233,7 @@ export default function MyBookingsPage() {
                         {/* Top Header Row inside Card */}
                         <div className="flex justify-between items-start gap-2 mb-3">
                           <h3 className="font-bold text-sm text-[var(--text-primary)] group-hover:text-yellow-500 transition-colors line-clamp-1 leading-snug">
-                            {booking.className || "Lớp học"}
+                            {booking.className || (locale === 'vi' ? "Lớp học" : "Class")}
                           </h3>
                           <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider flex-shrink-0 ${
                             isCancelled ? 'bg-rose-50 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400' :
@@ -163,7 +243,7 @@ export default function MyBookingsPage() {
                             <span className={`w-1 h-1 rounded-full ${
                               isCancelled ? 'bg-rose-500' : isCompleted ? 'bg-blue-500' : 'bg-emerald-500'
                             }`}></span>
-                            {isCancelled ? 'Đã hủy' : isCompleted ? 'Đã học' : 'Sắp tới'}
+                            {isCancelled ? tBook('statusCancelled') : isCompleted ? tBook('statusCompleted') : tBook('statusUpcoming')}
                           </span>
                         </div>
 
@@ -179,13 +259,13 @@ export default function MyBookingsPage() {
                             <span className="text-[var(--text-secondary)] flex-shrink-0 opacity-80">
                               <FaUserTie size={12} />
                             </span>
-                            <span className="font-semibold text-[11px] leading-none text-[var(--text-primary)]">PT: {booking.trainerName || 'N/A'}</span>
+                            <span className="font-semibold text-[11px] leading-none text-[var(--text-primary)]">{tBook('ptLabel')}{booking.trainerName || 'N/A'}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-[var(--text-secondary)] flex-shrink-0 opacity-80">
                               <FaMapMarkerAlt size={12} />
                             </span>
-                            <span className="font-medium text-[11px] leading-none text-[var(--text-primary)]">Phòng: {booking.roomName || 'N/A'}</span>
+                            <span className="font-medium text-[11px] leading-none text-[var(--text-primary)]">{locale === 'vi' ? 'Phòng' : 'Room'}: {booking.roomName || 'N/A'}</span>
                           </div>
                         </div>
                       </div>
@@ -197,7 +277,7 @@ export default function MyBookingsPage() {
                             onClick={() => openCancelModal(booking)}
                             className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold text-rose-500 hover:bg-rose-500/10 border border-rose-500/20 dark:border-rose-500/35 rounded-lg transition-all duration-200 hover:border-rose-500/20"
                           >
-                            <FaTimes size={8} /> Hủy đặt chỗ
+                            <FaTimes size={8} /> {tBook('cancelBtn')}
                           </button>
                         </div>
                       )}
@@ -213,7 +293,11 @@ export default function MyBookingsPage() {
         {!loading && totalPages > 1 && (
           <div className="flex-shrink-0 flex flex-col sm:flex-row items-center justify-between mt-3 pt-2 border-t border-[var(--border)] gap-2">
             <div className="text-xs text-[var(--text-secondary)] font-medium">
-              Hiển thị {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, bookings.length)} của {bookings.length} lớp học đã đặt
+              {tBook('showingLabel', {
+                start: ((currentPage - 1) * itemsPerPage) + 1,
+                end: Math.min(currentPage * itemsPerPage, bookings.length),
+                total: bookings.length
+              })}
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -221,7 +305,7 @@ export default function MyBookingsPage() {
                 disabled={currentPage === 1}
                 className="px-2.5 py-1 text-xs font-medium rounded border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
-                Trước
+                {tBook('prevBtn')}
               </button>
               {[...Array(totalPages)].map((_, idx) => {
                 const pageNum = idx + 1;
@@ -245,7 +329,7 @@ export default function MyBookingsPage() {
                 disabled={currentPage === totalPages}
                 className="px-2.5 py-1 text-xs font-medium rounded border border-[var(--border)] bg-[var(--surface)] text-[var(--text-primary)] hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
-                Sau
+                {tBook('nextBtn')}
               </button>
             </div>
           </div>
@@ -267,15 +351,15 @@ export default function MyBookingsPage() {
                 <FaExclamationTriangle size={20} />
               </span>
               <div>
-                <h3 className="font-bold text-base">Hủy đặt chỗ lớp học</h3>
-                <p className="text-[10px] text-white/80 font-medium">Bạn đang hủy đặt chỗ cho lớp {targetBooking.className}</p>
+                <h3 className="font-bold text-base">{tBook('cancelTitle')}</h3>
+                <p className="text-[10px] text-white/80 font-medium">{tBook('cancelSubtitle', { className: targetBooking.className })}</p>
               </div>
             </div>
 
             {/* Modal Body */}
             <div className="p-5">
               <p className="text-xs text-[var(--text-secondary)] mb-4 font-medium leading-relaxed">
-                Xin vui lòng chọn hoặc nhập lý do để chúng tôi cải thiện chất lượng phục vụ tốt hơn:
+                {tBook('cancelPrompt')}
               </p>
 
               {/* Quick Select Suggestion Chips */}
@@ -304,12 +388,12 @@ export default function MyBookingsPage() {
                 <textarea
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
-                  placeholder="Nhập lý do khác của bạn ở đây..."
+                  placeholder={tBook('customReasonPlaceholder')}
                   className="w-full pl-8 pr-3 py-2 text-xs border border-[var(--border)] rounded-xl bg-[var(--bg-third)] focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-[var(--text-primary)] transition-all resize-none h-20"
                   maxLength={150}
                 />
                 <div className="text-right text-[10px] text-gray-400 mt-1">
-                  {cancelReason.length}/150 ký tự
+                  {tBook('charCount', { count: cancelReason.length })}
                 </div>
               </div>
 
@@ -320,7 +404,7 @@ export default function MyBookingsPage() {
                   disabled={submitting}
                   className="px-4 py-2 rounded-xl text-xs font-bold text-[var(--text-secondary)] border border-[var(--border)] hover:bg-[var(--hover)] transition-all"
                 >
-                  Quay lại
+                  {tBook('backBtn')}
                 </button>
                 <button
                   onClick={handleConfirmCancel}
@@ -329,7 +413,7 @@ export default function MyBookingsPage() {
                 >
                   {submitting ? (
                     <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : "Xác nhận hủy"}
+                  ) : tBook('confirmCancelBtn')}
                 </button>
               </div>
             </div>
@@ -352,16 +436,16 @@ export default function MyBookingsPage() {
               <FaCheckCircle size={28} className="relative z-10" />
             </div>
 
-            <h3 className="font-bold text-sm text-[var(--text-primary)] mb-1">Hủy đặt chỗ thành công!</h3>
+            <h3 className="font-bold text-sm text-[var(--text-primary)] mb-1">{tBook('successTitle')}</h3>
             <p className="text-xs text-[var(--text-secondary)] mb-5 px-2 leading-relaxed">
-              Vị trí của bạn đã được giải phóng. Bạn có thể chọn và đăng ký lớp học khác bất kỳ lúc nào!
+              {tBook('successMsg')}
             </p>
 
             <button
               onClick={() => setIsSuccessModalOpen(false)}
               className="w-full py-2 rounded-xl text-xs font-bold text-black bg-yellow-500 hover:bg-yellow-600 shadow-md shadow-yellow-500/20 hover:shadow-lg transition-all"
             >
-              Đồng ý
+              {tBook('okBtn')}
             </button>
           </div>
         </div>

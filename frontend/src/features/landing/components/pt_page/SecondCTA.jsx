@@ -1,4 +1,8 @@
+import { useLanguage } from "../../../../shared/contexts/LanguageContext";
+
 export default function PtPackageCTA() {
+  const { t } = useLanguage();
+
   return (
     <section className="relative overflow-hidden bg-[var(--brand)] py-14">
 
@@ -49,13 +53,11 @@ export default function PtPackageCTA() {
           {/* LEFT CONTENT */}
           <div className="max-w-2xl">
             <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-black/70">
-              Khám phá lộ trình tập luyện
+              {t('ptPage.explorePlan')}
             </p>
 
             <h3 className="text-2xl font-bold leading-snug text-black md:text-3xl">
-              Tìm gói tập phù hợp với mục tiêu
-              <br className="hidden sm:block" />
-              và ngân sách của bạn
+              {t('ptPage.findPackage')}
             </h3>
           </div>
 
@@ -78,7 +80,7 @@ export default function PtPackageCTA() {
                 hover:opacity-90
               "
             >
-              Khám phá gói tập
+              {t('ptPage.explorePackagesBtn')}
             </a>
           </div>
         </div>
@@ -86,3 +88,4 @@ export default function PtPackageCTA() {
     </section>
   );
 }
+

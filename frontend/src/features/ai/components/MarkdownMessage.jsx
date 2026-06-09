@@ -1,13 +1,10 @@
-/**
- * MarkdownMessage – Renders AI markdown responses beautifully using Tailwind CSS.
- * Pure JS regex parsing – zero external dependencies.
- */
-
 import { useMemo, useState } from "react"
 import { Copy, Check, Clipboard } from "lucide-react"
+import { useLanguage } from "../../../shared/contexts/LanguageContext"
 
 // ─── Copy button ──────────────────────────────────────────────────────────────
 function CopyButton({ text }) {
+  const { locale } = useLanguage()
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
@@ -20,7 +17,7 @@ function CopyButton({ text }) {
   return (
     <button
       onClick={handleCopy}
-      title="Sao chép"
+      title={locale === 'vi' ? "Sao chép" : "Copy"}
       className="absolute top-2 right-2 bg-[var(--hover)] border border-[var(--border)] rounded-lg p-1.5 text-xs cursor-pointer text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--hover)]/80 transition-all flex items-center justify-center"
     >
       {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
@@ -289,6 +286,7 @@ function renderBlock(block, index) {
 
 // ─── Export ───────────────────────────────────────────────────────────────────
 export default function MarkdownMessage({ text, onCopy }) {
+  const { locale } = useLanguage()
   const blocks = useMemo(() => parseMarkdown(text), [text])
 
   return (
@@ -302,7 +300,7 @@ export default function MarkdownMessage({ text, onCopy }) {
           className="mt-3 text-[11px] text-[var(--text-secondary)] bg-none border-none cursor-pointer p-0 opacity-60 hover:opacity-100 transition-opacity flex items-center gap-1.5 font-medium"
         >
           <Clipboard size={12} />
-          Sao chép câu trả lời
+          {locale === 'vi' ? "Sao chép câu trả lời" : "Copy response"}
         </button>
       )}
     </div>

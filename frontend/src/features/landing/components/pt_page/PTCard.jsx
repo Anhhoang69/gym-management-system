@@ -1,3 +1,5 @@
+import { useLanguage } from "../../../../shared/contexts/LanguageContext";
+
 export default function PTCard({
   image,
   name,
@@ -5,6 +7,27 @@ export default function PTCard({
   experience,
   onClick,
 }) {
+  const { t } = useLanguage();
+
+  const specialtyMap = {
+    "Giảm mỡ, tăng cơ": t('ptPage.specialties.lossGain'),
+    "Giảm mỡ": t('ptPage.specialties.fatLoss'),
+    "Tăng cơ, thể hình": t('ptPage.specialties.gainBodybuilding'),
+    "Giảm mỡ, phục hồi thể lực": t('ptPage.specialties.lossRecovery'),
+    "Tăng cơ, sức mạnh": t('ptPage.specialties.gainStrength'),
+    "Thể hình, sức mạnh": t('ptPage.specialties.bodybuildingStrength'),
+    "Giảm mỡ, fitness nữ": t('ptPage.specialties.lossFemaleFitness'),
+    "Tăng cơ, bodybuilding": t('ptPage.specialties.gainBodybuildingShort'),
+    "Sức mạnh, powerlifting": t('ptPage.specialties.strengthPowerlifting'),
+    "Fitness, giảm mỡ": t('ptPage.specialties.fitnessLoss'),
+    "Thể lực tổng quát": t('ptPage.specialties.generalFitness'),
+    "Fitness nữ, giảm mỡ": t('ptPage.specialties.femaleFitnessLoss')
+  };
+
+  const translatedSpecialty = specialtyMap[specialty] || specialty;
+  const years = parseInt(experience) || 0;
+  const translatedExperience = t('ptPage.experienceValue', { years });
+
   return (
     <div
       onClick={onClick}
@@ -33,13 +56,14 @@ export default function PTCard({
         </h3>
 
         <p className="mt-1 text-base font-medium text-[var(--brand)]">
-          Chuyên môn: {specialty}
+          {t('ptPage.specialtyLabel')}: {translatedSpecialty}
         </p>
 
         <p className="mt-1 text-base text-[var(--text-secondary)]">
-          Kinh nghiệm: {experience}
+          {t('ptPage.experienceLabel')}: {translatedExperience}
         </p>
       </div>
     </div>
   );
 }
+

@@ -48,35 +48,35 @@ function UsersTable({
     users.length > 0 && users.every((u) => selectedIds.includes(u.userId))
 
   return (
-    <CCard>
-      <CCardBody>
+    <CCard className="border-0 shadow-none">
+      <CCardBody className="p-0">
 
-        <table className="table table-sm align-middle">
+        <table className="table align-middle mb-0" style={{ borderCollapse: "separate", borderSpacing: 0 }}>
 
           {/* HEADER */}
           <thead
             style={{
               position: "sticky",
               top: 0,
-              background: "#fff",
+              background: "#f9fafb",
               zIndex: 2,
-              boxShadow: "0 1px 0 #eee",
+              boxShadow: "0 1px 0 #e5e7eb",
             }}
           >
             <tr>
-              <th style={{ width: 36 }}>
+              <th style={{ width: 48, padding: "12px 16px" }}>
                 <CFormCheck
                   checked={allChecked}
                   onChange={(e) => onToggleSelectAll(e.target.checked)}
                 />
               </th>
 
-              <th>Người dùng</th>
-              <th>Vai trò</th>
-              <th>Chi nhánh</th>
-              <th>Trạng thái</th>
-              <th>Lần đăng nhập</th>
-              <th style={{ width: 50 }}></th>
+              <th style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#6b7280", fontWeight: "600", padding: "12px 16px" }}>Người dùng</th>
+              <th style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#6b7280", fontWeight: "600", padding: "12px 16px" }}>Vai trò</th>
+              <th style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#6b7280", fontWeight: "600", padding: "12px 16px" }}>Chi nhánh</th>
+              <th style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#6b7280", fontWeight: "600", padding: "12px 16px" }}>Trạng thái</th>
+              <th style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#6b7280", fontWeight: "600", padding: "12px 16px" }}>Lần đăng nhập</th>
+              <th style={{ width: 50, padding: "12px 16px" }}></th>
             </tr>
           </thead>
 
@@ -101,7 +101,7 @@ function UsersTable({
                   onClick={() => onEdit(u)}
                 >
                   {/* Checkbox */}
-                  <td>
+                  <td style={{ padding: "14px 16px" }}>
                     <CFormCheck
                       checked={isSelected}
                       onChange={() => onToggleSelect(u.userId)}
@@ -110,8 +110,8 @@ function UsersTable({
                   </td>
 
                   {/* USER INFO */}
-                  <td>
-                    <div style={{ fontWeight: 500 }}>
+                  <td style={{ padding: "14px 16px" }}>
+                    <div style={{ fontWeight: 600, color: "#111827" }}>
                       {u.fullName || "-"}
                     </div>
                     <div style={{ fontSize: 13, color: "#6b7280" }}>
@@ -120,32 +120,32 @@ function UsersTable({
                   </td>
 
                   {/* ROLE */}
-                  <td>
-                    <CBadge color={roleColor[role] || "secondary"}>
+                  <td style={{ padding: "14px 16px" }}>
+                    <CBadge color={roleColor[role] || "secondary"} className="px-2 py-1.5" style={{ fontSize: "11px", fontWeight: "600" }}>
                       {role || "-"}
                     </CBadge>
                   </td>
 
                   {/* BRANCH */}
-                  <td>{u.branchName || "-"}</td>
+                  <td style={{ padding: "14px 16px", color: "#4b5563", fontWeight: "500" }}>{u.branchName || "-"}</td>
 
                   {/* STATUS */}
-                  <td>
-                    <CBadge color={statusColor[u.status] || "secondary"}>
+                  <td style={{ padding: "14px 16px" }}>
+                    <CBadge color={statusColor[u.status] || "secondary"} className="px-2 py-1.5" style={{ fontSize: "11px", fontWeight: "600" }}>
                       {u.status}
                     </CBadge>
                   </td>
 
                   {/* LAST LOGIN */}
-                  <td>{formatDate(u.lastLoginAt)}</td>
+                  <td style={{ padding: "14px 16px", color: "#4b5563" }}>{formatDate(u.lastLoginAt)}</td>
 
                   {/* ACTION */}
-                  <td>
+                  <td style={{ padding: "14px 16px" }}>
                     <CDropdown
                       alignment="end"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <CDropdownToggle color="light" size="sm">
+                      <CDropdownToggle color="light" size="sm" caret={false} className="border shadow-sm" style={{ minWidth: "32px", height: "32px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
                         ⋮
                       </CDropdownToggle>
 

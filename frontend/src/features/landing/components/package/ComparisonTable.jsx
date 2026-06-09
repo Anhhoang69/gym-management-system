@@ -1,6 +1,61 @@
 import { Check, X } from 'lucide-react';
+import { useLanguage } from '../../../../shared/contexts/LanguageContext';
+
+const comparisonTranslations = {
+  vi: {
+    title: "So Sánh Quyền Lợi",
+    headerBenefit: "Tiện ích/ Gói tập",
+    ptIncluded: "Đã bao gồm PT",
+    privatePtLimit: "Giới hạn PT Cá nhân",
+    groupPtLimit: "Giới hạn PT Nhóm (Group)",
+    checkinsPerWeek: "Số lượt Check-in / Tuần",
+    otherPrivileges: "Đặc quyền khác",
+    sessionText: "{count} buổi",
+    unlimited: "Không giới hạn",
+    checkinText: "{count} lượt",
+    // Features
+    "Sử dụng toàn bộ thiết bị tập": "Sử dụng toàn bộ thiết bị tập",
+    "Không giới hạn thời gian": "Không giới hạn thời gian",
+    "Miễn phí gửi xe, tủ đồ": "Miễn phí gửi xe, tủ đồ",
+    "Tất cả quyền lợi Elite": "Tất cả quyền lợi Elite",
+    "Sử dụng phòng xông hơi": "Sử dụng phòng xông hơi",
+    "Nước uống, khăn tắm miễn phí": "Nước uống, khăn tắm miễn phí",
+  },
+  en: {
+    title: "Benefit Comparison",
+    headerBenefit: "Benefit / Package",
+    ptIncluded: "PT Included",
+    privatePtLimit: "Private PT Limit",
+    groupPtLimit: "Group PT Limit",
+    checkinsPerWeek: "Check-ins / Week",
+    otherPrivileges: "Other Privileges",
+    sessionText: "{count} sessions",
+    unlimited: "Unlimited",
+    checkinText: "{count} entries",
+    // Features
+    "Sử dụng toàn bộ thiết bị tập": "Full equipment access",
+    "Không giới hạn thời gian": "No time limit",
+    "Miễn phí gửi xe, tủ đồ": "Free parking & lockers",
+    "Tất cả quyền lợi Elite": "All Elite benefits",
+    "Sử dụng phòng xông hơi": "Sauna access",
+    "Nước uống, khăn tắm miễn phí": "Free drinks & towels",
+  }
+};
 
 export default function ComparisonTable() {
+  const { locale } = useLanguage();
+  const tComp = (key, params = {}) => {
+    let text = comparisonTranslations[locale]?.[key] || comparisonTranslations.vi[key] || key;
+    Object.keys(params).forEach(pKey => {
+      text = text.replace(`{${pKey}}`, params[pKey]);
+    });
+    return text;
+  };
+
+  const translateFeature = (feature) => {
+    return comparisonTranslations[locale]?.[feature] || feature;
+  };
+
   const packages = [
     {
       packageId: "744d512c-ce21-4e79-8e4d-d17d6af2b9e7",
@@ -60,26 +115,26 @@ export default function ComparisonTable() {
   // Build rows dynamically based on the fetched packages
   const rows = [
     { 
-      name: 'Đã bao gồm PT', 
+      name: tComp('ptIncluded'), 
       values: packages.map(pkg => pkg.isPtIncluded)
     },
     { 
-      name: 'Giới hạn PT Cá nhân', 
-      values: packages.map(pkg => pkg.privatePtLimit > 0 ? `${pkg.privatePtLimit} buổi` : false)
+      name: tComp('privatePtLimit'), 
+      values: packages.map(pkg => pkg.privatePtLimit > 0 ? tComp('sessionText', { count: pkg.privatePtLimit }) : false)
     },
     { 
-      name: 'Giới hạn PT Nhóm (Group)', 
-      values: packages.map(pkg => pkg.groupPtLimit > 0 ? `${pkg.groupPtLimit} buổi` : false)
+      name: tComp('groupPtLimit'), 
+      values: packages.map(pkg => pkg.groupPtLimit > 0 ? tComp('sessionText', { count: pkg.groupPtLimit }) : false)
     },
     { 
-      name: 'Số lượt Check-in / Tuần', 
-      values: packages.map(pkg => pkg.maxCheckinsPerWeek >= 7 ? 'Không giới hạn' : `${pkg.maxCheckinsPerWeek} lượt`)
+      name: tComp('checkinsPerWeek'), 
+      values: packages.map(pkg => pkg.maxCheckinsPerWeek >= 7 ? tComp('unlimited') : tComp('checkinText', { count: pkg.maxCheckinsPerWeek }))
     },
     {
-      name: 'Đặc quyền khác',
+      name: tComp('otherPrivileges'),
       values: packages.map(pkg => (
         <ul className="text-sm text-(--text-secondary) list-disc text-left pl-4 space-y-1">
-          {pkg.features?.map((f, i) => <li key={i}>{f}</li>)}
+          {pkg.features?.map((f, i) => <li key={i}>{translateFeature(f)}</li>)}
         </ul>
       ))
     }
@@ -99,7 +154,7 @@ export default function ComparisonTable() {
 
       <div className="relative z-10 container mx-auto text-center">
         <h2 style={{ color: 'var(--brand)' }} className="text-3xl md:text-4xl font-extrabold text-yellow-500 tracking-tight mb-8">
-          So Sánh Quyền Lợi
+          {tComp('title')}
         </h2>
 
         <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl bg-white/95 backdrop-blur-md mt-6">
@@ -108,7 +163,7 @@ export default function ComparisonTable() {
               <thead>
                 <tr className="bg-(--bg-secondary)">
                   <th className="px-6 py-4 text-left font-semibold text-(--text-primary)">
-                    Tiện ích/ Gói tập
+                    {tComp('headerBenefit')}
                   </th>
                   {packages.map((pkg) => {
                     const tierColor = pkg.tier ? `var(--plan-${pkg.tier.toLowerCase()})` : 'var(--brand)';

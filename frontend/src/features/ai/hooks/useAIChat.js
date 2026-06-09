@@ -6,20 +6,24 @@ import {
   getAvailableTools
 } from "../services/aiService"
 import { buildQuickActions } from "../models/quickActions"
+import { useLanguage } from "../../../shared/contexts/LanguageContext"
 
 /**
  * useAIChat – central hook for the AI chat panel.
  * Separates all state & async logic from the UI.
  */
 export function useAIChat() {
+  const { locale } = useLanguage()
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
   const [historyLoading, setHistoryLoading] = useState(true)
   const [plans, setPlans] = useState([])          // AIRecommendations (Member)
-  const [quickActions, setQuickActions] = useState([])
+  const [tools, setTools] = useState([])
   const [selectedPlan, setSelectedPlan] = useState(null)
   const [showScrollBtn, setShowScrollBtn] = useState(false)
   const [copiedMsg, setCopiedMsg] = useState(null) // index of copied message
+
+  const quickActions = buildQuickActions(tools, locale)
 
   const chatRef = useRef(null)
 
@@ -54,7 +58,7 @@ export function useAIChat() {
       setHistoryLoading(true)
       try {
         // Fetch history and tools concurrently to speed up load time
-        const [history, tools] = await Promise.all([
+        const [history, fetchedTools] = await Promise.all([
           getAIHistory(20),
           getAvailableTools()
         ])
@@ -64,7 +68,7 @@ export function useAIChat() {
           role: msg.type === "user" ? "user" : "assistant"
         }))
         setMessages(formatted)
-        setQuickActions(buildQuickActions(tools))
+        setTools(fetchedTools || [])
 
         // Load recommendations in the background so it never blocks UI rendering
         if (isMember()) {
@@ -127,12 +131,12 @@ export function useAIChat() {
       console.error("handleSend error:", err)
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", message: "❌ Có lỗi xảy ra, thử lại nhé!", isError: true }
+        { role: "assistant", message: locale === 'vi' ? "❌ Có lỗi xảy ra, thử lại nhé!" : "❌ An error occurred, please try again!", isError: true }
       ])
     } finally {
       setLoading(false)
     }
-  }, [loading, isMember])
+  }, [loading, isMember, locale])
 
   // ── Copy message text ──────────────────────────────────────────────────────
   const handleCopyMessage = useCallback((text, index) => {

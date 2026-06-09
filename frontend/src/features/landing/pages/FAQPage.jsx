@@ -3,10 +3,12 @@ import FAQSearch from '../components/faq/FAQSearch';
 import FAQFilters from '../components/faq/FAQFilters';
 import FAQList from '../components/faq/FAQList';
 import FAQContact from '../components/faq/FAQContact';
+import { useLanguage } from '../../../shared/contexts/LanguageContext';
 
 export default function FAQPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('Tất cả');
+  const { t } = useLanguage();
 
   return (
     <div
@@ -17,12 +19,13 @@ export default function FAQPage() {
       <section className="bg-[var(--bg)] pt-16 pb-10">
         <div className="text-center mx-auto mb-6 px-4">
           <h2 style={{ color: 'var(--brand)' }} className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 uppercase">
-            Câu Hỏi Thường Gặp
+            {t('faqPage.title')}
           </h2>
           <p style={{ color: 'var(--text-primary)' }} className="block text-lg md:text-xl italic w-[85%] mx-auto">
-            EnerGym giải đáp mọi thắc mắc của bạn để có trải nghiệm tập luyện tốt nhất.
+            {t('faqPage.subtitle')}
           </p>
         </div>
+
 
         <div className="w-[85%] mx-auto px-4 mt-8">
           <div className="flex flex-col lg:flex-row gap-6 items-center">

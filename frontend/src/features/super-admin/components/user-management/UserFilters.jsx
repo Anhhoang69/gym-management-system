@@ -7,6 +7,8 @@ function UserFilters({
   setRole,
   branch,
   setBranch,
+  status,
+  setStatus,
   branches = [],
   selectedCount,
   onBulkEmail,
@@ -17,60 +19,64 @@ function UserFilters({
   return (
     <>
       {/* Filters */}
-      <div className="d-flex gap-3 flex-wrap">
+      <div className="row g-4">
 
-        <CFormInput
-          placeholder="Tìm theo tên, email..."
-          style={{ maxWidth: 320 }}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+        {/* SEARCH */}
+        <div className="col-md-3">
+          <CFormInput
+            placeholder="Tìm theo tên, email..."
+            className="w-100"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
 
         {/* ROLE */}
-        <select
-          className="form-select"
-          style={{ width: 180 }}
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-        >
-          <option value="">Tất cả vai trò</option>
-          <option value="SuperAdmin">Super Admin</option>
-          <option value="GymOwner">Gym Owner</option>
-          <option value="Staff">Staff</option>
-          <option value="Member">Member</option>
-        </select>
+        <div className="col-md-3">
+          <select
+            className="form-select w-100"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+          >
+            <option value="">Tất cả vai trò</option>
+            <option value="SuperAdmin">Super Admin</option>
+            <option value="GymOwner">Gym Owner</option>
+            <option value="Staff">Staff</option>
+            <option value="Member">Member</option>
+          </select>
+        </div>
 
         {/* BRANCH */}
         {!hideBranchFilter && (
-          <select
-            className="form-select"
-            style={{ width: 180 }}
-            value={branch}
-            onChange={(e) => setBranch(e.target.value)}
-          >
-            <option value="">Tất cả chi nhánh</option>
-            {branches.map((b) => (
-              <option key={b.branchId} value={b.branchId}>
-                {b.name}
-              </option>
-            ))}
-          </select>
+          <div className="col-md-3">
+            <select
+              className="form-select w-100"
+              value={branch}
+              onChange={(e) => setBranch(e.target.value)}
+            >
+              <option value="">Tất cả chi nhánh</option>
+              {branches.map((b) => (
+                <option key={b.branchId || b.id} value={b.branchId || b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </div>
         )}
 
-        {/* RESET */}
-        <CButton
-          color="light"
-          size="sm"
-          onClick={() => {
-            setSearch("")
-            setRole("")
-            if (!hideBranchFilter) {
-              setBranch("")
-            }
-          }}
-        >
-          Reset
-        </CButton>
+        {/* STATUS */}
+        <div className="col-md-3">
+          <select
+            className="form-select w-100"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="Active">Hoạt động (Active)</option>
+            <option value="Inactive">Không hoạt động (Inactive)</option>
+            <option value="Suspended">Tạm ngưng (Suspended)</option>
+          </select>
+        </div>
 
       </div>
 

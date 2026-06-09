@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from "react"
 import { Send } from "lucide-react"
+import { useLanguage } from "../../../shared/contexts/LanguageContext"
 
 export default function ChatInput({ onSend, disabled }) {
+  const { locale } = useLanguage()
   const [input, setInput] = useState("")
   const textareaRef = useRef(null)
 
@@ -43,7 +45,7 @@ export default function ChatInput({ onSend, disabled }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Hỏi AI về tập luyện, dinh dưỡng, quản lý gym..."
+          placeholder={locale === 'vi' ? "Hỏi AI về tập luyện, dinh dưỡng, quản lý gym..." : "Ask AI about workouts, nutrition, gym management..."}
           disabled={disabled}
           rows={1}
           className="w-full pl-4.5 pr-14 py-3.5 max-h-[180px] min-h-[52px] resize-none border-none outline-none bg-transparent text-[var(--text-primary)] text-[15px] leading-relaxed font-sans overflow-y-auto block"
@@ -53,7 +55,7 @@ export default function ChatInput({ onSend, disabled }) {
         <button
           onClick={handleSubmit}
           disabled={!canSend}
-          title="Gửi (Enter)"
+          title={locale === 'vi' ? "Gửi (Enter)" : "Send (Enter)"}
           className={`absolute right-2.5 bottom-2.5 w-9 h-9 rounded-xl border-none flex items-center justify-center transition-all duration-200 ${
             canSend
               ? "bg-[var(--brand)] text-black cursor-pointer scale-100 opacity-100 hover:opacity-90 active:scale-95"
@@ -66,7 +68,9 @@ export default function ChatInput({ onSend, disabled }) {
 
       {/* Hint */}
       <p className="text-center text-[11px] mt-2 text-[var(--text-secondary)] opacity-60">
-        Enter để gửi · Shift+Enter để xuống dòng · EnerGym AI có thể lập kế hoạch và quản lý dữ liệu
+        {locale === 'vi' 
+          ? "Enter để gửi · Shift+Enter để xuống dòng · EnerGym AI có thể lập kế hoạch và quản lý dữ liệu"
+          : "Enter to send · Shift+Enter for new line · EnerGym AI can create plans & manage data"}
       </p>
     </div>
   )

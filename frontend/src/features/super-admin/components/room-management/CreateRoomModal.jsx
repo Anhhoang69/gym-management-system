@@ -12,6 +12,7 @@ import {
 } from "@coreui/react"
 
 import { createRoom } from "../../services/roomService"
+import api from "../../../../shared/api/api"
 
 function CreateRoomModal({ visible, setVisible, branches, onCreated, fixedBranchId }) {
   const [loading, setLoading] = useState(false)
@@ -22,8 +23,6 @@ function CreateRoomModal({ visible, setVisible, branches, onCreated, fixedBranch
     capacity: 0,
     images: []
   })
-
-  const [imageUrl, setImageUrl] = useState("")
 
   // ================= SET FIXED BRANCH ID =================
   useState(() => {
@@ -36,13 +35,32 @@ function CreateRoomModal({ visible, setVisible, branches, onCreated, fixedBranch
     setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleAddImage = () => {
-    if (imageUrl.trim()) {
-      setFormData({
-        ...formData,
-        images: [...formData.images, imageUrl.trim()]
+  const handleUploadImage = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const formDataObj = new FormData()
+    formDataObj.append("file", file)
+
+    setLoading(true)
+    try {
+      const response = await api.post("/api/Upload/image?folder=rooms", formDataObj, {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
       })
-      setImageUrl("")
+      const uploadedUrl = response.data.url
+      if (uploadedUrl) {
+        setFormData(prev => ({
+          ...prev,
+          images: [...prev.images, uploadedUrl]
+        }))
+      }
+    } catch (err) {
+      console.error("Upload image failed:", err)
+      alert("Tải ảnh lên thất bại!")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -138,30 +156,50 @@ function CreateRoomModal({ visible, setVisible, branches, onCreated, fixedBranch
           </div>
           
           <div className="mb-3">
-            <label className="form-label">Hình Ảnh (URL)</label>
-            <div className="d-flex gap-2">
-              <CFormInput
-                placeholder="Nhập link ảnh..."
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-              />
-              <CButton color="secondary" type="button" onClick={handleAddImage}>Thêm</CButton>
-            </div>
-            {formData.images.length > 0 && (
-              <div className="mt-2 d-flex flex-wrap gap-2">
-                {formData.images.map((img, idx) => (
-                  <div key={idx} className="position-relative">
-                    <img src={img} alt="room" style={{ width: 60, height: 60, objectFit: "cover", borderRadius: 4 }} />
-                    <button 
-                      type="button" 
-                      className="btn-close position-absolute top-0 start-100 translate-middle"
-                      style={{ padding: "0.2rem", backgroundColor: "white" }}
-                      onClick={() => handleRemoveImage(idx)}
-                    ></button>
-                  </div>
-                ))}
+            <label className="form-label fw-semibold">Hình Ảnh Phòng</label>
+            <div className="d-flex flex-column gap-2">
+              <div>
+                <input
+                  type="file"
+                  id="room-image-upload-create"
+                  className="d-none"
+                  accept="image/*"
+                  onChange={handleUploadImage}
+                  disabled={loading}
+                />
+                <label
+                  htmlFor="room-image-upload-create"
+                  className={`btn btn-outline-warning w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2 ${loading ? 'disabled' : ''}`}
+                  style={{ cursor: "pointer", borderStyle: "dashed", borderWidth: "2px" }}
+                >
+                  {loading ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      Đang tải lên...
+                    </>
+                  ) : (
+                    <>
+                      Tải ảnh phòng lên (Upload)
+                    </>
+                  )}
+                </label>
               </div>
-            )}
+              {formData.images.length > 0 && (
+                <div className="mt-2 d-flex flex-wrap gap-2">
+                  {formData.images.map((img, idx) => (
+                    <div key={idx} className="position-relative" style={{ width: 60, height: 60 }}>
+                      <img src={img} alt="room" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6, border: "1px solid #e5e7eb" }} />
+                      <button 
+                        type="button" 
+                        className="btn-close position-absolute top-0 start-100 translate-middle shadow"
+                        style={{ padding: "0.2rem", backgroundColor: "white", borderRadius: "50%", fontSize: "9px" }}
+                        onClick={() => handleRemoveImage(idx)}
+                      ></button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </CForm>
       </CModalBody>
