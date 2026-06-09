@@ -23,6 +23,8 @@ import LoginPage from "../../features/auth/pages/LoginPage"
 import VerifyOTPPage from "../../features/auth/pages/VerifyOTPPage"
 import ForgotPasswordPage from "../../features/auth/pages/ForgotPasswordPage"
 import ResetPasswordPage from "../../features/auth/pages/ResetPasswordPage"
+import VNPayConfirmPage from '../../features/payment/pages/VNPayConfirmPage.jsx';
+import VNPayReturnPage from '../../features/payment/pages/VNPayReturnPage.jsx';
 import DashboardPage from '../../features/super-admin/pages/DashboardPage.jsx';
 import UserManagementPage from '../../features/super-admin/pages/UserManagementPage.jsx';
 import PromotionManagementPage from '../../features/super-admin/pages/PromotionManagementPage.jsx';
@@ -80,6 +82,10 @@ export default function AppRouter() {
         <Route path="/otp" element={<VerifyOTPPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+        {/* VNPay — public, không cần auth */}
+        <Route path="/payment/vnpay/confirm" element={<VNPayConfirmPage />} />
+        <Route path="/payment/vnpay/return" element={<VNPayReturnPage />} />
 
         {/* Landing Page / Public Routes */}
         <Route element={<LandingLayout />}>

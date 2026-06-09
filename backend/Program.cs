@@ -135,6 +135,9 @@ builder.Services.AddScoped<IVietQrService, VietQrService>();
 builder.Services.AddScoped<IReportsService, ReportsService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 
+// ================= VNPAY =================
+builder.Services.Configure<backend.Options.VNPayOptions>(builder.Configuration.GetSection("VNPay"));
+builder.Services.AddScoped<IVNPayService, VNPayService>();
 // ================= CLOUDINARY =================
 builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 

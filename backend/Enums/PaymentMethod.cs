@@ -5,5 +5,6 @@ public enum PaymentMethod
     BankTransfer,
     Card,
     EWallet,
-    QRCode
+    QRCode,
+    VNPay
 }
