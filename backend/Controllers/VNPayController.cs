@@ -72,13 +72,13 @@ public class VNPayController : ControllerBase
         Description = "Endpoint nhận browser redirect từ VNPay sau khi user thanh toán. " +
                       "Validate signature và trả kết quả về cho frontend (VNPayReturnPage)."
     )]
-    public IActionResult HandleReturn()
+    public async Task<IActionResult> HandleReturn()
     {
         _logger.LogInformation("VNPay Return: ResponseCode={Code}, TxnRef={TxnRef}",
             Request.Query["vnp_ResponseCode"].ToString(),
             Request.Query["vnp_TxnRef"].ToString());
 
-        var result = _vnpay.HandleReturn(Request.Query);
+        var result = await _vnpay.HandleReturnAsync(Request.Query);
         return Ok(new ApiResponse<VNPayReturnResult>(result));
     }
 

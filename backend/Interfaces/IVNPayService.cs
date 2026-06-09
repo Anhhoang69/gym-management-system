@@ -22,9 +22,9 @@ public interface IVNPayService
 
     /// <summary>
     /// Validate ReturnUrl params sau khi user được redirect về.
-    /// Chỉ validate signature và trả kết quả — không update DB (IPN đã xử lý rồi).
+    /// Validate signature, cập nhật DB nếu cần (dự phòng IPN) và trả kết quả.
     /// </summary>
-    VNPayReturnResult HandleReturn(IQueryCollection query);
+    Task<VNPayReturnResult> HandleReturnAsync(IQueryCollection query);
 
     /// <summary>
     /// Lấy trạng thái payment của invoice để frontend poll.
