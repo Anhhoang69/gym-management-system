@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Http;
 namespace backend.Helpers;
 
 /// <summary>
-/// Static helper xây dựng và xác thực chữ ký HMAC-SHA512 với VNPay.
-/// Không dùng DI — gọi trực tiếp từ VNPayService.
+/// Static helper xây dựng và xác thực chữ ký HMAC-SHA512 với VNPay v2.1.0.
+/// Spec: raw hash = "key=UrlEncode(value)&key=UrlEncode(value)" (sort alphabetical).
 /// </summary>
 public static class VNPayHelper
 {
@@ -15,7 +15,7 @@ public static class VNPayHelper
 
     /// <summary>
     /// Tạo redirect URL sang trang thanh toán VNPay.
-    /// Params được sort theo alphabet, ký HMAC-SHA512, append vào query string.
+    /// Hash = HMAC-SHA512 trên chuỗi key=UrlEncode(value) (cùng encoding với query string).
     /// </summary>
     public static string BuildPaymentUrl(
         Guid invoiceId,
@@ -27,6 +27,9 @@ public static class VNPayHelper
     {
         var now = DateTime.UtcNow.AddHours(7); // VNPay dùng GMT+7
 
+        // orderInfo chỉ dùng ASCII để tránh encoding mismatch
+        var safeOrderInfo = RemoveDiacritics(orderInfo);
+
         var vnpParams = new SortedDictionary<string, string>(StringComparer.Ordinal)
         {
             ["vnp_Version"]    = opts.Version,
@@ -35,8 +38,8 @@ public static class VNPayHelper
             ["vnp_Amount"]     = ((long)(amount * 100)).ToString(),
             ["vnp_CurrCode"]   = opts.CurrencyCode,
             ["vnp_TxnRef"]     = txnRef,
-            ["vnp_OrderInfo"]  = orderInfo,
-            ["vnp_OrderType"]  = "billpayment",
+            ["vnp_OrderInfo"]  = safeOrderInfo,
+            ["vnp_OrderType"]  = "other",
             ["vnp_Locale"]     = opts.Locale,
             ["vnp_ReturnUrl"]  = opts.ReturnUrl,
             ["vnp_IpAddr"]     = clientIp,
@@ -44,9 +47,11 @@ public static class VNPayHelper
             ["vnp_ExpireDate"] = now.AddMinutes(opts.TimeoutMinutes).ToString("yyyyMMddHHmmss"),
         };
 
-        var rawHash = BuildRawData(vnpParams);
+        // VNPay v2.1.0: raw hash = same encoding as query string
+        var rawHash = BuildHashData(vnpParams);
         var secureHash = HmacSha512(opts.HashSecret, rawHash);
 
+        // Build full URL
         var query = new StringBuilder();
         foreach (var (k, v) in vnpParams)
             query.Append($"&{k}={Uri.EscapeDataString(v)}");
@@ -56,19 +61,25 @@ public static class VNPayHelper
         return $"{opts.BaseUrl}?{query.ToString().TrimStart('&')}";
     }
 
+    /// <summary>
+    /// Trả về raw hash string (để log debug).
+    /// </summary>
+    public static string GetRawHashData(SortedDictionary<string, string> vnpParams)
+        => BuildHashData(vnpParams);
+
     // ── Validate Signature ────────────────────────────────────────────────
 
     /// <summary>
     /// Kiểm tra chữ ký HMAC-SHA512 của request IPN hoặc ReturnUrl từ VNPay.
-    /// Loại vnp_SecureHash và vnp_SecureHashType khỏi dict trước khi ký.
+    /// ASP.NET Core tự decode query params → dùng lại UrlEncode để tính hash.
     /// </summary>
     public static bool ValidateSignature(IQueryCollection query, string hashSecret)
     {
         var receivedHash = query["vnp_SecureHash"].ToString();
         if (string.IsNullOrEmpty(receivedHash)) return false;
 
-        var vnpParams = GetSortedParams(query, exclude: new[] { "vnp_SecureHash", "vnp_SecureHashType" });
-        var rawHash = BuildRawData(vnpParams);
+        var vnpParams = GetSortedParams(query, exclude: ["vnp_SecureHash", "vnp_SecureHashType"]);
+        var rawHash = BuildHashData(vnpParams);
         var expectedHash = HmacSha512(hashSecret, rawHash);
 
         return string.Equals(expectedHash, receivedHash, StringComparison.OrdinalIgnoreCase);
@@ -76,7 +87,6 @@ public static class VNPayHelper
 
     // ── Parse params ─────────────────────────────────────────────────────
 
-    /// <summary>Lấy tất cả VNPay params từ query collection (trừ SecureHash) thành dict.</summary>
     public static Dictionary<string, string> GetAllParams(IQueryCollection query)
         => GetSortedParams(query).ToDictionary(kv => kv.Key, kv => kv.Value);
 
@@ -98,7 +108,11 @@ public static class VNPayHelper
         return result;
     }
 
-    private static string BuildRawData(SortedDictionary<string, string> dict)
+    /// <summary>
+    /// Build raw hash string: key=UrlEncode(value)&key=UrlEncode(value)
+    /// VNPay v2.1.0 yêu cầu dùng cùng encoding với query string để verify.
+    /// </summary>
+    private static string BuildHashData(SortedDictionary<string, string> dict)
     {
         var sb = new StringBuilder();
         foreach (var (k, v) in dict)
@@ -106,7 +120,7 @@ public static class VNPayHelper
             if (sb.Length > 0) sb.Append('&');
             sb.Append(k);
             sb.Append('=');
-            sb.Append(v);
+            sb.Append(Uri.EscapeDataString(v)); // SAME as query string encoding
         }
         return sb.ToString();
     }
@@ -116,5 +130,19 @@ public static class VNPayHelper
         using var hmac = new HMACSHA512(Encoding.UTF8.GetBytes(key));
         var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
         return Convert.ToHexString(hash).ToLower();
+    }
+
+    /// <summary>Remove diacritics (bỏ dấu tiếng Việt) để orderInfo luôn ASCII.</summary>
+    private static string RemoveDiacritics(string text)
+    {
+        var normalized = text.Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder();
+        foreach (var c in normalized)
+        {
+            var category = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
+            if (category != System.Globalization.UnicodeCategory.NonSpacingMark)
+                sb.Append(c);
+        }
+        return sb.ToString().Normalize(NormalizationForm.FormC);
     }
 }
