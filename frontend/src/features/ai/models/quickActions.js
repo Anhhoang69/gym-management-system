@@ -10,6 +10,41 @@
  */
 export const TOOL_QUICK_ACTION_MAP = {
   // ── Member / Fitness ──────────────────────────────────
+  get_membership_info: {
+    label: "Thông tin thẻ tập",
+    icon: "CreditCard",
+    prompt: "Xem thông tin thẻ tập và hợp đồng hiện tại của tôi."
+  },
+  get_available_packages: {
+    label: "Xem gói tập",
+    icon: "Package",
+    prompt: "Cho tôi xem các gói tập đang có và giá của từng gói."
+  },
+  get_my_schedule: {
+    label: "Lịch tập của tôi",
+    icon: "Calendar",
+    prompt: "Cho tôi xem lịch đặt lớp và lịch tập của tôi tuần này."
+  },
+  book_class: {
+    label: "Đặt lớp học",
+    icon: "CalendarPlus",
+    prompt: "Tôi muốn đặt một lớp học."
+  },
+  cancel_booking: {
+    label: "Hủy lịch đặt lớp",
+    icon: "CalendarX",
+    prompt: "Hủy lịch đặt lớp đã hẹn của tôi."
+  },
+  get_attendance_summary: {
+    label: "Lịch sử đi tập",
+    icon: "ClipboardList",
+    prompt: "Tóm tắt lịch sử đi tập và điểm danh của tôi."
+  },
+  get_member_training_overview: {
+    label: "Tổng quan tập luyện",
+    icon: "Activity",
+    prompt: "Xem tổng quan tiến độ tập luyện của tôi."
+  },
   generate_fitness_plan: {
     label: "Lập kế hoạch tập",
     icon: "Dumbbell",
@@ -25,13 +60,6 @@ export const TOOL_QUICK_ACTION_MAP = {
     icon: "Apple",
     prompt: "Tư vấn chế độ ăn uống phù hợp cho người muốn giảm cân."
   },
-
-  // ── Membership / Packages ────────────────────────────
-  get_available_packages: {
-    label: "Xem gói tập",
-    icon: "Package",
-    prompt: "Cho tôi xem các gói tập đang có và giá của từng gói."
-  },
   get_member_profile: {
     label: "Hồ sơ hội viên",
     icon: "User",
@@ -44,10 +72,35 @@ export const TOOL_QUICK_ACTION_MAP = {
     icon: "CheckSquare",
     prompt: "Danh sách hội viên đã check-in hôm nay tại chi nhánh."
   },
+  get_checkin_report: {
+    label: "Báo cáo check-in",
+    icon: "CheckSquare",
+    prompt: "Xem báo cáo danh sách hội viên check-in hôm nay."
+  },
+  checkin_lookup: {
+    label: "Tra cứu check-in",
+    icon: "Search",
+    prompt: "Tra cứu lịch sử check-in của hội viên."
+  },
   lookup_member: {
     label: "Tra cứu hội viên",
     icon: "Search",
     prompt: "Tra cứu thông tin hội viên theo tên hoặc email."
+  },
+  member_lookup: {
+    label: "Tra cứu hội viên",
+    icon: "Search",
+    prompt: "Tra cứu thông tin hội viên theo tên hoặc email."
+  },
+  contract_lookup: {
+    label: "Tra cứu hợp đồng",
+    icon: "FileText",
+    prompt: "Tra cứu thông tin hợp đồng của hội viên."
+  },
+  booking_lookup: {
+    label: "Tra cứu lịch đặt",
+    icon: "Calendar",
+    prompt: "Tra cứu lịch đặt lớp của hội viên."
   },
   get_expiring_cards: {
     label: "Thẻ sắp hết hạn",
@@ -56,10 +109,25 @@ export const TOOL_QUICK_ACTION_MAP = {
   },
 
   // ── Staff / Sales ─────────────────────────────────────
+  get_lead_summary: {
+    label: "Tóm tắt leads",
+    icon: "TrendingUp",
+    prompt: "Báo cáo tóm tắt tình trạng leads hôm nay."
+  },
   get_lead_status: {
     label: "Trạng thái Leads",
     icon: "TrendingUp",
     prompt: "Tóm tắt trạng thái leads hôm nay và tiến độ chuyển đổi."
+  },
+  get_lead_pipeline: {
+    label: "Đường ống dẫn leads",
+    icon: "ListTodo",
+    prompt: "Xem biểu đồ đường ống dẫn leads hiện tại."
+  },
+  get_sales_funnel: {
+    label: "Phễu bán hàng",
+    icon: "Filter",
+    prompt: "Xem biểu đồ phễu bán hàng (Sales Funnel)."
   },
   get_sales_summary: {
     label: "Doanh số hôm nay",
@@ -78,6 +146,16 @@ export const TOOL_QUICK_ACTION_MAP = {
     icon: "Calendar",
     prompt: "Xem lịch dạy và danh sách lớp học của tôi hôm nay."
   },
+  get_my_teaching_schedule: {
+    label: "Lịch dạy của tôi",
+    icon: "Calendar",
+    prompt: "Xem lịch dạy của tôi trong tuần này."
+  },
+  get_class_roster: {
+    label: "Danh sách lớp dạy",
+    icon: "Users",
+    prompt: "Xem danh sách học viên trong lớp dạy của tôi."
+  },
   get_student_progress: {
     label: "Tiến độ học viên",
     icon: "BarChart3",
@@ -88,12 +166,27 @@ export const TOOL_QUICK_ACTION_MAP = {
     icon: "FileText",
     prompt: "Lập kế hoạch tập luyện cá nhân hóa cho học viên."
   },
+  get_personal_payroll: {
+    label: "Bảng lương của tôi",
+    icon: "Coins",
+    prompt: "Xem thông tin bảng lương cá nhân tháng này của tôi."
+  },
 
   // ── Branch Admin ──────────────────────────────────────
   get_branch_revenue: {
     label: "Doanh thu chi nhánh",
     icon: "TrendingUp",
     prompt: "Báo cáo doanh thu chi nhánh tháng này so với tháng trước."
+  },
+  get_branch_payroll: {
+    label: "Lương nhân viên chi nhánh",
+    icon: "Coins",
+    prompt: "Xem báo cáo tổng hợp lương nhân viên chi nhánh tháng này."
+  },
+  get_pt_performance: {
+    label: "Hiệu suất PT",
+    icon: "BarChart3",
+    prompt: "Báo cáo hiệu suất và doanh số của đội ngũ PT chi nhánh."
   },
   get_branch_checkin_stats: {
     label: "Thống kê check-in",
@@ -112,7 +205,17 @@ export const TOOL_QUICK_ACTION_MAP = {
     icon: "LayoutDashboard",
     prompt: "Tổng quan hoạt động toàn bộ hệ thống gym tháng này."
   },
+  get_system_dashboard: {
+    label: "Tổng quan hệ thống",
+    icon: "LayoutDashboard",
+    prompt: "Tổng quan hoạt động toàn bộ hệ thống gym tháng này."
+  },
   get_revenue_summary: {
+    label: "Doanh thu tổng",
+    icon: "PieChart",
+    prompt: "Báo cáo doanh thu tổng hợp tất cả chi nhánh tháng này."
+  },
+  get_global_revenue: {
     label: "Doanh thu tổng",
     icon: "PieChart",
     prompt: "Báo cáo doanh thu tổng hợp tất cả chi nhánh tháng này."

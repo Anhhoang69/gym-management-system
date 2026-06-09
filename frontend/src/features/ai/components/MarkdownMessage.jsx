@@ -176,13 +176,15 @@ function parseMarkdown(text) {
     }
 
     // ── Ordered list ──
-    if (/^\d+\.\s/.test(line)) {
+    const olMatch = line.match(/^(\d+)\.\s/)
+    if (olMatch) {
+      const startNum = parseInt(olMatch[1], 10)
       const items = []
       while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
         items.push(lines[i].replace(/^\d+\.\s/, ""))
         i++
       }
-      blocks.push({ type: "ol", items })
+      blocks.push({ type: "ol", items, start: startNum })
       continue
     }
 
@@ -259,7 +261,7 @@ function renderBlock(block, index) {
 
     case "ol":
       return (
-        <ol key={index} className="pl-6 my-2 list-decimal space-y-1 text-[var(--text-primary)]">
+        <ol key={index} start={block.start} className="pl-6 my-2 list-decimal space-y-1 text-[var(--text-primary)]">
           {block.items.map((item, i) => (
             <li key={i} className="leading-relaxed">
               {renderInline(item)}
