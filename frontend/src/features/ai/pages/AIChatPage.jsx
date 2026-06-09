@@ -11,13 +11,23 @@ import OwnerHeader from "../../gym-owner/components/common/OwnerHeader"
 import OwnerSidebar from "../../gym-owner/components/common/OwnerSidebar"
 import LandingHeader from "../../landing/components/LandingHeader"
 import LandingFooter from "../../landing/components/LandingFooter"
+import api from "../../../shared/api/api"
+import { useLanguage } from "../../../shared/contexts/LanguageContext"
 
 /**
  * AIChatPageInner – Inner layout implementation.
  */
 function AIChatPageInner() {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const { locale } = useLanguage()
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem("user")
+      return stored ? JSON.parse(stored) : null
+    } catch {
+      return null
+    }
+  })
+  const [loading, setLoading] = useState(!user)
   const [globalErrors, setGlobalErrors] = useState([])
 
   useEffect(() => {
@@ -40,28 +50,60 @@ function AIChatPageInner() {
   }, [])
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("user")
-      if (stored) {
-        setUser(JSON.parse(stored))
+    const initUser = async () => {
+      try {
+        const stored = localStorage.getItem("user")
+        let parsedUser = user
+        if (stored && !parsedUser) {
+          parsedUser = JSON.parse(stored)
+          setUser(parsedUser)
+        }
+
+        // Fetch fresh profile data in background to resolve roles/staffPosition accurately
+        const response = await api.get("/api/me")
+        const meData = response.data?.data
+        if (meData) {
+          const updatedUser = {
+            ...(parsedUser || {}),
+            roles: parsedUser?.roles || (meData.role ? [meData.role] : []),
+            staffPosition: meData.staffPosition || meData.role || parsedUser?.staffPosition || "",
+            fullName: meData.fullName || meData.name || parsedUser?.fullName || ""
+          }
+          if (meData.role) {
+            const roleUpper = meData.role.toUpperCase()
+            if (!updatedUser.roles) updatedUser.roles = []
+            const rolesArr = [...updatedUser.roles]
+            if (!rolesArr.includes(roleUpper)) {
+              rolesArr.push(roleUpper)
+            }
+            updatedUser.roles = rolesArr
+          }
+          localStorage.setItem("user", JSON.stringify(updatedUser))
+          setUser(updatedUser)
+        }
+      } catch (e) {
+        console.error("Error fetching fresh user info on AI Page mount:", e)
+      } finally {
+        setLoading(false)
       }
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
     }
+
+    initUser()
   }, [])
 
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", background: "var(--bg)" }}>
-        <div style={{ color: "var(--text-secondary)" }}>Đang tải...</div>
+        <div style={{ color: "var(--text-secondary)" }}>{locale === 'vi' ? 'Đang tải...' : 'Loading...'}</div>
       </div>
     )
   }
 
   const roles = (user?.roles || []).map((r) => r.toLowerCase())
+  const staffPos = (user?.staffPosition || "").toLowerCase()
+
   const hasRole = (r) => roles.includes(r.toLowerCase()) || roles.includes(`role_${r.toLowerCase()}`)
+  const isPosition = (pos) => staffPos === pos.toLowerCase()
 
   // 1. SuperAdmin Layout
   if (hasRole("superadmin") || hasRole("admin")) {
@@ -94,7 +136,7 @@ function AIChatPageInner() {
   }
 
   // 3. Branch Admin Layout
-  if (hasRole("branchadmin")) {
+  if (hasRole("branchadmin") || isPosition("branchadmin")) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f5f6fa" }}>
         <AdminHeader />
@@ -109,7 +151,7 @@ function AIChatPageInner() {
   }
 
   // 4. PT Layout
-  if (hasRole("pt") || hasRole("trainer")) {
+  if (hasRole("pt") || hasRole("trainer") || isPosition("pt") || isPosition("headpt")) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f5f6fa" }}>
         <PtHeader />
@@ -124,7 +166,7 @@ function AIChatPageInner() {
   }
 
   // 5. Staff Layout
-  if (hasRole("staff") || hasRole("receptionist") || hasRole("sales")) {
+  if (hasRole("staff") || hasRole("receptionist") || hasRole("sales") || isPosition("receptionist") || isPosition("sales") || isPosition("staff")) {
     return (
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "#f5f6fa" }}>
         <StaffHeader />

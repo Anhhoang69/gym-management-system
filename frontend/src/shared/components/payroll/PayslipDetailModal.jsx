@@ -1,173 +1,239 @@
 import React from "react"
 import {
-    CModal,
-    CModalHeader,
-    CModalTitle,
-    CModalBody,
-    CModalFooter,
-    CButton,
-    CBadge
+  CModal,
+  CModalHeader,
+  CModalTitle,
+  CModalBody,
+  CModalFooter,
+  CButton,
+  CBadge
 } from "@coreui/react"
-import { FileText, Clock, BookOpen, Award, CheckCircle, DollarSign } from "lucide-react"
+import { FileText, Printer, ShieldCheck } from "lucide-react"
+import moment from "moment"
 
 function PayslipDetailModal({ slip, visible, onClose }) {
-    if (!slip) return null
+  if (!slip) return null
 
-    const formatCurrency = (val) => {
-        return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(val || 0)
+  const formatCurrency = (val) => {
+    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(val || 0)
+  }
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "Paid":
+        return <CBadge color="success">Đã thanh toán</CBadge>
+      case "Approved":
+        return <CBadge color="primary">Đã phê duyệt</CBadge>
+      case "Draft":
+      default:
+        return <CBadge color="warning" className="text-dark">Chờ duyệt (Draft)</CBadge>
     }
+  }
 
-    const getStatusBadge = (status) => {
-        switch (status) {
-            case "Paid":
-                return <CBadge color="dark">Đã Thanh Toán</CBadge>
-            case "Approved":
-                return <CBadge color="success">Đã Phê Duyệt</CBadge>
-            case "Draft":
-            default:
-                return <CBadge color="warning" className="text-dark">Chờ Duyệt (Draft)</CBadge>
-        }
-    }
+  const handlePrint = () => {
+    window.print()
+  }
 
-    const isPT = slip.position === "PT" || slip.position === "HeadPT" || (slip.sessionCount && slip.sessionCount > 0)
-    const isSales = slip.position === "Sales" || (slip.salesCommission && slip.salesCommission > 0)
+  const isPT = slip.position === "PT" || slip.position === "HeadPT" || (slip.sessionCount && slip.sessionCount > 0)
+  const isSales = slip.position === "Sales" || (slip.salesCommission && slip.salesCommission > 0)
 
-    return (
-        <CModal
-            visible={visible}
-            onClose={onClose}
-            size="lg"
-            backdrop="static"
-        >
-            <CModalHeader className="bg-light border-0">
-                <CModalTitle className="fw-bold text-primary d-flex align-items-center gap-2">
-                    <FileText size={20} /> Phiếu Lương Chi Tiết
-                </CModalTitle>
-            </CModalHeader>
-            <CModalBody className="p-4" style={{ backgroundColor: "#f8f9fa" }}>
-                <div className="bg-white p-4 rounded-4 shadow-sm border" style={{ color: "#333" }}>
-                    {/* Header */}
-                    <div className="d-flex justify-content-between align-items-start border-bottom pb-4 mb-4">
-                        <div>
-                            <h4 className="fw-extrabold text-primary mb-1">EnerGym Fitness & Yoga</h4>
-                            <p className="text-muted small mb-0">Hệ thống quản lý phòng gym & thù lao nhân sự</p>
-                        </div>
-                        <div className="text-end">
-                            <h5 className="fw-bold text-dark mb-1">Kỳ Lương: {slip.periodMonth}/{slip.periodYear}</h5>
-                            <small className="text-muted">Mã phiếu: #{slip.payrollId?.substring(0, 8) || slip.id?.substring(0, 8)}</small>
-                        </div>
-                    </div>
+  return (
+    <CModal visible={visible} onClose={onClose} size="lg" backdrop="static" alignment="center" scrollable>
+      <CModalHeader closeButton className="border-0 pb-0 bg-light">
+        <CModalTitle className="fw-bold fs-5 d-flex align-items-center gap-2 text-dark">
+          <FileText className="text-warning" size={20} />
+          Chi Tiết Phiếu Lương #{slip.payrollId?.slice(-10).toUpperCase() || slip.id?.slice(-10).toUpperCase()}
+        </CModalTitle>
+      </CModalHeader>
 
-                    {/* Employee info */}
-                    <div className="mb-4">
-                        <h6 className="fw-bold text-muted text-uppercase small mb-2">Thông tin người nhận</h6>
-                        <div className="fw-bold text-dark fs-5">{slip.staffName}</div>
-                        <div className="text-muted fw-semibold">{slip.position}</div>
-                    </div>
+      <CModalBody className="bg-light p-4">
+        {/* Paper Payslip Sheet */}
+        <div className="bg-white p-5 rounded-3 shadow-sm border mx-auto text-dark position-relative" style={{
+          maxWidth: "720px",
+          fontFamily: "'Times New Roman', Times, serif",
+          lineHeight: 1.6,
+          fontSize: "15px",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.05)"
+        }}>
+          {/* National Motto / Header */}
+          <div className="text-center mb-4">
+            <h5 className="fw-bold mb-1" style={{ letterSpacing: "0.5px" }}>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h5>
+            <div className="fw-semibold small mb-2">Độc lập - Tự do - Hạnh phúc</div>
+            <div style={{ width: "160px", borderBottom: "1.5px solid #000", margin: "0 auto 20px" }}></div>
+          </div>
 
-                    {/* Breakdown table */}
-                    <div className="table-responsive mb-4">
-                        <table className="table table-bordered align-middle">
-                            <thead className="table-light">
-                                <tr>
-                                    <th className="py-2">Mô tả khoản thu nhập</th>
-                                    <th className="py-2 text-center" style={{ width: "100px" }}>Số lượng</th>
-                                    <th className="py-2 text-end" style={{ width: "180px" }}>Đơn giá</th>
-                                    <th className="py-2 text-end" style={{ width: "200px" }}>Thành tiền</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {/* Base Salary */}
-                                <tr>
-                                    <td className="py-3">
-                                        <div className="fw-bold d-flex align-items-center gap-2 text-dark">
-                                            <Clock size={16} className="text-primary" /> Lương cơ bản
-                                        </div>
-                                        <small className="text-muted">Lương cơ bản cố định hàng tháng</small>
-                                    </td>
-                                    <td className="py-3 text-center fw-bold">-</td>
-                                    <td className="py-3 text-end">-</td>
-                                    <td className="py-3 text-end fw-bold">{formatCurrency(slip.baseSalary)}</td>
-                                </tr>
+          {/* Payslip Title */}
+          <div className="text-center mb-5">
+            <h4 className="fw-bold mb-1 text-uppercase" style={{ letterSpacing: "1px", color: "#111" }}>Phiếu Thanh Toán Lương & Thù Lao</h4>
+            <div className="text-muted small">Kỳ lương: Tháng {slip.periodMonth || moment(slip.calculatedAt).format("MM")}/{slip.periodYear || moment(slip.calculatedAt).format("YYYY")}</div>
+            <div className="text-muted small">Mã phiếu: #{slip.payrollId?.slice(-10).toUpperCase() || slip.id?.slice(-10).toUpperCase()}</div>
+            <div className="mt-2">{getStatusBadge(slip.status)}</div>
+          </div>
 
-                                {/* PT Session Commission */}
-                                {isPT && (
-                                    <tr>
-                                        <td className="py-3">
-                                            <div className="fw-bold d-flex align-items-center gap-2 text-dark">
-                                                <BookOpen size={16} className="text-success" /> Thù lao đứng lớp (HLV)
-                                            </div>
-                                            <small className="text-muted">Tiền đứng lớp huấn luyện cá nhân & lớp nhóm</small>
-                                        </td>
-                                        <td className="py-3 text-center fw-bold">{slip.sessionCount || 0}</td>
-                                        <td className="py-3 text-end">
-                                            {slip.sessionCount > 0 
-                                                ? formatCurrency((slip.sessionCommission || 0) / slip.sessionCount) 
-                                                : "-"
-                                            }
-                                        </td>
-                                        <td className="py-3 text-end fw-bold">{formatCurrency(slip.sessionCommission || 0)}</td>
-                                    </tr>
-                                )}
+          {/* EMPLOYEE INFO */}
+          <div className="mb-4">
+            <h6 className="fw-bold text-uppercase mb-2" style={{ borderBottom: "1px solid #ddd", paddingBottom: "4px" }}>THÔNG TIN CHI TIẾT NHÂN SỰ</h6>
+            <div className="row g-2 ps-2">
+              <div className="col-md-6"><span className="fw-semibold">Họ và tên:</span> {slip.staffName}</div>
+              <div className="col-md-6"><span className="fw-semibold">Vị trí / Chức vụ:</span> {slip.position}</div>
+              <div className="col-md-6">
+                <span className="fw-semibold">Thời gian lập phiếu:</span> {slip.calculatedAt ? moment(slip.calculatedAt).format("DD/MM/YYYY HH:mm") : "-"}
+              </div>
+              <div className="col-md-6">
+                <span className="fw-semibold">Đơn vị quản lý:</span> Hệ thống phòng tập EnerGym
+              </div>
+            </div>
+          </div>
 
-                                {/* PT KPI Bonus */}
-                                {isPT && slip.kpiBonus > 0 && (
-                                    <tr>
-                                        <td className="py-3">
-                                            <div className="fw-bold d-flex align-items-center gap-2 text-dark">
-                                                <Award size={16} className="text-warning" /> Thưởng chỉ tiêu KPI lớp dạy
-                                            </div>
-                                            <small className="text-muted">Đạt định mức buổi dạy tối thiểu trong tháng</small>
-                                        </td>
-                                        <td className="py-3 text-center fw-bold">1</td>
-                                        <td className="py-3 text-end">{formatCurrency(slip.kpiBonus)}</td>
-                                        <td className="py-3 text-end fw-bold text-success">+{formatCurrency(slip.kpiBonus)}</td>
-                                    </tr>
-                                )}
+          {/* DETAILS TABLE */}
+          <div className="mb-4">
+            <h6 className="fw-bold text-uppercase mb-2" style={{ borderBottom: "1px solid #ddd", paddingBottom: "4px" }}>CHI TIẾT CÁC KHOẢN THU NHẬP</h6>
+            <table className="table table-bordered mt-2 text-center" style={{ fontSize: "14px" }}>
+              <thead>
+                <tr className="table-light">
+                  <th style={{ width: "60px" }}>STT</th>
+                  <th className="text-start">Khoản mục thu nhập / Diễn giải</th>
+                  <th>Số lượng</th>
+                  <th>Đơn giá</th>
+                  <th>Thành tiền</th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* 1. Base Salary */}
+                <tr>
+                  <td>1</td>
+                  <td className="text-start">
+                    <div className="fw-bold">Lương cơ bản định mức</div>
+                    <div className="text-muted small">Lương cơ bản cố định hàng tháng theo vai trò</div>
+                  </td>
+                  <td>-</td>
+                  <td>-</td>
+                  <td className="text-end fw-semibold">{formatCurrency(slip.baseSalary)}</td>
+                </tr>
 
-                                {/* Sales Commission */}
-                                {isSales && (
-                                    <tr>
-                                        <td className="py-3">
-                                            <div className="fw-bold d-flex align-items-center gap-2 text-dark">
-                                                <DollarSign size={16} className="text-indigo" /> Hoa hồng doanh số bán hàng
-                                            </div>
-                                            <small className="text-muted">Hoa hồng tích lũy từ các hợp đồng hội viên mới</small>
-                                        </td>
-                                        <td className="py-3 text-center fw-bold">-</td>
-                                        <td className="py-3 text-end">-</td>
-                                        <td className="py-3 text-end fw-bold text-indigo">{formatCurrency(slip.salesCommission || 0)}</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                {/* 2. PT Sessions */}
+                {isPT && slip.sessionCount > 0 && (
+                  <tr>
+                    <td>2</td>
+                    <td className="text-start">
+                      <div className="fw-bold">Thù lao đứng lớp huấn luyện cá nhân</div>
+                      <div className="text-muted small">Tính theo số buổi lớp dạy thực tế trong kỳ lương</div>
+                    </td>
+                    <td>{slip.sessionCount} lớp</td>
+                    <td>{formatCurrency((slip.sessionCommission || 0) / slip.sessionCount)}</td>
+                    <td className="text-end fw-semibold">{formatCurrency(slip.sessionCommission)}</td>
+                  </tr>
+                )}
 
-                    {/* Total Payout */}
-                    <div className="d-flex justify-content-between align-items-center bg-light p-3 rounded-3 mb-4">
-                        <div className="fw-bold fs-5 text-dark">Tổng thù lao thực nhận (NET):</div>
-                        <div className="fw-extrabold fs-4 text-primary">{formatCurrency(slip.totalSalary)}</div>
-                    </div>
+                {/* 3. Sales Commission */}
+                {isSales && slip.salesCommission > 0 && (
+                  <tr>
+                    <td>{isPT ? 3 : 2}</td>
+                    <td className="text-start">
+                      <div className="fw-bold">Hoa hồng doanh số bán hàng</div>
+                      <div className="text-muted small">Trích lũy từ doanh thu các hợp đồng hội viên mới</div>
+                    </td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td className="text-end fw-semibold text-indigo">{formatCurrency(slip.salesCommission)}</td>
+                  </tr>
+                )}
 
-                    {/* Footer / Status */}
-                    <div className="d-flex justify-content-between pt-3 border-top align-items-center">
-                        <div>
-                            <span className="small text-muted me-2">Trạng thái phiếu:</span>
-                            {getStatusBadge(slip.status)}
-                        </div>
-                        <div className="small text-muted">
-                            {slip.calculatedAt && `Tính ngày: ${new Date(slip.calculatedAt).toLocaleDateString("vi-VN")}`}
-                        </div>
-                    </div>
+                {/* 4. KPI Bonus */}
+                {isPT && slip.kpiBonus > 0 && (
+                  <tr>
+                    <td>{isSales ? 4 : 3}</td>
+                    <td className="text-start">
+                      <div className="fw-bold">Thưởng đạt chỉ tiêu KPI huấn luyện</div>
+                      <div className="text-muted small">Đạt số buổi tối thiểu theo quy định</div>
+                    </td>
+                    <td>1</td>
+                    <td>{formatCurrency(slip.kpiBonus)}</td>
+                    <td className="text-end fw-semibold text-success">+{formatCurrency(slip.kpiBonus)}</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {/* Summary Section */}
+            <div className="d-flex flex-column align-items-end mt-3 ps-5">
+              <div className="w-100" style={{ maxWidth: "350px" }}>
+                <div className="d-flex justify-content-between border-top pt-2">
+                  <span className="text-dark fw-bold">Tổng thu nhập thực nhận (NET):</span>
+                  <span className="text-primary fw-bold fs-5">{formatCurrency(slip.totalSalary)}</span>
                 </div>
-            </CModalBody>
-            <CModalFooter className="bg-light border-0">
-                <CButton color="secondary" onClick={onClose}>
-                    Đóng
-                </CButton>
-            </CModalFooter>
-        </CModal>
-    )
+              </div>
+            </div>
+          </div>
+
+          {/* Signature & Stamp Section */}
+          <div className="row mt-5 pt-3 g-4 text-center">
+            {/* Buyer/Employee */}
+            <div className="col-6">
+              <div className="fw-bold text-uppercase">NGƯỜI NHẬN LƯƠNG</div>
+              <div className="text-muted small mb-4">(Ký, ghi rõ họ tên)</div>
+              <div className="text-muted mt-5 pt-3 small" style={{ fontStyle: "italic" }}>
+                Đã xác nhận điện tử
+              </div>
+            </div>
+
+            {/* Vendor Seal / Accountant */}
+            <div className="col-6 position-relative">
+              <div className="fw-bold text-uppercase">NGƯỜI LẬP BIỂU</div>
+              <div className="text-muted small mb-4">(Bộ phận kế toán & Ký số)</div>
+
+              {/* Digital Stamp */}
+              {(slip.status === 'Paid' || slip.status === 'Approved') && (
+                <div className="position-absolute start-50 top-50 translate-middle" style={{
+                  border: "3px double #d9534f",
+                  color: "#d9534f",
+                  borderRadius: "50%",
+                  width: "130px",
+                  height: "130px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "bold",
+                  fontSize: "11px",
+                  transform: "rotate(-12deg) translate(-25px, 5px)",
+                  backgroundColor: "rgba(255, 255, 255, 0.95)",
+                  boxShadow: "0 0 5px rgba(217, 83, 79, 0.2)",
+                  zIndex: 2,
+                  pointerEvents: "none",
+                  fontFamily: "monospace"
+                }}>
+                  <span style={{ fontSize: "9px" }}>ENERGYM FITNESS</span>
+                  <span className="border-top border-bottom py-0.5 my-0.5 fw-bold" style={{ borderColor: "#d9534f" }}>
+                    {slip.status === 'Paid' ? 'ĐÃ CHI TRẢ' : 'ĐÃ PHÊ DUYỆT'}
+                  </span>
+                  <span>{moment(slip.calculatedAt).format("DD/MM/YYYY")}</span>
+                </div>
+              )}
+
+              <div className="text-success d-flex flex-column align-items-center justify-content-center mt-5 pt-3" style={{ minHeight: "40px" }}>
+                {(slip.status === 'Paid' || slip.status === 'Approved') && (
+                  <>
+                    <ShieldCheck size={24} className="text-success mb-1" />
+                    <span className="fw-bold small" style={{ fontSize: "10px" }}>PHIẾU LƯƠNG HỢP LỆ</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </CModalBody>
+
+      <CModalFooter className="border-0 bg-light">
+        <CButton color="primary" className="px-4 fw-bold shadow-sm text-white" onClick={handlePrint}>
+          <Printer size={16} className="me-1" /> In Phiếu Lương
+        </CButton>
+        <CButton color="secondary" variant="outline" onClick={onClose} className="px-4 fw-bold bg-white">
+          Đóng
+        </CButton>
+      </CModalFooter>
+    </CModal>
+  )
 }
 
 export default PayslipDetailModal

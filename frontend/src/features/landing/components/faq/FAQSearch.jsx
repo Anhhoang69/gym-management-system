@@ -1,6 +1,9 @@
 import { Search } from 'lucide-react';
+import { useLanguage } from '../../../../shared/contexts/LanguageContext';
 
 export default function FAQSearch({ value, onChange }) {
+  const { t } = useLanguage();
+
   return (
     <div className="relative w-full min-w-[280px]">
       <div
@@ -10,7 +13,7 @@ export default function FAQSearch({ value, onChange }) {
         <Search className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
         <input
           type="text"
-          placeholder="Tìm kiếm thắc mắc..."
+          placeholder={t('faqPage.searchPlaceholder')}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           className="flex-1 bg-transparent text-sm outline-none border-none p-0 focus:ring-0 min-w-0"

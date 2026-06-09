@@ -436,13 +436,27 @@ const CreateContractModal = ({
             )}
           </CButton>
         ) : (
-          <CButton color="success" className="text-white flex items-center gap-2 px-6 shadow-md" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? (
-              <><Loader2 className="animate-spin" size={16}/> Đang tạo HĐ...</>
-            ) : (
-              'Xác nhận & Chuyển sang Thanh toán'
-            )}
-          </CButton>
+          <div className="d-flex gap-2">
+            <CButton 
+              color="warning" 
+              variant="outline"
+              onClick={() => {
+                if (onSuccess) onSuccess(null);
+                onClose();
+              }}
+              disabled={submitting}
+              className="fw-bold px-4"
+            >
+              Chỉ lưu bản nháp
+            </CButton>
+            <CButton color="success" className="text-white flex items-center gap-2 px-6 shadow-md fw-bold" onClick={handleSubmit} disabled={submitting}>
+              {submitting ? (
+                <><Loader2 className="animate-spin" size={16}/> Đang tạo HĐ...</>
+              ) : (
+                'Xác nhận & Ký hợp đồng'
+              )}
+            </CButton>
+          </div>
         )}
       </div>
     </COffcanvas>

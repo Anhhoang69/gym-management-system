@@ -7,6 +7,7 @@ import ChatInput from "./ChatInput"
 import AIPlanCard from "./AIPlanCard"
 import AIToolsPanel from "./AIToolsPanel"
 import AITokenDashboard from "./AITokenDashboard"
+import { useLanguage } from "../../../shared/contexts/LanguageContext"
 
 // Helper component to render Lucide icons by name string
 function LucideIcon({ name, size = 18, className = "" }) {
@@ -40,15 +41,17 @@ function ThinkingDots() {
 
 // ─── Empty State ──────────────────────────────────────────────────────────────
 function EmptyState({ onQuick, quickActions }) {
+  const { locale } = useLanguage()
   const user = (() => {
     try { return JSON.parse(localStorage.getItem("user") || "{}") } catch { return {} }
   })()
 
-  const name = user?.fullName?.split(" ").pop() || user?.email?.split("@")[0] || "bạn"
+  const name = user?.fullName?.split(" ").pop() || user?.email?.split("@")[0] || (locale === 'vi' ? "bạn" : "there")
 
-  const greetings = [
-    { icon: "💪", title: `Xin chào ${name}!`, desc: "Hỏi tôi bất cứ điều gì về tập luyện, dinh dưỡng hay quản lý gym." },
-  ]
+  const greetingTitle = locale === 'vi' ? `Xin chào ${name}!` : `Hello ${name}!`
+  const greetingDesc = locale === 'vi'
+    ? "Hỏi tôi bất cứ điều gì về tập luyện, dinh dưỡng hay quản lý gym."
+    : "Ask me anything about fitness, nutrition, or gym management."
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] py-10 px-5 text-center">
@@ -60,10 +63,10 @@ function EmptyState({ onQuick, quickActions }) {
       </div>
 
       <h2 className="text-2xl font-extrabold text-[var(--text-primary)] mb-2">
-        {greetings[0].title}
+        {greetingTitle}
       </h2>
       <p className="text-sm text-[var(--text-secondary)] max-w-md leading-relaxed mb-9">
-        {greetings[0].desc}
+        {greetingDesc}
       </p>
 
       {/* Suggestion cards */}
@@ -89,6 +92,7 @@ function EmptyState({ onQuick, quickActions }) {
 
 // ─── Message Bubble ───────────────────────────────────────────────────────────
 function MessageBubble({ msg, index, onViewPlan, onCopy, copied }) {
+  const { locale } = useLanguage()
   const isUser = msg.role === "user"
   const isJson = msg.type === "json" && msg.parsed
 
@@ -132,10 +136,10 @@ function MessageBubble({ msg, index, onViewPlan, onCopy, copied }) {
               </div>
               <div>
                 <div className="font-bold text-sm text-[var(--text-primary)]">
-                  Kế hoạch đã sẵn sàng
+                  {locale === 'vi' ? "Kế hoạch đã sẵn sàng" : "Plan is ready"}
                 </div>
                 <div className="text-xs text-[var(--text-secondary)] mt-0.5">
-                  Được tạo bởi EnerGym AI
+                  {locale === 'vi' ? "Được tạo bởi EnerGym AI" : "Created by EnerGym AI"}
                 </div>
               </div>
             </div>
@@ -143,7 +147,7 @@ function MessageBubble({ msg, index, onViewPlan, onCopy, copied }) {
               onClick={() => onViewPlan && onViewPlan(msg.parsed)}
               className="w-full py-2.5 px-4 rounded-xl border-none bg-[var(--brand)] text-black font-bold text-sm cursor-pointer flex items-center justify-between transition-all duration-200 hover:opacity-90"
             >
-              <span>Xem chi tiết kế hoạch</span>
+              <span>{locale === 'vi' ? "Xem chi tiết kế hoạch" : "View plan details"}</span>
               <ChevronRight size={14} />
             </button>
           </div>
@@ -152,7 +156,7 @@ function MessageBubble({ msg, index, onViewPlan, onCopy, copied }) {
         {/* Copy feedback */}
         {copied && (
           <span className="text-[11px] text-green-500 mt-1 block">
-            ✓ Đã sao chép
+            {locale === 'vi' ? "✓ Đã sao chép" : "✓ Copied"}
           </span>
         )}
       </div>
@@ -162,6 +166,7 @@ function MessageBubble({ msg, index, onViewPlan, onCopy, copied }) {
 
 // ─── Plan Drawer ──────────────────────────────────────────────────────────────
 function PlanDrawer({ plan, onClose }) {
+  const { locale } = useLanguage()
   if (!plan) return null
 
   return (
@@ -177,7 +182,7 @@ function PlanDrawer({ plan, onClose }) {
       >
         <div className="px-5 py-4 border-b border-[var(--border)] flex justify-between items-center flex-shrink-0">
           <h3 className="font-extrabold text-base text-[var(--text-primary)] m-0">
-            📋 Chi tiết kế hoạch
+            {locale === 'vi' ? "📋 Chi tiết kế hoạch" : "📋 Plan Details"}
           </h3>
           <button
             onClick={onClose}
@@ -196,6 +201,7 @@ function PlanDrawer({ plan, onClose }) {
 
 // ─── Main AIChatPanel ─────────────────────────────────────────────────────────
 export default function AIChatPanel({ headerHeight = 70 }) {
+  const { locale } = useLanguage()
   const {
     messages,
     loading,
@@ -260,13 +266,18 @@ export default function AIChatPanel({ headerHeight = 70 }) {
             {!sidebarCollapsed && (
               <div className="transition-all duration-200">
                 <div className="text-xs font-extrabold text-[var(--text-primary)] leading-tight">EnerGym AI</div>
-                <div className="text-[10px] text-[var(--text-secondary)]">Trợ lý thông minh</div>
+                <div className="text-[10px] text-[var(--text-secondary)]">
+                  {locale === 'vi' ? "Trợ lý thông minh" : "Smart Assistant"}
+                </div>
               </div>
             )}
           </div>
           <button
             onClick={toggleSidebar}
-            title={sidebarCollapsed ? "Mở rộng" : "Thu gọn"}
+            title={sidebarCollapsed 
+              ? (locale === 'vi' ? "Mở rộng" : "Expand") 
+              : (locale === 'vi' ? "Thu gọn" : "Collapse")
+            }
             className="w-7 h-7 flex items-center justify-center rounded-lg border-none bg-transparent hover:bg-[var(--hover)] cursor-pointer text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"
           >
             {sidebarCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
@@ -302,7 +313,7 @@ export default function AIChatPanel({ headerHeight = 70 }) {
           {!sidebarCollapsed && Array.isArray(quickActions) && quickActions.length > 0 && (
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
-                Gợi ý nhanh
+                {locale === 'vi' ? "Gợi ý nhanh" : "Quick Suggestions"}
               </p>
               <div className="flex flex-col gap-1">
                 {quickActions.map((action, i) => (
@@ -347,11 +358,11 @@ export default function AIChatPanel({ headerHeight = 70 }) {
           {!sidebarCollapsed && isMember && (
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-2">
-                Kế hoạch đã lưu
+                {locale === 'vi' ? "Kế hoạch đã lưu" : "Saved Plans"}
               </p>
               {!Array.isArray(plans) || plans.length === 0 ? (
                 <p className="text-xs text-[var(--text-secondary)] px-1">
-                  Chưa có kế hoạch
+                  {locale === 'vi' ? "Chưa có kế hoạch" : "No plans saved"}
                 </p>
               ) : (
                 <div className="flex flex-col gap-1">
@@ -399,7 +410,7 @@ export default function AIChatPanel({ headerHeight = 70 }) {
               <div className="flex justify-center items-center pt-20">
                 <div className="text-sm text-[var(--text-secondary)] flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-[var(--brand)] border-t-transparent rounded-full animate-spin"></div>
-                  Đang tải lịch sử...
+                  {locale === 'vi' ? "Đang tải lịch sử..." : "Loading chat history..."}
                 </div>
               </div>
             ) : messages.length === 0 ? (

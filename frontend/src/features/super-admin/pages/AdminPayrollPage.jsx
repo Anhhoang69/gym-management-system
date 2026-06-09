@@ -295,12 +295,11 @@ function AdminPayrollPage() {
   const chartData = positionDistribution()
 
   return (
-    <div className="d-flex flex-column gap-4" style={{ minHeight: "calc(100vh - 120px)" }}>
+    <div className="d-flex flex-column gap-3" style={{ minHeight: "calc(100vh - 120px)" }}>
       {/* Page Header */}
       <div className="flex-shrink-0 d-flex justify-content-between align-items-center">
         <div>
-          <h3 className="fw-bold mb-1">Quản Lý Lương & Hoa Hồng Hệ Thống</h3>
-          <p className="text-muted mb-0">Cấu hình công thức, tính toán lương nhân sự, thống kê chi phí và theo dõi hoa hồng doanh số.</p>
+          <h3 className="fw-bold mb-0">Quản Lý Lương & Hoa Hồng</h3>
         </div>
       </div>
 
@@ -348,50 +347,44 @@ function AdminPayrollPage() {
 
       {/* Selected Month Filter (Global for all tabs except Formulas) */}
       {activeTab !== "formulas" && (
-        <CCard className="border-0 shadow-sm rounded-4 flex-shrink-0">
-          <CCardBody className="p-3">
-            <CRow className="align-items-end g-3">
-              <CCol md={4} xs={12}>
-                <CFormLabel className="small fw-bold mb-1">Chọn Kỳ Lương (Period)</CFormLabel>
-                <PeriodPicker
-                  value={selectedPeriod}
-                  onChange={setSelectedPeriod}
-                />
-              </CCol>
-              
-              {activeTab === "payroll_records" && (
-                <>
-                  <CCol md={3} xs={6}>
-                    <CFormLabel className="small fw-bold mb-1">Vị trí (Position)</CFormLabel>
-                    <CFormSelect
-                      value={filterPosition}
-                      onChange={(e) => setFilterPosition(e.target.value)}
-                    >
-                      <option value="">Tất cả vị trí</option>
-                      <option value="PT">Personal Trainer (PT)</option>
-                      <option value="HeadPT">Trưởng Bộ Phận PT (HeadPT)</option>
-                      <option value="Sales">Tư Vấn Bán Hàng (Sales)</option>
-                      <option value="Receptionist">Lễ Tân (Receptionist)</option>
-                      <option value="BranchAdmin">Quản Lý Chi Nhánh (BranchAdmin)</option>
-                    </CFormSelect>
-                  </CCol>
-                  <CCol md={3} xs={6}>
-                    <CFormLabel className="small fw-bold mb-1">Trạng thái (Status)</CFormLabel>
-                    <CFormSelect
-                      value={filterStatus}
-                      onChange={(e) => setFilterStatus(e.target.value)}
-                    >
-                      <option value="">Tất cả trạng thái</option>
-                      <option value="Draft">Chờ Duyệt (Draft)</option>
-                      <option value="Approved">Đã Duyệt (Approved)</option>
-                      <option value="Paid">Đã Thanh Toán (Paid)</option>
-                    </CFormSelect>
-                  </CCol>
-                </>
-              )}
-            </CRow>
-          </CCardBody>
-        </CCard>
+        <div className="row g-3 align-items-center mb-1 flex-shrink-0">
+          <div className="col-md-4 col-sm-12 d-flex align-items-center gap-2">
+            <span className="small text-muted text-nowrap fw-bold">Kỳ lương:</span>
+            <PeriodPicker
+              value={selectedPeriod}
+              onChange={setSelectedPeriod}
+            />
+          </div>
+          
+          {activeTab === "payroll_records" && (
+            <>
+              <div className="col-md-3 col-sm-6">
+                <CFormSelect
+                  value={filterPosition}
+                  onChange={(e) => setFilterPosition(e.target.value)}
+                >
+                  <option value="">Tất cả vị trí</option>
+                  <option value="PT">Personal Trainer (PT)</option>
+                  <option value="HeadPT">Trưởng Bộ Phận PT (HeadPT)</option>
+                  <option value="Sales">Tư Vấn Bán Hàng (Sales)</option>
+                  <option value="Receptionist">Lễ Tân (Receptionist)</option>
+                  <option value="BranchAdmin">Quản Lý Chi Nhánh (BranchAdmin)</option>
+                </CFormSelect>
+              </div>
+              <div className="col-md-3 col-sm-6">
+                <CFormSelect
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <option value="">Tất cả trạng thái</option>
+                  <option value="Draft">Chờ Duyệt (Draft)</option>
+                  <option value="Approved">Đã Duyệt (Approved)</option>
+                  <option value="Paid">Đã Thanh Toán (Paid)</option>
+                </CFormSelect>
+              </div>
+            </>
+          )}
+        </div>
       )}
 
       {/* Main Content Area */}
@@ -401,45 +394,43 @@ function AdminPayrollPage() {
           <PayrollSummaryCards records={allReports} />
 
           {/* Action Toolbar */}
-          <CCard className="border-0 shadow-sm rounded-4 flex-shrink-0">
-            <CCardBody className="p-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <div className="d-flex align-items-center gap-2">
-                <span className="small text-muted fw-bold">Tính lương bằng công thức:</span>
-                <CFormSelect
-                  style={{ width: "250px" }}
-                  value={selectedFormulaId}
-                  onChange={(e) => setSelectedFormulaId(e.target.value)}
-                >
-                  {formulas.length === 0 && <option value="">Đang tải công thức...</option>}
-                  {formulas.map(f => (
-                    <option key={f.formulaId || f.id} value={f.formulaId || f.id}>
-                      {f.name} {(f.isActive ?? f.active) ? '(Đang Áp Dụng)' : ''}
-                    </option>
-                  ))}
-                </CFormSelect>
-                <CButton
-                  color="primary"
-                  className="fw-bold text-white shadow-sm"
-                  onClick={handleCalculatePayroll}
-                  disabled={actionLoading}
-                >
-                  Tính Lương Kỳ Này
-                </CButton>
-              </div>
+          <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 flex-shrink-0">
+            <div className="d-flex align-items-center gap-2">
+              <span className="small text-muted fw-bold">Tính lương bằng công thức:</span>
+              <CFormSelect
+                style={{ width: "250px" }}
+                value={selectedFormulaId}
+                onChange={(e) => setSelectedFormulaId(e.target.value)}
+              >
+                {formulas.length === 0 && <option value="">Đang tải công thức...</option>}
+                {formulas.map(f => (
+                  <option key={f.formulaId || f.id} value={f.formulaId || f.id}>
+                    {f.name} {(f.isActive ?? f.active) ? '(Đang Áp Dụng)' : ''}
+                  </option>
+                ))}
+              </CFormSelect>
+              <CButton
+                color="primary"
+                className="fw-bold text-white shadow-sm"
+                onClick={handleCalculatePayroll}
+                disabled={actionLoading}
+              >
+                Tính Lương Kỳ Này
+              </CButton>
+            </div>
 
-              <div>
-                <CButton
-                  color="dark"
-                  variant="outline"
-                  className="fw-bold"
-                  onClick={handleExportCsv}
-                  disabled={actionLoading}
-                >
-                  Xuất File CSV
-                </CButton>
-              </div>
-            </CCardBody>
-          </CCard>
+            <div>
+              <CButton
+                color="dark"
+                variant="outline"
+                className="fw-bold"
+                onClick={handleExportCsv}
+                disabled={actionLoading}
+              >
+                Xuất File CSV
+              </CButton>
+            </div>
+          </div>
 
           {/* Calculated Payroll Slip List */}
           <CCard className="border-0 shadow-sm rounded-4 flex-grow-1 overflow-hidden">

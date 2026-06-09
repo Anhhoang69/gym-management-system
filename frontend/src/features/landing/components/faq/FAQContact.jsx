@@ -1,15 +1,18 @@
 import { Phone, Mail, MapPin } from 'lucide-react';
+import { useLanguage } from '../../../../shared/contexts/LanguageContext';
 
 export default function FAQContact() {
+  const { t } = useLanguage();
+
   return (
     <div className="px-4 py-16" style={{ backgroundColor: 'var(--bg)' }}>
       <div className="mx-auto w-[85%]">
         <div className="mb-12 text-center">
           <h2 style={{ color: 'var(--brand)' }} className="text-3xl md:text-4xl font-extrabold tracking-tight mb-3 uppercase">
-            Vẫn còn thắc mắc?
+            {t('faqPage.stillQuestionsTitle')}
           </h2>
           <p style={{ color: 'var(--text-primary)' }} className="block text-lg md:text-xl italic max-w-5xl mx-auto">
-            Đội ngũ hỗ trợ của chúng tôi luôn sẵn sàng giải đáp mọi câu hỏi của bạn. Hãy liên hệ với chúng tôi!
+            {t('faqPage.stillQuestionsDesc')}
           </p>
         </div>
 
@@ -28,7 +31,7 @@ export default function FAQContact() {
               Hotline
             </h3>
             <p className="mb-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Hỗ trợ 24/7
+              {t('faqPage.hotlineDesc')}
             </p>
             <a
               href="tel:0901234567"
@@ -53,7 +56,7 @@ export default function FAQContact() {
               Email
             </h3>
             <p className="mb-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Phản hồi trong 24h
+              {t('faqPage.emailDesc')}
             </p>
             <a
               href="mailto:support@energym.vn"
@@ -75,17 +78,17 @@ export default function FAQContact() {
               <MapPin className="h-8 w-8" style={{ color: 'var(--on-brand)' }} />
             </div>
             <h3 className="mb-2 text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              Địa chỉ
+              {t('contactPage.address')}
             </h3>
             <p className="mb-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-              10+ chi nhánh tại TP.HCM
+              {t('faqPage.addressDesc')}
             </p>
             <a
               href="#"
               className="text-lg font-bold transition-opacity hover:opacity-70"
               style={{ color: 'var(--text-primary)' }}
             >
-              Xem chi nhánh
+              {t('faqPage.viewBranches')}
             </a>
           </div>
         </div>
@@ -98,7 +101,7 @@ export default function FAQContact() {
               color: 'var(--on-brand)',
             }}
           >
-            Đăng ký tập thử miễn phí
+            {t('faqPage.registerFreeTrial')}
           </button>
           <button
             className="rounded-lg border px-8 py-3 font-semibold transition-all hover:scale-105 hover:brightness-95"
@@ -108,7 +111,7 @@ export default function FAQContact() {
               borderColor: 'var(--border)',
             }}
           >
-            Tư vấn ngay
+            {t('faqPage.consultNow')}
           </button>
         </div>
       </div>

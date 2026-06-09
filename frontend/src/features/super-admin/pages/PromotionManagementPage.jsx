@@ -91,7 +91,7 @@ function PromotionManagementPage() {
         const discount =
           p.discountType === "Percentage"
             ? `${p.discountValue}%`
-            : `$${p.discountValue}`
+            : `${(p.discountValue || 0).toLocaleString('vi-VN')}₫`
 
         const start =
           p.startDate && p.startDate !== "0001-01-01T00:00:00"
@@ -386,47 +386,41 @@ function PromotionManagementPage() {
   }
 
   return (
+    <div className="d-flex flex-column h-100" style={{ height: "calc(100vh - 130px)", overflow: "hidden" }}>
+      {/* FIXED TOP AREA */}
+      <div className="flex-shrink-0">
+        {/* HEADER */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h3 className="fw-bold mb-0">Quản Lý Mã Giảm Giá</h3>
+          </div>
 
-    <div>
-
-      <div className="d-flex justify-content-between align-items-center mb-4">
-
-        <div>
-          <h3 className="fw-bold mb-1">Quản Lý Mã Giảm Giá</h3>
-          <p className="text-muted mb-0">
-            Quản lý tất cả các khuyến mãi cho phòng tập
-          </p>
+          <button
+            className="btn btn-warning px-4 fw-semibold shadow-sm"
+            onClick={() => setShowCreateModal(true)}
+          >
+            + Thêm Mã Mới
+          </button>
         </div>
 
-        <button
-          className="btn btn-warning px-4 fw-semibold"
-          onClick={() => setShowCreateModal(true)}
-        >
-          + Thêm Mã Mới
-        </button>
+        {/* STATS */}
+        <StatsCards stats={stats} />
 
+        {/* FILTERS */}
+        <div className="mt-4">
+          <PromotionFilters
+            search={search}
+            setSearch={setSearch}
+            status={status}
+            setStatus={setStatus}
+            type={type}
+            setType={setType}
+          />
+        </div>
       </div>
 
-      <StatsCards stats={stats} />
-
-      <div className="mt-3">
-        <PromotionFilters
-          search={search}
-          setSearch={setSearch}
-          status={status}
-          setStatus={setStatus}
-          type={type}
-          setType={setType}
-        />
-      </div>
-
-      <div className="mt-3" style={{
-        maxHeight: "42vh",
-        overflowY: "auto",
-        border: "1px solid #eee",
-        borderRadius: "8px"
-      }}>
-
+      {/* TABLE AREA */}
+      <div className="flex-grow-1 overflow-auto mt-4 border rounded-3" style={{ minHeight: 0, background: "#fff" }}>
         <PromotionTable
           promotions={currentPromotions}
           selectedIds={selectedIds}
@@ -436,11 +430,10 @@ function PromotionManagementPage() {
           onDelete={handleDelete}
           onToggleStatus={handleToggleStatus}
         />
-
       </div>
 
-      <div className="d-flex justify-content-between align-items-center mt-3">
-
+      {/* PAGINATION / FOOTER */}
+      <div className="flex-shrink-0 mt-3 d-flex justify-content-between align-items-center">
         <small className="text-muted">
           Hiển thị {promotions.length === 0 ? 0 : (page - 1) * pageSize + 1}–
           {Math.min(page * pageSize, promotions.length)} của {promotions.length}
@@ -451,7 +444,6 @@ function PromotionManagementPage() {
           totalPages={totalPages}
           onChange={setPage}
         />
-
       </div>
 
       <CreatePromotionModal
@@ -478,9 +470,7 @@ function PromotionManagementPage() {
       <CToaster placement="top-end">
         {toast}
       </CToaster>
-
     </div>
-
   )
 
 }

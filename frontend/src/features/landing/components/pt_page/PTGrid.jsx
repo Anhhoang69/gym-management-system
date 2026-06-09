@@ -6,8 +6,10 @@ import pt4 from "../../../../assets/pt-4.jpg";
 import { useState } from "react";
 import PTCard from "./PTCard";
 import PTModal from "./PTModal";
+import { useLanguage } from "../../../../shared/contexts/LanguageContext";
 
 export default function PTGrid() {
+  const { t } = useLanguage();
   const trainers = [
     { image: pt1, name: "Hoàng Anh Minh", specialty: "Giảm mỡ, tăng cơ", experience: "6 năm" },
     { image: pt2, name: "Hoàng Ngọc Anh", specialty: "Giảm mỡ", experience: "5 năm" },
@@ -56,12 +58,10 @@ export default function PTGrid() {
       {/* INTRO */}
       <div className="relative z-10 mx-auto max-w-4xl px-6 text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-6">
-          Chuyên Gia Của <span className="text-[var(--brand)]">Chúng Tôi</span>
+          {t('ptPage.expertsTitle')} <span className="text-[var(--brand)]">{t('ptPage.expertsBrand')}</span>
         </h2>
         <p className="block text-lg md:text-xl text-[var(--text-secondary)] leading-relaxed">
-          Đội ngũ Huấn luyện viên của chúng tôi gồm những chuyên gia được chứng nhận
-          quốc tế, có nhiều năm kinh nghiệm trong lĩnh vực thể hình và sức khỏe.
-          Sẵn sàng đồng hành cùng bạn trên mọi hành trình.
+          {t('ptPage.expertsDesc')}
         </p>
         <div className="w-24 h-1 bg-[var(--brand)] mx-auto mt-8 rounded-full"></div>
       </div>

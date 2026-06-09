@@ -141,7 +141,7 @@ function PackageForm({ formId, initialData = {}, onSubmit, onClose }) {
                     <CCard className="border-0 shadow-sm flex-grow-1">
                         <CCardHeader className="bg-white border-bottom-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
                             <h5 className="fw-bold text-primary mb-0">Tiện ích đi kèm</h5>
-                            <CButton color="primary" variant="outline" size="sm" onClick={addFeature}>
+                            <CButton color="warning" variant="outline" size="sm" onClick={addFeature}>
                                 + Thêm tiện ích
                             </CButton>
                         </CCardHeader>
@@ -176,7 +176,7 @@ function PackageForm({ formId, initialData = {}, onSubmit, onClose }) {
                     <CCard className="border-0 shadow-sm h-100">
                         <CCardHeader className="bg-white border-bottom-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
                             <h5 className="fw-bold text-primary mb-0">Bảng giá (Pricings)</h5>
-                            <CButton color="primary" variant="outline" size="sm" onClick={addPricing}>
+                            <CButton color="warning" variant="outline" size="sm" onClick={addPricing}>
                                 + Thêm tùy chọn giá
                             </CButton>
                         </CCardHeader>

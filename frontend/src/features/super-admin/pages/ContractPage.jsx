@@ -7,7 +7,7 @@ import SalesTable from "../components/revenue-sales/SalesTable"
 
 import { useState } from "react"
 import UnifiedPaymentDrawer from "../components/common/UnifiedPaymentDrawer"
-
+import { CNav, CNavItem, CNavLink, CButton } from "@coreui/react"
 
 function ContractsPage() {
   const storedUser = localStorage.getItem("user")
@@ -20,64 +20,78 @@ function ContractsPage() {
   const [paymentData, setPaymentData] = useState({})
   const [refreshKey, setRefreshKey] = useState(0)
 
-  const [activeTab, setActiveTab] = useState('official')
+  const [activeTab, setActiveTab] = useState('draft')
 
   return (
-    <div>
+    <div className="d-flex flex-column" style={{ height: "calc(100vh - 130px)" }}>
 
       {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
-
+      <div className="flex-shrink-0 d-flex justify-content-between align-items-center mb-3">
         <div>
           <h3 className="fw-bold mb-1">Hợp Đồng & Hóa Đơn</h3>
         </div>
-
-        <button
-          className="btn btn-warning px-4 fw-semibold shadow-sm"
-          onClick={() => setShowCreateModal(true)}
-        >
-          + Tạo Hợp Đồng
-        </button>
-
+        {activeTab === 'draft' && (
+          <CButton
+            color="warning"
+            className="px-4 fw-bold text-dark shadow-sm"
+            onClick={() => setShowCreateModal(true)}
+          >
+            + Tạo Hợp Đồng
+          </CButton>
+        )}
       </div>
 
       {/* Tabs */}
-      <div className="d-flex border-bottom mb-3 gap-4">
-        <button
-          className={`btn btn-link text-decoration-none px-0 pb-2 border-bottom border-2 rounded-0 ${activeTab === 'official' ? 'border-primary fw-bold text-primary' : 'border-transparent text-muted'}`}
-          onClick={() => setActiveTab('official')}
-        >
-          Hợp đồng chính thức
-        </button>
-        <button
-          className={`btn btn-link text-decoration-none px-0 pb-2 border-bottom border-2 rounded-0 ${activeTab === 'draft' ? 'border-primary fw-bold text-primary' : 'border-transparent text-muted'}`}
-          onClick={() => setActiveTab('draft')}
-        >
-          Bản nháp
-        </button>
-        <button
-          className={`btn btn-link text-decoration-none px-0 pb-2 border-bottom border-2 rounded-0 ${activeTab === 'invoice' ? 'border-primary fw-bold text-primary' : 'border-transparent text-muted'}`}
-          onClick={() => setActiveTab('invoice')}
-        >
-          Hóa đơn
-        </button>
-        <button
-          className={`btn btn-link text-decoration-none px-0 pb-2 border-bottom border-2 rounded-0 ${activeTab === 'sales' ? 'border-primary fw-bold text-primary' : 'border-transparent text-muted'}`}
-          onClick={() => setActiveTab('sales')}
-        >
-          Lịch sử giao dịch
-        </button>
+      <div className="flex-shrink-0 border-bottom mb-3">
+        <CNav variant="tabs">
+          <CNavItem>
+            <CNavLink
+              active={activeTab === 'draft'}
+              onClick={() => setActiveTab('draft')}
+              style={{ cursor: "pointer", fontWeight: activeTab === 'draft' ? "bold" : "normal" }}
+            >
+              Bản nháp
+            </CNavLink>
+          </CNavItem>
+          <CNavItem>
+            <CNavLink
+              active={activeTab === 'official'}
+              onClick={() => setActiveTab('official')}
+              style={{ cursor: "pointer", fontWeight: activeTab === 'official' ? "bold" : "normal" }}
+            >
+              Hợp đồng chính thức
+            </CNavLink>
+          </CNavItem>
+          <CNavItem>
+            <CNavLink
+              active={activeTab === 'invoice'}
+              onClick={() => setActiveTab('invoice')}
+              style={{ cursor: "pointer", fontWeight: activeTab === 'invoice' ? "bold" : "normal" }}
+            >
+              Hóa đơn
+            </CNavLink>
+          </CNavItem>
+          <CNavItem>
+            <CNavLink
+              active={activeTab === 'sales'}
+              onClick={() => setActiveTab('sales')}
+              style={{ cursor: "pointer", fontWeight: activeTab === 'sales' ? "bold" : "normal" }}
+            >
+              Thanh toán
+            </CNavLink>
+          </CNavItem>
+        </CNav>
       </div>
 
       {/* Filters */}
       {activeTab !== 'sales' && (
-        <div className="mb-3">
+        <div className="flex-shrink-0 mb-3">
           <ContractFilters />
         </div>
       )}
 
       {/* Table */}
-      <div>
+      <div className="flex-grow-1 overflow-hidden">
         {activeTab === 'official' && (
           <ContractsTable
             key={`official-${refreshKey}`}
@@ -100,7 +114,7 @@ function ContractsPage() {
                   invoiceId: result.invoiceId,
                   contractId: result.contractId || result.id,
                   totalAmountDue: result.dealPrice || result.totalAmount || 0,
-                  invoiceCode: result.invoiceId.substring(0, 8).toUpperCase()
+                  invoiceCode: result.invoiceId.slice(-10).toUpperCase()
                 });
                 setShowPayment(true);
               }
@@ -152,7 +166,7 @@ function ContractsPage() {
               invoiceId: result.invoiceId,
               contractId: result.contractId || result.id,
               totalAmountDue: result.dealPrice || result.totalAmount || 0,
-              invoiceCode: result.invoiceId // Using invoiceId as code if there's no code returned
+              invoiceCode: result.invoiceId.slice(-10).toUpperCase()
             });
             setShowPayment(true);
           }

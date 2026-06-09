@@ -19,7 +19,7 @@ function FinancialTable({ revenueData }) {
   return (
     <CCard className="shadow-sm border-0">
       <CCardBody>
-        <CNav variant="pills" className="mb-4">
+        <CNav variant="tabs" className="mb-4">
           <CNavItem>
             <CNavLink
               active={activeKey === 1}
@@ -45,8 +45,7 @@ function FinancialTable({ revenueData }) {
             <table className="table table-hover">
               <thead>
                 <tr>
-                  <th>ID Chi Nhánh</th>
-                  <th>Tên Chi Nhánh</th>
+                  <th>Chi Nhánh</th>
                   <th>Số Lượng Hóa Đơn</th>
                   <th>Tổng Doanh Thu</th>
                 </tr>
@@ -54,13 +53,15 @@ function FinancialTable({ revenueData }) {
               <tbody>
                 {branches.length === 0 && (
                   <tr>
-                    <td colSpan="4" className="text-center text-muted">Không có dữ liệu</td>
+                    <td colSpan="3" className="text-center text-muted">Không có dữ liệu</td>
                   </tr>
                 )}
                 {branches.map(item => (
                   <tr key={item.branchId}>
-                    <td>{item.branchId.substring(0, 8)}...</td>
-                    <td>{item.branchName}</td>
+                    <td>
+                      <div className="fw-semibold">{item.branchName}</div>
+                      <small className="text-muted d-block" style={{ fontSize: "0.75rem" }}>ID: {item.branchId}</small>
+                    </td>
                     <td>{item.invoiceCount}</td>
                     <td className="fw-bold text-primary">
                       {formatCurrency(item.revenue)}
@@ -75,8 +76,7 @@ function FinancialTable({ revenueData }) {
             <table className="table table-hover">
               <thead>
                 <tr>
-                  <th>ID Gói</th>
-                  <th>Tên Gói</th>
+                  <th>Gói Tập</th>
                   <th>Số Lượng Hợp Đồng</th>
                   <th>Tổng Doanh Thu</th>
                 </tr>
@@ -84,13 +84,15 @@ function FinancialTable({ revenueData }) {
               <tbody>
                 {packages.length === 0 && (
                   <tr>
-                    <td colSpan="4" className="text-center text-muted">Không có dữ liệu</td>
+                    <td colSpan="3" className="text-center text-muted">Không có dữ liệu</td>
                   </tr>
                 )}
                 {packages.map(item => (
                   <tr key={item.packageId}>
-                    <td>{item.packageId.substring(0, 8)}...</td>
-                    <td>{item.packageName}</td>
+                    <td>
+                      <div className="fw-semibold">{item.packageName}</div>
+                      <small className="text-muted d-block" style={{ fontSize: "0.75rem" }}>ID: {item.packageId}</small>
+                    </td>
                     <td>{item.contractCount}</td>
                     <td className="fw-bold text-success">
                       {formatCurrency(item.revenue)}

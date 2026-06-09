@@ -1,42 +1,45 @@
 import { useState, useEffect } from "react"
 import {
-    CCard,
-    CCardBody,
     CButton,
     CFormInput,
-    CFormSelect,
     CBadge,
-    CTable,
-    CTableHead,
-    CTableRow,
-    CTableHeaderCell,
-    CTableBody,
-    CTableDataCell,
-    CPagination,
-    CPaginationItem
+    CDropdown,
+    CDropdownToggle,
+    CDropdownMenu,
+    CDropdownItem,
+    CNav,
+    CNavItem,
+    CNavLink
 } from "@coreui/react"
-import { getLeads, getLeadStats } from "../../super-admin/services/leadService"
+import { cilPeople, cilUserPlus, cilChartLine, cilBan } from "@coreui/icons"
+import { getLeads, getLeadStats, getLeadSources } from "../../super-admin/services/leadService"
 import moment from "moment"
 import CreateLeadModal from "../../super-admin/components/lead-management/CreateLeadModal"
 import Pagination from "../../../shared/components/Pagination"
 import LeadDetailModal from "../../super-admin/components/lead-management/LeadDetailModal"
 import MembershipOnboardingModal from "../../super-admin/components/common/MembershipOnboardingModal"
 import UnifiedPaymentDrawer from "../../super-admin/components/common/UnifiedPaymentDrawer"
+import StatsCards from "../../super-admin/components/common/StatsCards"
+import LeadSourcesTab from "../../super-admin/components/lead-management/LeadSourcesTab"
+import LeadSourceModal from "../../super-admin/components/lead-management/LeadSourceModal"
 
 function LeadManagementPage() {
     const storedUser = localStorage.getItem("user")
     const currentUser = storedUser ? JSON.parse(storedUser) : null
     const myBranchId = currentUser?.branchId || ""
 
+    const [activeTab, setActiveTab] = useState("leads") // leads or sources
+
     const [leads, setLeads] = useState([])
     const [stats, setStats] = useState(null)
     const [loading, setLoading] = useState(false)
-    const [filters, setFilters] = useState({
-        search: "",
-        status: "",
-        page: 1,
-        pageSize: 10
-    })
+    
+    const [search, setSearch] = useState("")
+    const [status, setStatus] = useState("")
+    const [sourceId, setSourceId] = useState("")
+    const [sources, setSources] = useState([])
+    const [page, setPage] = useState(1)
+    const pageSize = 10
     const [pagination, setPagination] = useState({ totalPages: 1, totalItems: 0 })
 
     const [showCreateModal, setShowCreateModal] = useState(false)
@@ -48,10 +51,10 @@ function LeadManagementPage() {
     const [showPayment, setShowPayment] = useState(false)
     const [paymentData, setPaymentData] = useState({})
 
-    useEffect(() => {
-        fetchStats()
-        fetchLeads()
-    }, [filters.page, filters.status])
+    // Lead Source Modal State
+    const [showLeadSourceModal, setShowLeadSourceModal] = useState(false)
+    const [selectedLeadSource, setSelectedLeadSource] = useState(null)
+    const [leadSourcesRefreshTrigger, setLeadSourcesRefreshTrigger] = useState(0)
 
     const fetchStats = async () => {
         try {
@@ -62,14 +65,24 @@ function LeadManagementPage() {
         }
     }
 
+    const fetchSources = async () => {
+        try {
+            const data = await getLeadSources()
+            setSources(data || [])
+        } catch (error) {
+            console.error("Failed to load lead sources", error)
+        }
+    }
+
     const fetchLeads = async () => {
         setLoading(true)
         try {
             const data = await getLeads({
-                Search: filters.search,
-                Status: filters.status,
-                Page: filters.page,
-                PageSize: filters.pageSize,
+                Search: search,
+                Status: status,
+                SourceId: sourceId,
+                Page: page,
+                PageSize: pageSize,
                 BranchId: myBranchId
             })
             setLeads(data.items || [])
@@ -84,203 +97,304 @@ function LeadManagementPage() {
         }
     }
 
-    const handleSearch = () => {
-        setFilters({ ...filters, page: 1 })
-        fetchLeads()
-    }
+    useEffect(() => {
+        fetchStats()
+        fetchSources()
+    }, [])
 
-    const handleFilterChange = (e) => {
-        setFilters({ ...filters, [e.target.name]: e.target.value, page: 1 })
-    }
+    useEffect(() => {
+        if (activeTab === "leads") {
+            fetchLeads()
+        }
+    }, [page, activeTab])
+
+    useEffect(() => {
+        if (activeTab === "leads") {
+            const timeout = setTimeout(() => {
+                if (page === 1) {
+                    fetchLeads()
+                } else {
+                    setPage(1)
+                }
+            }, 300)
+            return () => clearTimeout(timeout)
+        }
+    }, [search, status, sourceId])
 
     const getStatusBadge = (status) => {
+        let color = "secondary"
+        let text = status
         switch (status) {
-            case 'New': return <CBadge color="info">New</CBadge>
-            case 'Contacted': return <CBadge color="primary">Contacted</CBadge>
-            case 'Qualified': return <CBadge color="warning">Qualified</CBadge>
-            case 'Converted': return <CBadge color="success">Converted</CBadge>
-            case 'Lost': return <CBadge color="danger">Lost</CBadge>
-            default: return <CBadge color="secondary">{status}</CBadge>
+            case 'New':
+                color = "info"
+                text = "Mới"
+                break
+            case 'Contacted':
+                color = "primary"
+                text = "Đã liên hệ"
+                break
+            case 'Qualified':
+                color = "warning"
+                text = "Tiềm năng"
+                break
+            case 'Converted':
+                color = "success"
+                text = "Đã chốt"
+                break
+            case 'Lost':
+                color = "danger"
+                text = "Thất bại"
+                break
         }
+        return (
+            <CBadge color={color} className="px-2 py-1.5" style={{ fontSize: "11px", fontWeight: "600" }}>
+                {text}
+            </CBadge>
+        )
     }
 
+    const statsItems = stats ? [
+        {
+            title: "Tổng Số Leads",
+            value: stats.totalLeads,
+            subtitle: `+${stats.leadsCreatedToday} hôm nay`,
+            icon: cilPeople,
+            bg: "#FFF3CD",
+            color: "#F59E0B"
+        },
+        {
+            title: "Lead Mới",
+            value: stats.newLeads,
+            icon: cilUserPlus,
+            bg: "#DCFCE7",
+            color: "#22C55E"
+        },
+        {
+            title: "Tỉ Lệ Chuyển Đổi",
+            value: `${(stats.conversionRate || 0).toFixed(1)}%`,
+            icon: cilChartLine,
+            bg: "#F3E8FF",
+            color: "#A855F7"
+        },
+        {
+            title: "Lead Đã Mất",
+            value: stats.lostLeads,
+            icon: cilBan,
+            bg: "#FEE2E2",
+            color: "#EF4444"
+        }
+    ] : []
+
     return (
-        <div className="container-fluid p-0">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h3 className="fw-bold mb-1">Quản Lý Leads</h3>
-                    <p className="text-muted mb-0">Theo dõi khách hàng tiềm năng & CRM</p>
+        <div className="d-flex flex-column h-100" style={{ height: "calc(100vh - 130px)", overflow: "hidden" }}>
+            {/* FIXED TOP AREA */}
+            <div className="flex-shrink-0">
+                {/* HEADER */}
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h3 className="fw-bold mb-0">Quản Lý Leads</h3>
+                    </div>
+                    <div className="d-flex gap-2">
+                        {activeTab === "leads" ? (
+                            <>
+                                <CButton color="success" className="text-white fw-semibold shadow-sm" onClick={() => alert("Chức năng Import CSV đang phát triển")}>
+                                    Import CSV
+                                </CButton>
+                                <CButton color="warning" className="fw-semibold shadow-sm" onClick={() => setShowCreateModal(true)}>
+                                    + Thêm Lead
+                                </CButton>
+                            </>
+                        ) : (
+                            <CButton color="success" className="text-white fw-semibold shadow-sm" onClick={() => {
+                                setSelectedLeadSource(null)
+                                setShowLeadSourceModal(true)
+                            }}>
+                                + Thêm Nguồn Lead
+                            </CButton>
+                        )}
+                    </div>
                 </div>
-                <div className="d-flex gap-2">
-                    <CButton color="success" className="text-white" onClick={() => alert("Chức năng Import CSV đang phát triển")}>
-                        Import CSV
-                    </CButton>
-                    <CButton color="warning" onClick={() => setShowCreateModal(true)}>
-                        + Thêm Lead
-                    </CButton>
-                </div>
+
+                {/* TABS */}
+                <CNav variant="tabs" className="mb-3">
+                    <CNavItem>
+                        <CNavLink
+                            active={activeTab === "leads"}
+                            onClick={() => setActiveTab("leads")}
+                            style={{ cursor: "pointer", fontWeight: activeTab === "leads" ? "bold" : "normal" }}
+                        >
+                            Danh Sách Leads
+                        </CNavLink>
+                    </CNavItem>
+                    <CNavItem>
+                        <CNavLink
+                            active={activeTab === "sources"}
+                            onClick={() => setActiveTab("sources")}
+                            style={{ cursor: "pointer", fontWeight: activeTab === "sources" ? "bold" : "normal" }}
+                        >
+                            Nguồn Leads
+                        </CNavLink>
+                    </CNavItem>
+                </CNav>
             </div>
 
-            {/* Dashboard Stats */}
-            {stats && (
-                <div className="row g-3 mb-4">
-                    <div className="col-md-3">
-                        <CCard className="border-0 shadow-sm">
-                            <CCardBody>
-                                <div className="text-muted small fw-semibold">TỔNG SỐ LEADS</div>
-                                <h3 className="mb-0 fw-bold">{stats.totalLeads}</h3>
-                                <div className="text-success small mt-1">+{stats.leadsCreatedToday} hôm nay</div>
-                            </CCardBody>
-                        </CCard>
-                    </div>
-                    <div className="col-md-3">
-                        <CCard className="border-0 shadow-sm">
-                            <CCardBody>
-                                <div className="text-muted small fw-semibold">LEAD MỚI</div>
-                                <h3 className="mb-0 fw-bold text-info">{stats.newLeads}</h3>
-                            </CCardBody>
-                        </CCard>
-                    </div>
-                    <div className="col-md-3">
-                        <CCard className="border-0 shadow-sm">
-                            <CCardBody>
-                                <div className="text-muted small fw-semibold">TỈ LỆ CHUYỂN ĐỔI</div>
-                                <h3 className="mb-0 fw-bold text-success">{(stats.conversionRate || 0).toFixed(1)}%</h3>
-                            </CCardBody>
-                        </CCard>
-                    </div>
-                    <div className="col-md-3">
-                        <CCard className="border-0 shadow-sm">
-                            <CCardBody>
-                                <div className="text-muted small fw-semibold">LEAD ĐÃ MẤT</div>
-                                <h3 className="mb-0 fw-bold text-danger">{stats.lostLeads}</h3>
-                            </CCardBody>
-                        </CCard>
-                    </div>
-                </div>
-            )}
+            {/* TAB CONTENT */}
+            {activeTab === "leads" ? (
+                <>
+                    {/* FIXED STATS & FILTERS (only for leads) */}
+                    <div className="flex-shrink-0">
+                        {/* STATS */}
+                        <StatsCards stats={statsItems} />
 
-            {/* Main Content */}
-            <CCard className="border-0 shadow-sm">
-                <CCardBody>
-                    <div className="row mb-3 g-3">
-                        <div className="col-md-4">
-                            <div className="d-flex gap-2">
+                        {/* FILTERS */}
+                        <div className="row g-4 align-items-center mt-2 mb-2">
+                            <div className="col-md-3">
                                 <CFormInput 
                                     placeholder="Tìm theo tên, SĐT, email..." 
-                                    value={filters.search}
-                                    name="search"
-                                    onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
                                 />
-                                <CButton color="primary" onClick={handleSearch}>Tìm</CButton>
                             </div>
-                        </div>
-                        <div className="col-md-3">
-                            <CFormSelect name="status" value={filters.status} onChange={handleFilterChange}>
-                                <option value="">Tất cả trạng thái</option>
-                                <option value="New">New</option>
-                                <option value="Contacted">Contacted</option>
-                                <option value="Qualified">Qualified</option>
-                                <option value="Converted">Converted</option>
-                                <option value="Lost">Lost</option>
-                            </CFormSelect>
+                            <div className="col-md-3">
+                                <select 
+                                    className="form-select w-100"
+                                    value={status} 
+                                    onChange={(e) => setStatus(e.target.value)}
+                                >
+                                    <option value="">Tất cả trạng thái</option>
+                                    <option value="New">Mới (New)</option>
+                                    <option value="Contacted">Đã liên hệ (Contacted)</option>
+                                    <option value="Qualified">Tiềm năng (Qualified)</option>
+                                    <option value="Converted">Đã chốt (Converted)</option>
+                                    <option value="Lost">Thất bại (Lost)</option>
+                                </select>
+                            </div>
+                            <div className="col-md-3">
+                                <select 
+                                    className="form-select w-100"
+                                    value={sourceId} 
+                                    onChange={(e) => setSourceId(e.target.value)}
+                                >
+                                    <option value="">Tất cả nguồn</option>
+                                    {sources.map(src => (
+                                        <option key={src.id} value={src.id}>{src.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                     </div>
 
-                    {loading ? (
-                        <div className="text-center py-5">Đang tải...</div>
-                    ) : (
-                        <>
-                            <div className="table-responsive">
-                                <CTable align="middle" className="mb-0 border" hover responsive>
-                                    <CTableHead color="light">
-                                        <CTableRow>
-                                            <CTableHeaderCell>Họ Tên</CTableHeaderCell>
-                                            <CTableHeaderCell>Liên Hệ</CTableHeaderCell>
-                                            <CTableHeaderCell>Nguồn</CTableHeaderCell>
-                                            <CTableHeaderCell>Nhân Viên</CTableHeaderCell>
-                                            <CTableHeaderCell>Ngày Tạo</CTableHeaderCell>
-                                            <CTableHeaderCell>Trạng Thái</CTableHeaderCell>
-                                            <CTableHeaderCell className="text-center">Thao tác</CTableHeaderCell>
-                                        </CTableRow>
-                                    </CTableHead>
-                                    <CTableBody>
-                                        {leads.map(lead => (
-                                            <CTableRow key={lead.leadId}>
-                                                <CTableDataCell className="fw-semibold">
-                                                    {lead.name}
-                                                </CTableDataCell>
-                                                <CTableDataCell>
-                                                    <div className="small">{lead.phone}</div>
-                                                    <div className="small text-muted">{lead.email}</div>
-                                                </CTableDataCell>
-                                                <CTableDataCell>
-                                                    {lead.sourceName || 'Unknown'}
-                                                </CTableDataCell>
-                                                <CTableDataCell>
-                                                    {lead.assignedToStaffName || 'Chưa gán'}
-                                                </CTableDataCell>
-                                                <CTableDataCell>
-                                                    {moment(lead.createdAt).format("DD/MM/YYYY")}
-                                                </CTableDataCell>
-                                                <CTableDataCell>
-                                                    {getStatusBadge(lead.status)}
-                                                </CTableDataCell>
-                                                <CTableDataCell className="text-center">
-                                                    <CButton 
-                                                        color="info" 
-                                                        variant="ghost" 
-                                                        size="sm"
-                                                        onClick={() => {
+                    {/* TABLE AREA */}
+                    <div className="flex-grow-1 overflow-auto mt-2 border rounded-3" style={{ minHeight: 0, background: "#fff" }}>
+                        {loading ? (
+                            <div className="text-center py-5 text-muted">Đang tải dữ liệu...</div>
+                        ) : (
+                            <table className="table align-middle mb-0" style={{ borderCollapse: "separate", borderSpacing: 0 }}>
+                                <thead
+                                    style={{
+                                        position: "sticky",
+                                        top: 0,
+                                        background: "#f9fafb",
+                                        zIndex: 2,
+                                        boxShadow: "0 1px 0 #e5e7eb",
+                                    }}
+                                >
+                                    <tr>
+                                        <th style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#6b7280", fontWeight: "600", padding: "12px 16px" }}>Họ Tên</th>
+                                        <th style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#6b7280", fontWeight: "600", padding: "12px 16px" }}>Liên Hệ</th>
+                                        <th style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#6b7280", fontWeight: "600", padding: "12px 16px" }}>Nguồn</th>
+                                        <th style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#6b7280", fontWeight: "600", padding: "12px 16px" }}>Nhân Viên</th>
+                                        <th style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#6b7280", fontWeight: "600", padding: "12px 16px" }}>Ngày Tạo</th>
+                                        <th style={{ fontSize: "12px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#6b7280", fontWeight: "600", padding: "12px 16px" }}>Trạng Thế</th>
+                                        <th style={{ width: 80, padding: "12px 16px" }}></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {leads.map(lead => (
+                                        <tr key={lead.leadId} className="user-row">
+                                            <td style={{ padding: "14px 16px" }} className="fw-semibold text-dark">
+                                                {lead.name}
+                                            </td>
+                                            <td style={{ padding: "14px 16px" }}>
+                                                <div className="small fw-medium text-dark">{lead.phone}</div>
+                                                <div className="small text-muted">{lead.email}</div>
+                                            </td>
+                                            <td style={{ padding: "14px 16px", color: "#4b5563" }}>
+                                                {lead.sourceName || 'Không xác định'}
+                                            </td>
+                                            <td style={{ padding: "14px 16px", color: "#4b5563" }}>
+                                                {lead.assignedToStaffName || 'Chưa gán'}
+                                            </td>
+                                            <td style={{ padding: "14px 16px", color: "#4b5563" }}>
+                                                {moment(lead.createdAt).format("DD/MM/YYYY")}
+                                            </td>
+                                            <td style={{ padding: "14px 16px" }}>
+                                                {getStatusBadge(lead.status)}
+                                            </td>
+                                            <td style={{ padding: "14px 16px", textAlign: "right" }}>
+                                                <CDropdown alignment="end" onClick={(e) => e.stopPropagation()}>
+                                                    <CDropdownToggle color="light" size="sm" caret={false} className="border shadow-sm" style={{ minWidth: "32px", height: "32px", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                                                        ⋮
+                                                    </CDropdownToggle>
+                                                    <CDropdownMenu>
+                                                        <CDropdownItem onClick={() => {
                                                             setSelectedLead(lead)
                                                             setShowDetailModal(true)
-                                                        }}
-                                                    >
-                                                        Chi Tiết
-                                                    </CButton>
-                                                    {lead.status !== 'Converted' && lead.status !== 'Lost' && (
-                                                        <CButton 
-                                                            color="success" 
-                                                            variant="outline" 
-                                                            size="sm"
-                                                            className="ms-2"
-                                                            onClick={() => {
+                                                        }}>
+                                                            Chi Tiết
+                                                        </CDropdownItem>
+                                                        {lead.status !== 'Converted' && lead.status !== 'Lost' && (
+                                                            <CDropdownItem className="border-top" onClick={() => {
                                                                 setSelectedLead(lead)
                                                                 setShowOnboarding(true)
-                                                            }}
-                                                        >
-                                                            Chốt Sale
-                                                        </CButton>
-                                                    )}
-                                                </CTableDataCell>
-                                            </CTableRow>
-                                        ))}
-                                        {leads.length === 0 && (
-                                            <CTableRow>
-                                                <CTableDataCell colSpan={7} className="text-center py-4 text-muted">
-                                                    Không tìm thấy lead nào.
-                                                </CTableDataCell>
-                                            </CTableRow>
-                                        )}
-                                    </CTableBody>
-                                </CTable>
-                            </div>
+                                                            }}>
+                                                                Chốt Sale
+                                                            </CDropdownItem>
+                                                        )}
+                                                    </CDropdownMenu>
+                                                </CDropdown>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {leads.length === 0 && (
+                                        <tr>
+                                            <td colSpan={7} className="text-center py-4 text-muted">
+                                                Không tìm thấy lead nào.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
 
-                            {/* Pagination */}
-                            {pagination.totalPages > 1 && (
-                                <div className="d-flex justify-content-end mt-4">
-                                    <Pagination
-                                        currentPage={filters.page}
-                                        totalPages={pagination.totalPages}
-                                        onChange={(newPage) => setFilters({...filters, page: newPage})}
-                                    />
-                                </div>
-                            )}
-                        </>
-                    )}
-                </CCardBody>
-            </CCard>
+                    {/* PAGINATION / FOOTER */}
+                    <div className="flex-shrink-0 mt-3 d-flex justify-content-between align-items-center">
+                        <small className="text-muted">
+                            Hiển thị {pagination.totalItems === 0 ? 0 : (page - 1) * pageSize + 1}–
+                            {Math.min(page * pageSize, pagination.totalItems)} của {pagination.totalItems}
+                        </small>
+
+                        {pagination.totalPages > 1 && (
+                            <Pagination
+                                currentPage={page}
+                                            totalPages={pagination.totalPages}
+                                onChange={setPage}
+                            />
+                        )}
+                    </div>
+                </>
+            ) : (
+                <div className="flex-grow-1 d-flex flex-column overflow-hidden mt-3">
+                    <LeadSourcesTab 
+                        refreshTrigger={leadSourcesRefreshTrigger} 
+                        onEditSource={(source) => {
+                            setSelectedLeadSource(source)
+                            setShowLeadSourceModal(true)
+                        }} 
+                    />
+                </div>
+            )}
 
             <CreateLeadModal 
                 visible={showCreateModal}
@@ -326,6 +440,13 @@ function LeadManagementPage() {
                 onSuccess={() => {
                     // Drawer success state plays for a bit then closes
                 }}
+            />
+
+            <LeadSourceModal
+                visible={showLeadSourceModal}
+                setVisible={setShowLeadSourceModal}
+                leadSource={selectedLeadSource}
+                onSaved={() => setLeadSourcesRefreshTrigger(prev => prev + 1)}
             />
         </div>
     )

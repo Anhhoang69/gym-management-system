@@ -224,7 +224,7 @@ function EditPromotionModal({
               </option>
 
               <option value="FixedAmount">
-                Fixed Amount ($)
+                Fixed Amount (₫)
               </option>
             </CFormSelect>
 
@@ -388,6 +388,7 @@ function EditPromotionModal({
                   : "Chưa cập nhật"
               }
               disabled
+              className="mb-3"
             />
 
           </div>
@@ -400,6 +401,7 @@ function EditPromotionModal({
 
         <CButton
           color="secondary"
+          variant="outline"
           onClick={() => setVisible(false)}
         >
           Hủy
@@ -407,9 +409,10 @@ function EditPromotionModal({
 
         <CButton
           color="warning"
+          className="fw-bold shadow-sm"
           onClick={handleSave}
         >
-          Lưu thay đổi
+          Lưu Thay Đổi
         </CButton>
 
       </CModalFooter>

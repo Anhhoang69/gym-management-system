@@ -2,8 +2,11 @@ import { Link } from 'react-router-dom';
 import { FaLinkedin, FaGithub, FaInstagram, FaFacebookF } from 'react-icons/fa6';
 import LogoWhite from '../../../assets/LogoWhiteText.svg';
 import LogoBlack from '../../../assets/LogoBlackText.svg';
+import { useLanguage } from '../../../shared/contexts/LanguageContext';
 
 export default function LandingFooter() {
+  const { t } = useLanguage();
+
   const socialMediaLinks = [
     { name: 'LinkedIn', url: 'https://www.linkedin.com', icon: <FaLinkedin /> },
     { name: 'Github', url: 'https://github.com', icon: <FaGithub /> },
@@ -31,7 +34,7 @@ export default function LandingFooter() {
             </Link>
 
             <p className="max-w-md text-sm leading-relaxed text-(--text-secondary)">
-              EnerGym mang đến không gian tập luyện chuyên nghiệp, hệ thống thiết bị hiện đại cùng đội ngũ chuyên gia tận tâm, đồng hành cùng bạn trên hành trình chinh phục sức khoẻ.
+              {t('footer.description')}
             </p>
           </div>
 
@@ -54,9 +57,9 @@ export default function LandingFooter() {
 
           {/* Copyright */}
           <div className="text-sm leading-relaxed text-(--text-secondary)">
-            <p>Bản quyền © {new Date().getFullYear()} thuộc về EnerGym.</p>
+            <p>{t('footer.copyright', { year: new Date().getFullYear() })}</p>
             <p className="mt-1">
-              Hệ thống quản lý phòng tập chuyên nghiệp.
+              {t('footer.subtext')}
             </p>
           </div>
         </div>
@@ -64,17 +67,17 @@ export default function LandingFooter() {
         {/* CLASSES */}
         <div className="space-y-4">
             <h4 className="relative pb-2 text-xl font-semibold">
-            Dịch vụ nổi bật
+            {t('footer.highlightServices')}
             <span className="absolute bottom-0 left-0 h-1 w-16 bg-(--brand)" />
           </h4>
 
           <ul className="space-y-4">
             {[
-              'Gym / Thể hình',
-              'Yoga & Thiền',
-              'Zumba / Dance',
-              'Kickboxing',
-              'Huấn luyện viên cá nhân (PT)',
+              t('footer.servicesList.gym'),
+              t('footer.servicesList.yoga'),
+              t('footer.servicesList.zumba'),
+              t('footer.servicesList.kickboxing'),
+              t('footer.servicesList.pt'),
             ].map((item) => (
               <li key={item}>
                 <Link className="block font-medium text-(--text-secondary) transition-all duration-300 hover:translate-x-2 hover:text-(--brand)">
@@ -88,19 +91,19 @@ export default function LandingFooter() {
         {/* HOURS */}
         <div className="space-y-4">
           <h4 className="relative pb-2 text-xl font-semibold">
-            Giờ hoạt động
+            {t('footer.operatingHours')}
             <span className="absolute bottom-0 left-0 h-1 w-16 bg-(--brand)" />
           </h4>
 
           <ul className="space-y-4 text-(--text-secondary)">
             <li>
-              <span className="font-semibold text-(--text-primary)">Thứ 2 - Thứ 6:</span> 05:00 - 22:00
+              <span className="font-semibold text-(--text-primary)">{t('footer.monFri')}</span> 05:00 - 22:00
             </li>
             <li>
-              <span className="font-semibold text-(--text-primary)">Thứ 7 - Chủ Nhật:</span> 06:00 - 21:00
+              <span className="font-semibold text-(--text-primary)">{t('footer.satSun')}</span> 06:00 - 21:00
             </li>
             <li>
-              <span className="font-semibold text-(--text-primary)">Ngày Lễ:</span> Cập nhật trên Fanpage
+              <span className="font-semibold text-(--text-primary)">{t('footer.holidays')}</span> {t('footer.holidaysDetail')}
             </li>
           </ul>
         </div>
