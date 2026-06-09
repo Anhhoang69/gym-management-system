@@ -99,6 +99,8 @@ public class VNPayService : IVNPayService
 
         _logger.LogInformation("VNPAY PAYMENT URL: {Url}", paymentUrl);
 
+        var isStaff = requestedByUserId.HasValue && await _context.Staffs.AnyAsync(s => s.UserId == requestedByUserId.Value);
+
         var payment = new Payment
         {
             PaymentId = Guid.NewGuid(),
@@ -107,7 +109,7 @@ public class VNPayService : IVNPayService
             Amount = invoice.TotalAmount,
             Status = PaymentStatus.Pending,
             ProcessedBy = requestedByUserId ?? Guid.Empty,
-            ProcessedByStaffId = requestedByUserId,
+            ProcessedByStaffId = isStaff ? requestedByUserId : null,
             GatewayTxnRef = txnRef,
             ExpiredAt = expiredAt,
             CreatedAt = DateTime.UtcNow
