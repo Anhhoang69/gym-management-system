@@ -148,50 +148,149 @@ public class VNPayService : IVNPayService
         var rawParams = VNPayHelper.GetAllParams(query);
         var rawData = JsonSerializer.Serialize(rawParams);
 
-        // 2. Load Payment bằng TxnRef
+        var (success, msg) = await UpdatePaymentStatusInternalAsync(
+            txnRef, 
+            responseCode, 
+            transactionNo, 
+            bankCode, 
+            query["vnp_Amount"].ToString(), 
+            query["vnp_PayDate"].ToString(), 
+            rawData);
+
+        if (!success)
+        {
+            var rspCode = msg switch
+            {
+                "Order not found" => "01",
+                "Invalid amount" => "04",
+                _ => "99"
+            };
+            return new VNPayIpnResult { RspCode = rspCode, Message = msg };
+        }
+
+        return new VNPayIpnResult { RspCode = "00", Message = "Confirm Success" };
+    }
+
+    // ── Handle Return URL ─────────────────────────────────────────────────────
+
+    public async Task<VNPayReturnResult> HandleReturnAsync(IQueryCollection query)
+    {
+        var responseCode = query["vnp_ResponseCode"].ToString();
+        var txnRef = query["vnp_TxnRef"].ToString();
+
+        if (!VNPayHelper.ValidateSignature(query, _opts.HashSecret, _logger))
+        {
+            return new VNPayReturnResult
+            {
+                Success = false,
+                ResponseCode = "97",
+                Message = "Chữ ký không hợp lệ. Vui lòng liên hệ hỗ trợ."
+            };
+        }
+
+        var transactionNo = query["vnp_TransactionNo"].ToString();
+        var bankCode = query["vnp_BankCode"].ToString();
+        var rawParams = VNPayHelper.GetAllParams(query);
+        var rawData = JsonSerializer.Serialize(rawParams);
+
+        // Cập nhật Database dự phòng trường hợp IPN bị nghẽn/lỗi
+        await UpdatePaymentStatusInternalAsync(
+            txnRef, 
+            responseCode, 
+            transactionNo, 
+            bankCode, 
+            query["vnp_Amount"].ToString(), 
+            query["vnp_PayDate"].ToString(), 
+            rawData);
+
+        var success = responseCode == "00";
+        var message = responseCode switch
+        {
+            "00" => "Thanh toán thành công!",
+            "24" => "Bạn đã hủy giao dịch. Hóa đơn vẫn còn hiệu lực.",
+            "07" => "Giao dịch bị nghi ngờ gian lận.",
+            "09" => "Thẻ/Tài khoản chưa đăng ký Internet Banking.",
+            "10" => "Xác thực thẻ/tài khoản sai quá 3 lần.",
+            "11" => "Phiên thanh toán hết hạn.",
+            "12" => "Thẻ/Tài khoản bị khóa.",
+            "13" => "OTP nhập sai.",
+            "51" => "Tài khoản không đủ số dư.",
+            "65" => "Vượt hạn mức giao dịch trong ngày.",
+            "75" => "Ngân hàng đang bảo trì.",
+            "79" => "Nhập sai mật khẩu thanh toán quá số lần quy định.",
+            _ => $"Thanh toán thất bại (mã lỗi: {responseCode})."
+        };
+
+        decimal? amount = null;
+        if (long.TryParse(query["vnp_Amount"].ToString(), out var amt))
+            amount = amt / 100m;
+
+        return new VNPayReturnResult
+        {
+            Success = success,
+            ResponseCode = responseCode,
+            Message = message,
+            Amount = amount,
+            BankCode = query["vnp_BankCode"].ToString(),
+            TransactionNo = query["vnp_TransactionNo"].ToString()
+        };
+    }
+
+    // ── Helper nghiệp vụ xử lý trạng thái thanh toán và kích hoạt ───────────────
+
+    private async Task<(bool Success, string Message)> UpdatePaymentStatusInternalAsync(
+        string txnRef, 
+        string responseCode, 
+        string transactionNo, 
+        string bankCode, 
+        string? vnpAmountStr, 
+        string? vnpPayDateStr, 
+        string rawData)
+    {
+        // 1. Load Payment bằng TxnRef
         var payment = await _context.Payments
             .Include(p => p.Invoice)
             .FirstOrDefaultAsync(p => p.GatewayTxnRef == txnRef);
 
         if (payment == null)
         {
-            _logger.LogWarning("VNPay IPN: Payment not found for TxnRef={TxnRef}", txnRef);
-            return new VNPayIpnResult { RspCode = "01", Message = "Order not found" };
+            _logger.LogWarning("VNPay: Payment not found for TxnRef={TxnRef}", txnRef);
+            return (false, "Order not found");
         }
 
-        // 3. Idempotent check
+        // 2. Idempotent check (đã hoàn thành thì không làm gì)
         if (payment.Status == PaymentStatus.Completed)
         {
-            _logger.LogInformation("VNPay IPN: Duplicate callback for TxnRef={TxnRef} — already completed", txnRef);
-            return new VNPayIpnResult { RspCode = "00", Message = "Confirm Success" };
+            _logger.LogInformation("VNPay: Duplicate callback/return for TxnRef={TxnRef} — already completed", txnRef);
+            return (true, "Confirm Success");
         }
 
-        // 4. Validate amount (VNPay gửi * 100)
-        if (long.TryParse(query["vnp_Amount"].ToString(), out var vnpAmount))
+        // 3. Validate amount (VNPay gửi * 100)
+        if (!string.IsNullOrEmpty(vnpAmountStr) && long.TryParse(vnpAmountStr, out var vnpAmount))
         {
             var expectedAmount = (long)(payment.Invoice.TotalAmount * 100);
             if (vnpAmount != expectedAmount)
             {
-                _logger.LogWarning("VNPay IPN: Amount mismatch. Expected={Expected}, Got={Got}", expectedAmount, vnpAmount);
+                _logger.LogWarning("VNPay: Amount mismatch. Expected={Expected}, Got={Got}", expectedAmount, vnpAmount);
                 payment.Status = PaymentStatus.Failed;
                 payment.GatewayResponseCode = responseCode;
                 payment.GatewayRawData = rawData;
                 payment.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
-                return new VNPayIpnResult { RspCode = "04", Message = "Invalid amount" };
+                return (false, "Invalid amount");
             }
         }
 
-        // 5. Parse PayDate
+        // 4. Parse PayDate
         DateTime? payDate = null;
-        if (DateTime.TryParseExact(query["vnp_PayDate"].ToString(), "yyyyMMddHHmmss",
+        if (!string.IsNullOrEmpty(vnpPayDateStr) && DateTime.TryParseExact(vnpPayDateStr, "yyyyMMddHHmmss",
             null, System.Globalization.DateTimeStyles.None, out var pd))
         {
             payDate = DateTime.SpecifyKind(pd, DateTimeKind.Unspecified)
                               .ToUniversalTime();
         }
 
-        // 6. BEGIN TRANSACTION
+        // 5. BEGIN TRANSACTION
         using var tx = await _context.Database.BeginTransactionAsync();
         try
         {
@@ -248,7 +347,7 @@ public class VNPayService : IVNPayService
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "VNPay IPN: post-processing error for TxnRef={TxnRef}", txnRef);
+                        _logger.LogError(ex, "VNPay: post-processing error for TxnRef={TxnRef}", txnRef);
                     }
                 });
             }
@@ -272,74 +371,23 @@ public class VNPayService : IVNPayService
                                 message: "Giao dịch không thành công. Vui lòng thử lại hoặc liên hệ nhân viên.",
                                 recipientIds: new List<Guid> { memberId },
                                 type: Enums.NotificationType.Info);
-
                         }
                         catch { }
                     });
                 }
             }
 
-            _logger.LogInformation("VNPay IPN: TxnRef={TxnRef} ResponseCode={Code} Status={Status}",
+            _logger.LogInformation("VNPay Processed: TxnRef={TxnRef} ResponseCode={Code} Status={Status}",
                 txnRef, responseCode, payment.Status);
 
-            return new VNPayIpnResult { RspCode = "00", Message = "Confirm Success" };
+            return (true, "Confirm Success");
         }
         catch (Exception ex)
         {
             await tx.RollbackAsync();
-            _logger.LogError(ex, "VNPay IPN: DB error for TxnRef={TxnRef}", txnRef);
-            return new VNPayIpnResult { RspCode = "99", Message = "Unknown error" };
+            _logger.LogError(ex, "VNPay: DB error for TxnRef={TxnRef}", txnRef);
+            return (false, "Unknown error");
         }
-    }
-
-    // ── Handle Return URL ─────────────────────────────────────────────────────
-
-    public VNPayReturnResult HandleReturn(IQueryCollection query)
-    {
-        var responseCode = query["vnp_ResponseCode"].ToString();
-        var txnRef = query["vnp_TxnRef"].ToString();
-
-        if (!VNPayHelper.ValidateSignature(query, _opts.HashSecret, _logger))
-        {
-            return new VNPayReturnResult
-            {
-                Success = false,
-                ResponseCode = "97",
-                Message = "Chữ ký không hợp lệ. Vui lòng liên hệ hỗ trợ."
-            };
-        }
-
-        var success = responseCode == "00";
-        var message = responseCode switch
-        {
-            "00" => "Thanh toán thành công!",
-            "24" => "Bạn đã hủy giao dịch. Hóa đơn vẫn còn hiệu lực.",
-            "07" => "Giao dịch bị nghi ngờ gian lận.",
-            "09" => "Thẻ/Tài khoản chưa đăng ký Internet Banking.",
-            "10" => "Xác thực thẻ/tài khoản sai quá 3 lần.",
-            "11" => "Phiên thanh toán hết hạn.",
-            "12" => "Thẻ/Tài khoản bị khóa.",
-            "13" => "OTP nhập sai.",
-            "51" => "Tài khoản không đủ số dư.",
-            "65" => "Vượt hạn mức giao dịch trong ngày.",
-            "75" => "Ngân hàng đang bảo trì.",
-            "79" => "Nhập sai mật khẩu thanh toán quá số lần quy định.",
-            _ => $"Thanh toán thất bại (mã lỗi: {responseCode})."
-        };
-
-        decimal? amount = null;
-        if (long.TryParse(query["vnp_Amount"].ToString(), out var amt))
-            amount = amt / 100m;
-
-        return new VNPayReturnResult
-        {
-            Success = success,
-            ResponseCode = responseCode,
-            Message = message,
-            Amount = amount,
-            BankCode = query["vnp_BankCode"].ToString(),
-            TransactionNo = query["vnp_TransactionNo"].ToString()
-        };
     }
 
     // ── Get Payment Status ────────────────────────────────────────────────────
