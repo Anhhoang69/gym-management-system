@@ -3,6 +3,7 @@ import { FaUser, FaEnvelope, FaPhone, FaLock, FaCamera, FaCheckCircle, FaHistory
 import { changePassword, send2FAOtp, enable2FA, disable2FA } from '../../auth/services/authService'
 import { getMyProfile, updateMyProfile, getLoginHistory, revokeSession, getMyRequests, cancelRequest, getMyAttendance, uploadImage } from '../services/memberService'
 import { useLanguage } from '../../../shared/contexts/LanguageContext'
+import { createVNPayUrl } from "../../payment/services/vnpayService"
 
 export default function MemberProfilePage() {
   const { t, locale } = useLanguage()
@@ -39,6 +40,28 @@ export default function MemberProfilePage() {
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [otp, setOtp] = useState("");
   const [showOtpInput, setShowOtpInput] = useState(false);
+  const [paying, setPaying] = useState(false);
+
+  const handleVNPayPayment = async (invoiceId) => {
+    if (!invoiceId) {
+      alert("Không tìm thấy thông tin hóa đơn.");
+      return;
+    }
+    try {
+      setPaying(true);
+      const data = await createVNPayUrl(invoiceId);
+      if (data && data.paymentUrl) {
+        window.open(data.paymentUrl, '_blank');
+      } else {
+        alert("Không thể khởi tạo liên kết thanh toán VNPay.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Lỗi khi tạo liên kết thanh toán: " + (err.response?.data?.message || err.message));
+    } finally {
+      setPaying(false);
+    }
+  };
 
   useEffect(() => {
     fetchProfile();
@@ -449,6 +472,26 @@ export default function MemberProfilePage() {
                           </span>
                         </div>
                       </div>
+
+                      {user.memberInfo.activeContract.status === 'Pending' && (
+                        <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/25 text-left">
+                          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                            ⚠️ Hợp đồng của bạn đang chờ thanh toán. Vui lòng thanh toán số tiền{' '}
+                            <strong className="text-[var(--brand)] font-extrabold text-sm">
+                              {new Intl.NumberFormat('vi-VN').format(user.memberInfo.activeContract.totalAmount || 0)} VND
+                            </strong>{' '}
+                            để kích hoạt thẻ tập.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => handleVNPayPayment(user.memberInfo.activeContract.invoiceId)}
+                            disabled={paying}
+                            className="mt-3 w-full py-2.5 px-4 rounded-lg bg-yellow-500 hover:brightness-95 active:scale-[0.98] text-black font-bold text-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                          >
+                            {paying ? 'Đang xử lý...' : '💳 Thanh toán ngay qua VNPay'}
+                          </button>
+                        </div>
+                      )}
 
                       <div className="grid grid-cols-2 gap-4 border-t border-[var(--border)] pt-3">
                         <div className="text-left">

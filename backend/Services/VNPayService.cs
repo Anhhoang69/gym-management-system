@@ -66,8 +66,38 @@ public class VNPayService : IVNPayService
         var expiredAt = DateTime.UtcNow.AddMinutes(_opts.TimeoutMinutes);
         var orderInfo = $"Thanh toan hoa don {invoice.InvoiceCode}";
 
+        // ── DEBUG: log config ──────────────────────────────────────────────
+        _logger.LogInformation("VNPAY CONFIG | TmnCode={TmnCode} | Version={Version} | BaseUrl={BaseUrl} | HashSecret={HashSecretMasked}",
+            _opts.TmnCode,
+            _opts.Version,
+            _opts.BaseUrl,
+            string.IsNullOrEmpty(_opts.HashSecret) ? "(EMPTY)" : $"{_opts.HashSecret[..4]}****");
+
+        var now = DateTime.UtcNow.AddHours(7);
+        var debugParams = new SortedDictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["vnp_Version"]    = _opts.Version,
+            ["vnp_Command"]    = _opts.Command,
+            ["vnp_TmnCode"]    = _opts.TmnCode,
+            ["vnp_Amount"]     = ((long)(invoice.TotalAmount * 100)).ToString(),
+            ["vnp_CurrCode"]   = _opts.CurrencyCode,
+            ["vnp_TxnRef"]     = txnRef,
+            ["vnp_OrderInfo"]  = orderInfo,
+            ["vnp_OrderType"]  = "other",
+            ["vnp_Locale"]     = _opts.Locale,
+            ["vnp_ReturnUrl"]  = _opts.ReturnUrl,
+            ["vnp_IpAddr"]     = clientIp,
+            ["vnp_CreateDate"] = now.ToString("yyyyMMddHHmmss"),
+            ["vnp_ExpireDate"] = now.AddMinutes(_opts.TimeoutMinutes).ToString("yyyyMMddHHmmss"),
+        };
+        var rawHash = VNPayHelper.GetRawHashData(debugParams);
+        _logger.LogInformation("VNPAY RAW HASH: {RawHash}", rawHash);
+        // ── END DEBUG ──────────────────────────────────────────────────────
+
         var paymentUrl = VNPayHelper.BuildPaymentUrl(
             invoiceId, txnRef, orderInfo, invoice.TotalAmount, clientIp, _opts);
+
+        _logger.LogInformation("VNPAY PAYMENT URL: {Url}", paymentUrl);
 
         var payment = new Payment
         {
@@ -101,7 +131,7 @@ public class VNPayService : IVNPayService
     public async Task<VNPayIpnResult> HandleIpnAsync(IQueryCollection query)
     {
         // 1. Validate signature
-        if (!VNPayHelper.ValidateSignature(query, _opts.HashSecret))
+        if (!VNPayHelper.ValidateSignature(query, _opts.HashSecret, _logger))
         {
             _logger.LogWarning("VNPay IPN: Invalid signature. TxnRef={TxnRef}", query["vnp_TxnRef"].ToString());
             await WriteAuditLogAsync("VNPay_IPN_InvalidSignature",
@@ -267,7 +297,7 @@ public class VNPayService : IVNPayService
         var responseCode = query["vnp_ResponseCode"].ToString();
         var txnRef = query["vnp_TxnRef"].ToString();
 
-        if (!VNPayHelper.ValidateSignature(query, _opts.HashSecret))
+        if (!VNPayHelper.ValidateSignature(query, _opts.HashSecret, _logger))
         {
             return new VNPayReturnResult
             {

@@ -84,12 +84,14 @@ public class VNPayController : ControllerBase
 
     /// <summary>
     /// Poll trạng thái payment của invoice. Dùng cho frontend polling sau redirect VNPay.
+    /// Public endpoint — VNPayConfirmPage không có JWT (user chưa đăng nhập).
     /// </summary>
     [HttpGet("status/{invoiceId:guid}")]
-    [Authorize]
+    [AllowAnonymous]
     [SwaggerOperation(
         Summary = "Lấy trạng thái payment VNPay",
         Description = "Frontend gọi mỗi 3 giây để kiểm tra kết quả sau khi user thanh toán VNPay. " +
+                      "Public endpoint — không cần JWT. " +
                       "Trả Expired nếu link đã hết hạn mà chưa thanh toán."
     )]
     public async Task<ApiResponse<PaymentStatusDto?>> GetStatus(Guid invoiceId)
