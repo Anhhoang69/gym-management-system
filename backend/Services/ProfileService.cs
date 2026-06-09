@@ -57,9 +57,11 @@ public class ProfileService : IProfileService
         // ---- Member-specific info ----
         if (user.Member != null)
         {
-            var activeContract = await _context.Contracts
+            var latestContract = await _context.Contracts
                 .Include(c => c.Package)
-                .Where(c => c.MemberUserId == userId && c.Status == ContractStatus.Active)
+                .Include(c => c.Invoice)
+                    .ThenInclude(i => i!.Payment)
+                .Where(c => c.MemberUserId == userId && (c.Status == ContractStatus.Active || c.Status == ContractStatus.Pending))
                 .OrderByDescending(c => c.CreatedAt)
                 .FirstOrDefaultAsync();
 
@@ -74,15 +76,20 @@ public class ProfileService : IProfileService
                 CardStatus    = card?.Status,
                 CardExpireDate = card?.ExpireDate,
                 TotalContracts = totalContracts,
-                ActiveContract = activeContract == null ? null : new ActiveContractInfo
+                ActiveContract = latestContract == null ? null : new ActiveContractInfo
                 {
-                    ContractId   = activeContract.ContractId,
-                    PackageName  = activeContract.Package.Name,
-                    Status       = activeContract.Status,
-                    StartDate    = activeContract.StartDate,
-                    EndDate      = activeContract.EndDate,
-                    RemainingPrivateSessions = activeContract.TotalPrivateSessions - activeContract.UsedPrivateSessions,
-                    RemainingGroupSessions   = activeContract.TotalGroupSessions   - activeContract.UsedGroupSessions
+                    ContractId   = latestContract.ContractId,
+                    PackageName  = latestContract.Package.Name,
+                    Status       = latestContract.Status,
+                    StartDate    = latestContract.StartDate,
+                    EndDate      = latestContract.EndDate,
+                    RemainingPrivateSessions = latestContract.TotalPrivateSessions - latestContract.UsedPrivateSessions,
+                    RemainingGroupSessions   = latestContract.TotalGroupSessions   - latestContract.UsedGroupSessions,
+                    
+                    InvoiceId    = latestContract.Invoice?.InvoiceId,
+                    InvoiceCode  = latestContract.Invoice?.InvoiceCode,
+                    TotalAmount  = latestContract.Invoice?.TotalAmount,
+                    PaymentExpiredAt = latestContract.Invoice?.Payment?.ExpiredAt
                 }
             };
         }

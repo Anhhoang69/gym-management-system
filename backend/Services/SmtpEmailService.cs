@@ -55,7 +55,7 @@ public class SmtpEmailService : IEmailService
                   <img src="https://img.icons8.com/fluency-system-regular/32/b45309/warning-shield.png" width="16" height="16" style="vertical-align:middle;margin-right:6px;" /> <strong>Lưu ý bảo mật:</strong> Vui lòng đăng nhập và đổi mật khẩu ngay sau lần đăng nhập đầu tiên để bảo vệ tài khoản.
                 </p>
                 <div style="text-align:center;margin:28px 0">
-                  <a href="{appUrl}" style="display:inline-block;background:linear-gradient(135deg,#111827,#1f2937);color:#eab308;padding:14px 36px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;box-shadow:0 4px 6px rgba(0,0,0,0.1)">🔐 Đăng nhập ngay</a>
+                  <a href="{appUrl}/login" style="display:inline-block;background:linear-gradient(135deg,#111827,#1f2937);color:#eab308;padding:14px 36px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px;box-shadow:0 4px 6px rgba(0,0,0,0.1)">🔐 Đăng nhập ngay</a>
                 </div>
                 <p style="color:#9ca3af;font-size:12px;margin-top:24px;text-align:center">Nếu bạn không yêu cầu tạo tài khoản này, vui lòng liên hệ quản lý.</p>
               </div>
@@ -160,7 +160,7 @@ public class SmtpEmailService : IEmailService
                 {paymentSection}
 
                 <div style="text-align:center;margin:28px 0;border-top:1px solid #f3f4f6;padding-top:20px">
-                  <a href="{appUrl}" style="display:inline-block;background:linear-gradient(135deg,#111827,#1f2937);color:#eab308;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px">🔐 Đăng nhập ngay</a>
+                  <a href="{appUrl}/login" style="display:inline-block;background:linear-gradient(135deg,#111827,#1f2937);color:#eab308;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:15px">🔐 Đăng nhập ngay</a>
                 </div>
                 <p style="color:#9ca3af;font-size:12px;margin-top:24px;text-align:center">Nếu bạn không thực hiện đăng ký này, vui lòng liên hệ quản lý.</p>
               </div>

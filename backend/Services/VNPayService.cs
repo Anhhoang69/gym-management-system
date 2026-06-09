@@ -131,7 +131,7 @@ public class VNPayService : IVNPayService
     public async Task<VNPayIpnResult> HandleIpnAsync(IQueryCollection query)
     {
         // 1. Validate signature
-        if (!VNPayHelper.ValidateSignature(query, _opts.HashSecret))
+        if (!VNPayHelper.ValidateSignature(query, _opts.HashSecret, _logger))
         {
             _logger.LogWarning("VNPay IPN: Invalid signature. TxnRef={TxnRef}", query["vnp_TxnRef"].ToString());
             await WriteAuditLogAsync("VNPay_IPN_InvalidSignature",
@@ -297,7 +297,7 @@ public class VNPayService : IVNPayService
         var responseCode = query["vnp_ResponseCode"].ToString();
         var txnRef = query["vnp_TxnRef"].ToString();
 
-        if (!VNPayHelper.ValidateSignature(query, _opts.HashSecret))
+        if (!VNPayHelper.ValidateSignature(query, _opts.HashSecret, _logger))
         {
             return new VNPayReturnResult
             {
