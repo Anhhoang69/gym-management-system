@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, CheckCircle, CreditCard, Banknote, QrCode, Loader2, Gift, Zap, BadgeCheck, Sparkles } from 'lucide-react';
 import { getInvoiceQr, collectPayment } from '../../services/invoiceService';
 import { activateContract } from '../../services/contractService';
+import { createVNPayUrl, getPaymentStatus } from '../../../payment/services/vnpayService';
 
 // Unified Payment Drawer
 // Handles displaying the invoice amount, QR code, and processing payment + activation
@@ -21,12 +22,32 @@ const UnifiedPaymentDrawer = ({
   const [step, setStep] = useState('payment'); // 'payment', 'success'
   const [error, setError] = useState(null);
 
+  // VNPay Integration States
+  const [vnpayUrl, setVnpayUrl] = useState(null);
+  const [pollStatus, setPollStatus] = useState(null); // null | 'checking' | 'paid' | 'failed' | 'expired'
+  const pollIntervalRef = useRef(null);
+
+  // Clean up polling interval on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, []);
+
   // Reset state when drawer opens with a new invoice
   useEffect(() => {
     if (isOpen && invoiceId) {
       setStep('payment');
       setError(null);
       setPaymentMethod('Cash');
+      setVnpayUrl(null);
+      setPollStatus(null);
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
       fetchQrCode(invoiceId);
     }
   }, [isOpen, invoiceId]);
@@ -45,12 +66,91 @@ const UnifiedPaymentDrawer = ({
     }
   };
 
+  const handleClose = () => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    onClose();
+  };
+
   const handleConfirmPayment = async () => {
     if (!invoiceId || !contractId) {
       setError("Missing invoice or contract information.");
       return;
     }
 
+    // VNPay Specific Flow
+    if (paymentMethod === 'VNPay') {
+      try {
+        setIsProcessing(true);
+        setError(null);
+        setPollStatus('checking');
+
+        const result = await createVNPayUrl(invoiceId);
+        if (result && result.paymentUrl) {
+          setVnpayUrl(result.paymentUrl);
+          window.open(result.paymentUrl, '_blank');
+
+          // Start status polling
+          let attempts = 0;
+          const maxAttempts = 100; // 100 * 3s = 5 minutes
+
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+          }
+
+          pollIntervalRef.current = setInterval(async () => {
+            attempts++;
+            try {
+              const statusData = await getPaymentStatus(invoiceId);
+              if (statusData?.status === 'Completed') {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+                setPollStatus('paid');
+                setStep('success');
+                setIsProcessing(false);
+                setTimeout(() => {
+                  if (onSuccess) onSuccess();
+                }, 2500);
+              } else if (statusData?.status === 'Failed' || statusData?.status === 'Cancelled') {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+                setPollStatus('failed');
+                setIsProcessing(false);
+              } else if (statusData?.status === 'Expired') {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+                setPollStatus('expired');
+                setIsProcessing(false);
+              }
+            } catch (pollErr) {
+              console.error("Polling status error:", pollErr);
+            }
+
+            if (attempts >= maxAttempts) {
+              if (pollIntervalRef.current) {
+                clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+              }
+              setPollStatus('failed');
+              setIsProcessing(false);
+              setError("Hết thời gian chờ thanh toán VNPay.");
+            }
+          }, 3000);
+        } else {
+          throw new Error("Không thể khởi tạo URL thanh toán VNPay");
+        }
+      } catch (err) {
+        console.error("VNPay payment creation failed:", err);
+        setError(err.message || "Không thể khởi tạo thanh toán VNPay.");
+        setPollStatus(null);
+        setIsProcessing(false);
+      }
+      return;
+    }
+
+    // Regular Cash/Card/BankTransfer Flow
     try {
       setIsProcessing(true);
       setError(null);
@@ -92,7 +192,7 @@ const UnifiedPaymentDrawer = ({
       {/* Backdrop */}
       <div
         className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm transition-opacity"
-        onClick={!isProcessing ? onClose : undefined}
+        onClick={!isProcessing ? handleClose : undefined}
       ></div>
 
       {/* Drawer */}
@@ -107,8 +207,8 @@ const UnifiedPaymentDrawer = ({
             Thanh toán & Kích hoạt
           </h2>
           <button
-            onClick={onClose}
-            disabled={isProcessing}
+            onClick={handleClose}
+            disabled={isProcessing && paymentMethod !== 'VNPay'} // Allow closing during VNPay poll
             className="p-1.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors disabled:opacity-50"
           >
             <X size={18} />
@@ -190,7 +290,7 @@ const UnifiedPaymentDrawer = ({
                         color: paymentMethod === 'Cash' ? '#4f46e5' : '#475569'
                       }}
                     >
-                      <input type="radio" name="paymentMethod" value="Cash" className="sr-only" checked={paymentMethod === 'Cash'} onChange={() => setPaymentMethod('Cash')} />
+                      <input type="radio" name="paymentMethod" value="Cash" className="sr-only" checked={paymentMethod === 'Cash'} onChange={() => { setPaymentMethod('Cash'); setPollStatus(null); }} />
                       <span className="flex flex-1 items-center gap-2.5">
                         <Banknote size={16} className={paymentMethod === 'Cash' ? 'text-indigo-600' : 'text-slate-400'} />
                         <span className="text-xs font-semibold">
@@ -211,7 +311,7 @@ const UnifiedPaymentDrawer = ({
                         color: paymentMethod === 'Card' ? '#4f46e5' : '#475569'
                       }}
                     >
-                      <input type="radio" name="paymentMethod" value="Card" className="sr-only" checked={paymentMethod === 'Card'} onChange={() => setPaymentMethod('Card')} />
+                      <input type="radio" name="paymentMethod" value="Card" className="sr-only" checked={paymentMethod === 'Card'} onChange={() => { setPaymentMethod('Card'); setPollStatus(null); }} />
                       <span className="flex flex-1 items-center gap-2.5">
                         <CreditCard size={16} className={paymentMethod === 'Card' ? 'text-indigo-600' : 'text-slate-400'} />
                         <span className="text-xs font-semibold">
@@ -232,7 +332,7 @@ const UnifiedPaymentDrawer = ({
                         color: paymentMethod === 'BankTransfer' ? '#4f46e5' : '#475569'
                       }}
                     >
-                      <input type="radio" name="paymentMethod" value="BankTransfer" className="sr-only" checked={paymentMethod === 'BankTransfer'} onChange={() => setPaymentMethod('BankTransfer')} />
+                      <input type="radio" name="paymentMethod" value="BankTransfer" className="sr-only" checked={paymentMethod === 'BankTransfer'} onChange={() => { setPaymentMethod('BankTransfer'); setPollStatus(null); }} />
                       <span className="flex flex-1 items-center gap-2.5">
                         <QrCode size={16} className={paymentMethod === 'BankTransfer' ? 'text-indigo-600' : 'text-slate-400'} />
                         <span className="text-xs font-semibold">
@@ -241,6 +341,27 @@ const UnifiedPaymentDrawer = ({
                       </span>
                       <CheckCircle className={`h-4.5 w-4.5 ${paymentMethod === 'BankTransfer' ? 'text-indigo-600' : 'text-transparent'}`} />
                     </label>
+
+                    {/* VNPay */}
+                    <label
+                      className={`relative flex cursor-pointer rounded-lg border py-2.5 px-3.5 transition-all duration-200 ${paymentMethod === 'VNPay'
+                          ? 'border-indigo-600 ring-2 ring-indigo-650/15'
+                          : 'border-slate-200 hover:border-slate-300'
+                        }`}
+                      style={{
+                        backgroundColor: paymentMethod === 'VNPay' ? '#f0f4ff' : '#ffffff',
+                        color: paymentMethod === 'VNPay' ? '#4f46e5' : '#475569'
+                      }}
+                    >
+                      <input type="radio" name="paymentMethod" value="VNPay" className="sr-only" checked={paymentMethod === 'VNPay'} onChange={() => setPaymentMethod('VNPay')} />
+                      <span className="flex flex-1 items-center gap-2.5">
+                        <QrCode size={16} className={paymentMethod === 'VNPay' ? 'text-indigo-600' : 'text-slate-400'} />
+                        <span className="text-xs font-semibold">
+                          Thanh toán VNPay (QR / ATM / Visa)
+                        </span>
+                      </span>
+                      <CheckCircle className={`h-4.5 w-4.5 ${paymentMethod === 'VNPay' ? 'text-indigo-600' : 'text-transparent'}`} />
+                    </label>
                   </div>
                 </div>
               )}
@@ -248,7 +369,7 @@ const UnifiedPaymentDrawer = ({
               {/* QR Code Display for Bank Transfer */}
               {paymentMethod === 'BankTransfer' && totalAmountDue > 0 && (
                 <div
-                  className="p-5 rounded-2xl border border-indigo-100 flex flex-col items-center justify-center animate-in fade-in slide-in-from-top-4"
+                  className="p-5 rounded-2xl border border-indigo-100 flex flex-col items-center justify-center animate-in fade-in"
                   style={{ backgroundColor: '#f8fafc' }}
                 >
                   <p className="text-xs font-bold text-slate-550 uppercase tracking-wider mb-4" style={{ color: '#475569' }}>
@@ -270,6 +391,78 @@ const UnifiedPaymentDrawer = ({
                   )}
                   <p className="text-xs text-slate-500 mt-4 text-center leading-relaxed font-medium">
                     Vui lòng yêu cầu khách hàng quét mã này. <br /> Nhấn xác nhận khi nhận được tiền.
+                  </p>
+                </div>
+              )}
+
+              {/* VNPay integration sub-panels */}
+              {paymentMethod === 'VNPay' && !pollStatus && totalAmountDue > 0 && (
+                <div
+                  className="p-5 rounded-2xl border border-indigo-100 flex flex-col items-center justify-center animate-in fade-in"
+                  style={{ backgroundColor: '#f8fafc' }}
+                >
+                  <QrCode size={32} className="mb-2 text-indigo-500 opacity-80" />
+                  <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                    Thanh toán qua cổng VNPay
+                  </p>
+                  <p className="text-xs text-slate-550 text-center leading-relaxed font-medium">
+                    Hệ thống sẽ tạo mã QR và cổng thanh toán để khách hàng quét App ngân hàng, Thẻ ATM, hoặc Visa/Mastercard.
+                    Nhấn nút thanh toán phía dưới để mở cổng VNPay.
+                  </p>
+                </div>
+              )}
+
+              {paymentMethod === 'VNPay' && pollStatus === 'checking' && (
+                <div
+                  className="p-5 rounded-2xl border border-blue-100 flex flex-col items-center justify-center animate-in fade-in"
+                  style={{ backgroundColor: '#f0f9ff' }}
+                >
+                  <Loader2 className="animate-spin text-blue-600 mb-3" size={32} />
+                  <p className="text-xs font-bold text-blue-900 uppercase tracking-wider text-center">
+                    ĐANG CHỜ THANH TOÁN VNPAY...
+                  </p>
+                  <p className="text-xs text-blue-700 mt-2 text-center leading-relaxed font-medium">
+                    Trang thanh toán VNPay đã được mở ở cửa sổ mới.
+                    <br />
+                    Nếu trình duyệt chặn cửa sổ bật lên, vui lòng click nút bên dưới:
+                  </p>
+                  {vnpayUrl && (
+                    <button
+                      onClick={() => window.open(vnpayUrl, '_blank')}
+                      className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+                    >
+                      <QrCode size={14} /> Mở trang thanh toán VNPay
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {paymentMethod === 'VNPay' && pollStatus === 'failed' && (
+                <div
+                  className="p-5 rounded-2xl border border-red-100 flex flex-col items-center justify-center animate-in fade-in"
+                  style={{ backgroundColor: '#fef2f2' }}
+                >
+                  <span className="text-3xl mb-2">❌</span>
+                  <p className="text-xs font-bold text-red-900 uppercase tracking-wider text-center">
+                    Giao dịch VNPay thất bại hoặc bị hủy
+                  </p>
+                  <p className="text-xs text-red-700 mt-2 text-center leading-relaxed font-medium">
+                    Vui lòng bấm nút phía dưới để thử thanh toán lại.
+                  </p>
+                </div>
+              )}
+
+              {paymentMethod === 'VNPay' && pollStatus === 'expired' && (
+                <div
+                  className="p-5 rounded-2xl border border-amber-100 flex flex-col items-center justify-center animate-in fade-in"
+                  style={{ backgroundColor: '#fffbeb' }}
+                >
+                  <span className="text-3xl mb-2">⏰</span>
+                  <p className="text-xs font-bold text-amber-900 uppercase tracking-wider text-center">
+                    Giao dịch VNPay đã hết hạn
+                  </p>
+                  <p className="text-xs text-amber-750 mt-2 text-center leading-relaxed font-medium">
+                    Đã quá 15 phút. Vui lòng bấm nút thanh toán để tạo liên kết thanh toán mới.
                   </p>
                 </div>
               )}
@@ -296,7 +489,7 @@ const UnifiedPaymentDrawer = ({
               </p>
 
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all duration-150"
               >
                 Đóng
@@ -310,18 +503,30 @@ const UnifiedPaymentDrawer = ({
           <div className="p-4 border-t border-slate-100 bg-slate-50">
             <button
               onClick={handleConfirmPayment}
-              disabled={isProcessing}
+              disabled={isProcessing && paymentMethod !== 'VNPay'} // Allow click again if VNPay polling
               className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 px-4 rounded-xl font-semibold transition-all duration-150 focus:ring-4 focus:ring-indigo-650/20 disabled:opacity-70 shadow-md shadow-indigo-650/10"
               style={{
                 backgroundColor: '#4f46e5',
                 color: '#ffffff'
               }}
             >
-              {isProcessing ? (
+              {isProcessing && paymentMethod !== 'VNPay' ? (
                 <>
                   <Loader2 className="animate-spin" size={18} />
                   Đang xử lý...
                 </>
+              ) : paymentMethod === 'VNPay' ? (
+                pollStatus === 'checking' ? (
+                  <>
+                    <Loader2 className="animate-spin" size={18} />
+                    Đang chờ thanh toán VNPay...
+                  </>
+                ) : (
+                  <>
+                    <QrCode size={18} />
+                    Mở cổng thanh toán VNPay
+                  </>
+                )
               ) : totalAmountDue === 0 ? (
                 <>
                   <Zap size={18} className="text-yellow-300" />
@@ -343,4 +548,3 @@ const UnifiedPaymentDrawer = ({
 };
 
 export default UnifiedPaymentDrawer;
-

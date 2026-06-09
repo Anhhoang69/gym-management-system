@@ -18,6 +18,7 @@ import {
 import { getLeads, getLeadStats } from "../services/leadService"
 import moment from "moment"
 import CreateLeadModal from "../components/lead-management/CreateLeadModal"
+import Pagination from "../../../shared/components/Pagination"
 import LeadDetailModal from "../components/lead-management/LeadDetailModal"
 import MembershipOnboardingModal from "../components/common/MembershipOnboardingModal"
 import UnifiedPaymentDrawer from "../components/common/UnifiedPaymentDrawer"
@@ -264,29 +265,11 @@ function LeadManagementPage() {
                             {/* Pagination */}
                             {pagination.totalPages > 1 && (
                                 <div className="d-flex justify-content-end mt-4">
-                                    <CPagination>
-                                        <CPaginationItem 
-                                            disabled={filters.page === 1}
-                                            onClick={() => setFilters({...filters, page: filters.page - 1})}
-                                        >
-                                            Trước
-                                        </CPaginationItem>
-                                        {[...Array(pagination.totalPages)].map((_, idx) => (
-                                            <CPaginationItem 
-                                                key={idx} 
-                                                active={filters.page === idx + 1}
-                                                onClick={() => setFilters({...filters, page: idx + 1})}
-                                            >
-                                                {idx + 1}
-                                            </CPaginationItem>
-                                        ))}
-                                        <CPaginationItem 
-                                            disabled={filters.page === pagination.totalPages}
-                                            onClick={() => setFilters({...filters, page: filters.page + 1})}
-                                        >
-                                            Tiếp
-                                        </CPaginationItem>
-                                    </CPagination>
+                                    <Pagination
+                                        currentPage={filters.page}
+                                        totalPages={pagination.totalPages}
+                                        onChange={(newPage) => setFilters({...filters, page: newPage})}
+                                    />
                                 </div>
                             )}
                         </>

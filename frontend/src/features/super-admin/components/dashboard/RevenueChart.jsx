@@ -1,5 +1,5 @@
 import { CCard, CCardBody } from "@coreui/react"
-import { CChartLine } from "@coreui/react-chartjs"
+import { CChartBar } from "@coreui/react-chartjs"
 
 function RevenueChart({ revenueData }) {
   const labels = revenueData?.revenueByMonth?.map(item => item.label) || ["T1", "T2", "T3", "T4", "T5"]
@@ -11,18 +11,35 @@ function RevenueChart({ revenueData }) {
 
         <h5>Xu Hướng Doanh Thu</h5>
 
-        <CChartLine
+        <CChartBar
           data={{
             labels: labels,
             datasets: [
               {
                 label: "Doanh Thu",
-                backgroundColor: "rgba(255,193,7,0.3)",
+                backgroundColor: "rgba(255, 193, 7, 0.85)",
                 borderColor: "#ffc107",
+                borderWidth: 1,
                 data: data,
-                fill: true,
               },
             ],
+          }}
+          options={{
+            plugins: {
+              legend: {
+                display: false
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return value.toLocaleString("vi-VN") + " đ";
+                  }
+                }
+              }
+            }
           }}
         />
 

@@ -3,19 +3,18 @@ import ContractsTable from "../components/contract/ContractsTable"
 import DraftContractsTable from "../components/contract/DraftContractsTable"
 import InvoicesTable from "../components/contract/InvoicesTable"
 import CreateContractModal from "../components/contract/CreateContractModal"
-
-import {
-  cilFile,
-  cilCheckCircle,
-  cilClock,
-  cilWarning
-} from "@coreui/icons"
+import SalesTable from "../components/revenue-sales/SalesTable"
 
 import { useState } from "react"
 import UnifiedPaymentDrawer from "../components/common/UnifiedPaymentDrawer"
 
 
 function ContractsPage() {
+  const storedUser = localStorage.getItem("user")
+  const currentUser = storedUser ? JSON.parse(storedUser) : null
+  const isSuperAdminOrOwner = window.location.pathname.startsWith('/admin') || window.location.pathname.startsWith('/owner')
+  const myBranchId = isSuperAdminOrOwner ? "" : (currentUser?.branchId || "")
+
   const [showPayment, setShowPayment] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [paymentData, setPaymentData] = useState({})
@@ -62,12 +61,20 @@ function ContractsPage() {
         >
           Hóa đơn
         </button>
+        <button
+          className={`btn btn-link text-decoration-none px-0 pb-2 border-bottom border-2 rounded-0 ${activeTab === 'sales' ? 'border-primary fw-bold text-primary' : 'border-transparent text-muted'}`}
+          onClick={() => setActiveTab('sales')}
+        >
+          Lịch sử giao dịch
+        </button>
       </div>
 
       {/* Filters */}
-      <div className="mb-3">
-        <ContractFilters />
-      </div>
+      {activeTab !== 'sales' && (
+        <div className="mb-3">
+          <ContractFilters />
+        </div>
+      )}
 
       {/* Table */}
       <div>
@@ -79,6 +86,7 @@ function ContractsPage() {
               setShowPayment(true);
             }}
             onRefresh={() => setRefreshKey(prev => prev + 1)}
+            fixedBranchId={myBranchId}
           />
         )}
 
@@ -97,6 +105,7 @@ function ContractsPage() {
                 setShowPayment(true);
               }
             }}
+            fixedBranchId={myBranchId}
           />
         )}
 
@@ -107,6 +116,15 @@ function ContractsPage() {
               setPaymentData(data);
               setShowPayment(true);
             }}
+            fixedBranchId={myBranchId}
+          />
+        )}
+
+        {activeTab === 'sales' && (
+          <SalesTable
+            key={`sales-${refreshKey}`}
+            fixedBranchId={myBranchId}
+            hideBranchFilter={!isSuperAdminOrOwner}
           />
         )}
       </div>
@@ -139,6 +157,7 @@ function ContractsPage() {
             setShowPayment(true);
           }
         }}
+        fixedBranchId={myBranchId}
       />
 
     </div>
