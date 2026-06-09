@@ -29,4 +29,10 @@ public class ActiveContractInfo
 
     /// <summary>Buổi tập nhóm còn lại</summary>
     public int RemainingGroupSessions { get; set; }
+
+    // Extra fields for payment options in member profile page
+    public Guid? InvoiceId { get; set; }
+    public string? InvoiceCode { get; set; }
+    public decimal? TotalAmount { get; set; }
+    public DateTime? PaymentExpiredAt { get; set; }
 }
