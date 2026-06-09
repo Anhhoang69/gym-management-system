@@ -8,7 +8,7 @@ import { getBranches, getBranchById } from "../../services/branchService"
 import { getLeadSources } from "../../services/leadSourceService"
 import moment from "moment"
 
-function LeadDetailModal({ visible, setVisible, leadId, onRefresh }) {
+function LeadDetailModal({ visible, setVisible, leadId, onRefresh, onConvert }) {
     const [detail, setDetail] = useState(null)
     const [loading, setLoading] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
@@ -27,6 +27,14 @@ function LeadDetailModal({ visible, setVisible, leadId, onRefresh }) {
     // Merge state
     const [duplicateId, setDuplicateId] = useState("")
     const [showMerge, setShowMerge] = useState(false)
+
+    const statusLabels = {
+        "New": "Mới",
+        "Contacted": "Đã liên hệ",
+        "Qualified": "Tiềm năng",
+        "Converted": "Đã chốt",
+        "Lost": "Thất bại"
+    }
 
     useEffect(() => {
         if (visible && leadId) {
@@ -170,7 +178,7 @@ function LeadDetailModal({ visible, setVisible, leadId, onRefresh }) {
         const currentIndex = statuses.indexOf(detail?.status)
 
         return (
-            <div className="d-flex justify-content-between position-relative my-4 px-4" style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <div className="d-flex justify-content-between position-relative my-4 px-4" style={{ maxWidth: '680px', margin: '0 auto' }}>
                 <div className="progress position-absolute" style={{ height: '4px', top: '18px', left: '10%', right: '10%', zIndex: 0 }}>
                     <div className="progress-bar bg-success" style={{ width: `${(currentIndex / 4) * 100}%` }}></div>
                 </div>
@@ -179,21 +187,23 @@ function LeadDetailModal({ visible, setVisible, leadId, onRefresh }) {
                     const isCurrent = index === currentIndex
                     const isLost = status === "Lost"
                     
-                    let colorClass = "bg-light text-muted border"
-                    if (isActive) colorClass = "bg-success text-white"
-                    if (isCurrent && !isLost) colorClass = "bg-primary text-white shadow"
-                    if (isActive && isLost) colorClass = "bg-danger text-white shadow"
+                    let colorClass = "bg-white text-muted border border-2"
+                    if (isActive) colorClass = "bg-success text-white border-success"
+                    if (isCurrent && !isLost) colorClass = "bg-warning text-white border-warning shadow-sm"
+                    if (isActive && isLost) colorClass = "bg-danger text-white border-danger shadow-sm"
 
                     return (
-                        <div key={status} className="text-center position-relative" style={{ zIndex: 1, cursor: 'pointer', width: '80px' }} onClick={() => handleStatusClick(status)}>
+                        <div key={status} className="text-center position-relative" style={{ zIndex: 1, cursor: 'pointer', width: '85px' }} onClick={() => handleStatusClick(status)}>
                             <div 
                                 className={`rounded-circle d-flex align-items-center justify-content-center mx-auto ${colorClass}`} 
-                                style={{ width: '40px', height: '40px', transition: 'all 0.2s', border: isCurrent ? '2px solid white' : 'none' }}
+                                style={{ width: '40px', height: '40px', transition: 'all 0.2s', fontWeight: '600' }}
                                 title="Click để chuyển trạng thái"
                             >
                                 {index + 1}
                             </div>
-                            <div className={`mt-2 small fw-bold ${isCurrent ? 'text-dark' : 'text-muted'}`}>{status}</div>
+                            <div className={`mt-2 small fw-bold ${isCurrent ? 'text-dark' : 'text-muted'}`}>
+                                {statusLabels[status]}
+                            </div>
                         </div>
                     )
                 })}
@@ -205,80 +215,86 @@ function LeadDetailModal({ visible, setVisible, leadId, onRefresh }) {
 
     return (
         <>
-            <CModal visible={visible} onClose={() => setVisible(false)} fullscreen backdrop="static">
-                <CModalHeader className="bg-light">
+            <CModal visible={visible} onClose={() => setVisible(false)} size="lg" backdrop="static">
+                <CModalHeader>
                     <CModalTitle className="fw-bold">{isEditing ? "Chỉnh Sửa Lead" : "Hồ Sơ Khách Hàng Tiềm Năng"}</CModalTitle>
                 </CModalHeader>
-                <CModalBody className="p-4 bg-light" style={{ overflowY: 'auto' }}>
+                <CModalBody className="p-4" style={{ background: "#f9fafb" }}>
                     {loading ? (
                         <div className="text-center py-5">Đang tải dữ liệu...</div>
                     ) : detail && !isEditing ? (
-                        <div className="container" style={{ maxWidth: '1000px' }}>
+                        <div>
                             {/* Header info */}
-                            <div className="bg-white p-3 rounded border shadow-sm mb-3 d-flex justify-content-between align-items-center">
+                            <div className="bg-white p-3 rounded-3 border shadow-sm mb-3 d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h4 className="fw-bold mb-1">{detail.name}</h4>
-                                    <div className="text-muted d-flex gap-4 mt-1 fs-6">
-                                        <span>📞 {detail.phone}</span>
-                                        {detail.email && <span>✉️ {detail.email}</span>}
+                                    <h4 className="fw-bold mb-1 text-dark">{detail.name}</h4>
+                                    <div className="text-muted d-flex gap-4 mt-2" style={{ fontSize: "14px" }}>
+                                        <span>SĐT: <strong className="text-dark">{detail.phone}</strong></span>
+                                        {detail.email && <span>Email: <strong className="text-dark">{detail.email}</strong></span>}
                                     </div>
                                 </div>
                                 <div className="text-end">
-                                    <CBadge color={
-                                        detail.status === 'New' ? 'info' :
-                                        detail.status === 'Contacted' ? 'primary' :
-                                        detail.status === 'Qualified' ? 'warning' :
-                                        detail.status === 'Converted' ? 'success' : 'danger'
-                                    } shape="rounded-pill" className="fs-6 mb-2">
-                                        {detail.status}
-                                    </CBadge>
+                                    <div className="mb-2">
+                                        <CBadge color={
+                                            detail.status === 'New' ? 'info' :
+                                            detail.status === 'Contacted' ? 'primary' :
+                                            detail.status === 'Qualified' ? 'warning' :
+                                            detail.status === 'Converted' ? 'success' : 'danger'
+                                        } className="px-2 py-1.5" style={{ fontSize: "11px", fontWeight: "600" }}>
+                                            {statusLabels[detail.status]}
+                                        </CBadge>
+                                    </div>
                                     <div>
-                                        <span className="badge bg-secondary text-white px-2 py-1 rounded-pill">🔥 Điểm: {detail.score}</span>
+                                        <span className="small text-muted fw-semibold px-2 py-1 rounded bg-light border">Độ ưu tiên: {detail.score}</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* STEPPER */}
-                            <div className="bg-white p-3 rounded border shadow-sm mb-3 text-center">
-                                <h6 className="fw-bold mb-1 text-start">Trạng Thái Lead</h6>
+                            <div className="bg-white p-3 rounded-3 border shadow-sm mb-3">
+                                <h6 className="fw-bold mb-1 text-dark">Quy Trình Chăm Sóc</h6>
                                 {renderStepper()}
                             </div>
 
                             <div className="row g-3 mb-3">
                                 {/* Thông tin chi tiết */}
-                                <div className="col-md-8">
-                                    <div className="bg-white p-3 rounded border shadow-sm h-100">
-                                        <div className="d-flex justify-content-between border-bottom pb-2 mb-2">
-                                            <h6 className="fw-bold mb-0">Thông tin chi tiết</h6>
-                                            <CButton color="warning" size="sm" onClick={handleEditClick}>Sửa thông tin</CButton>
+                                <div className="col-md-7">
+                                    <div className="bg-white p-3 rounded-3 border shadow-sm h-100">
+                                        <div className="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                                            <h6 className="fw-bold mb-0 text-dark">Thông Tin Chi Tiết</h6>
+                                            <CButton color="warning" size="sm" className="fw-semibold text-white shadow-sm" onClick={handleEditClick}>
+                                                Sửa thông tin
+                                            </CButton>
                                         </div>
-                                        <div className="row">
-                                            <div className="col-md-6 mb-2">
-                                                <strong className="text-muted small">Chi nhánh:</strong><br />
-                                                <span>{detail.branchName || "N/A"}</span>
+                                        <div className="row g-3">
+                                            <div className="col-md-6">
+                                                <div className="text-muted small mb-1">Chi nhánh quan tâm</div>
+                                                <div className="fw-semibold text-dark">{detail.branchName || "Chưa chọn"}</div>
                                             </div>
-                                            <div className="col-md-6 mb-2">
-                                                <strong className="text-muted small">Nguồn:</strong><br />
-                                                <span>{detail.sourceName || "N/A"}</span>
+                                            <div className="col-md-6">
+                                                <div className="text-muted small mb-1">Nguồn khách hàng</div>
+                                                <div className="fw-semibold text-dark">{detail.sourceName || "Chưa chọn"}</div>
                                             </div>
-                                            <div className="col-md-6 mb-2">
-                                                <strong className="text-muted small">Sales phụ trách:</strong><br />
-                                                <span>{detail.assignedToStaffName || "Chưa phân bổ"}</span>
+                                            <div className="col-md-6">
+                                                <div className="text-muted small mb-1">Sales phụ trách</div>
+                                                <div className="fw-semibold text-dark">{detail.assignedToStaffName || "Chưa phân bổ"}</div>
                                             </div>
-                                            <div className="col-md-6 mb-2">
-                                                <strong className="text-muted small">Ngày tạo:</strong><br />
-                                                <span>{moment(detail.createdAt).format("DD/MM/YYYY HH:mm")}</span>
+                                            <div className="col-md-6">
+                                                <div className="text-muted small mb-1">Ngày tạo</div>
+                                                <div className="fw-semibold text-dark">{moment(detail.createdAt).format("DD/MM/YYYY HH:mm")}</div>
                                             </div>
-                                            <div className="col-12 mt-1">
-                                                <strong className="text-muted small">Ghi chú:</strong>
-                                                <div className="p-2 bg-light rounded mt-1 border" style={{ minHeight: '60px' }}>
-                                                    {detail.note || <span className="text-muted fst-italic small">Không có ghi chú.</span>}
+                                            <div className="col-12">
+                                                <div className="text-muted small mb-1">Ghi chú</div>
+                                                <div className="p-3 bg-light rounded-3 border text-dark" style={{ minHeight: '80px', fontSize: '13px', lineHeight: '1.5' }}>
+                                                    {detail.note || <span className="text-muted fst-italic">Không có ghi chú.</span>}
                                                 </div>
                                             </div>
                                             {detail.status === 'Lost' && (
-                                                <div className="col-12 mt-2">
-                                                    <strong className="text-danger small">Lý do Lost:</strong>
-                                                    <div className="text-danger mt-1 fw-semibold small">{detail.lostReason}</div>
+                                                <div className="col-12">
+                                                    <div className="text-danger small fw-semibold mb-1">Lý do thất bại (Lost)</div>
+                                                    <div className="p-2 bg-danger-light text-danger rounded border border-danger-subtle fw-semibold" style={{ fontSize: '13px' }}>
+                                                        {detail.lostReason}
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -286,26 +302,29 @@ function LeadDetailModal({ visible, setVisible, leadId, onRefresh }) {
                                 </div>
                                 
                                 {/* Thao tác Sales */}
-                                <div className="col-md-4">
-                                    <div className="bg-white p-3 rounded border shadow-sm h-100 text-center d-flex flex-column justify-content-center align-items-center">
-                                        <h6 className="fw-bold mb-3 w-100 border-bottom pb-2 text-start">Tương tác Sales</h6>
-                                        <div className="display-4 fw-bold text-primary mb-1">{detail.contactCount}</div>
-                                        <div className="text-muted mb-2">Lần liên hệ</div>
-                                        <p className="small text-muted mb-3 w-100 bg-light p-2 rounded">
-                                            Gần nhất:<br/>
-                                            <strong>{detail.lastContactedAt ? moment(detail.lastContactedAt).format("DD/MM/YYYY HH:mm") : "Chưa liên hệ"}</strong>
-                                        </p>
-                                        <CButton color="primary" className="w-100 shadow fw-bold py-2 mt-auto" onClick={handleContact}>
-                                            📞 GHI NHẬN LIÊN HỆ
+                                <div className="col-md-5">
+                                    <div className="bg-white p-3 rounded-3 border shadow-sm h-100 d-flex flex-column">
+                                        <h6 className="fw-bold mb-3 border-bottom pb-2 text-dark">Tương Tác Sales</h6>
+                                        <div className="flex-grow-1 d-flex flex-column justify-content-center align-items-center py-3">
+                                            <div className="display-4 fw-bold text-warning mb-1">{detail.contactCount}</div>
+                                            <div className="text-muted small mb-3">Lần liên hệ chăm sóc</div>
+                                            <div className="w-100 bg-light p-3 rounded-3 border text-center mb-4" style={{ fontSize: "13px" }}>
+                                                <div className="text-muted small mb-1">Lần cuối liên hệ:</div>
+                                                <strong className="text-dark">
+                                                    {detail.lastContactedAt ? moment(detail.lastContactedAt).format("DD/MM/YYYY HH:mm") : "Chưa liên hệ"}
+                                                </strong>
+                                            </div>
+                                        </div>
+                                        <CButton color="warning" className="w-100 text-white fw-bold py-2 mt-auto shadow-sm" onClick={handleContact}>
+                                            GHI NHẬN LIÊN HỆ
                                         </CButton>
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     ) : detail && isEditing ? (
-                        <div className="container bg-white p-4 rounded shadow-sm" style={{ maxWidth: '800px' }}>
-                            <h4 className="fw-bold mb-4 pb-2 border-bottom">Chỉnh Sửa Thông Tin Lead</h4>
+                        <div className="container bg-white p-4 rounded-3 border shadow-sm" style={{ maxWidth: '800px' }}>
+                            <h5 className="fw-bold mb-4 pb-2 border-bottom text-dark">Chỉnh Sửa Thông Tin Lead</h5>
                             <div className="row g-4">
                                 <div className="col-md-6">
                                     <CFormInput label="Họ tên (*)" name="name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
@@ -344,23 +363,22 @@ function LeadDetailModal({ visible, setVisible, leadId, onRefresh }) {
                                     <CFormTextarea label="Ghi chú" name="note" rows="4" value={formData.note} onChange={(e) => setFormData({...formData, note: e.target.value})} />
                                 </div>
                                 <div className="col-12 text-end mt-4">
-                                    <CButton color="secondary" className="me-2" onClick={() => setIsEditing(false)}>Hủy</CButton>
-                                    <CButton color="success" className="text-white" onClick={handleSaveEdit}>Lưu Thay Đổi</CButton>
+                                    <CButton color="secondary" variant="outline" className="me-2" onClick={() => setIsEditing(false)}>Hủy</CButton>
+                                    <CButton color="warning" className="text-white fw-semibold" onClick={handleSaveEdit}>Lưu Thay Đổi</CButton>
                                 </div>
                             </div>
                         </div>
                     ) : null}
                 </CModalBody>
-                {/* Removed Footer for View Mode */}
             </CModal>
 
             {/* Confirm Status Modal */}
             <CModal visible={confirmModalVisible} onClose={() => setConfirmModalVisible(false)} backdrop="static">
                 <CModalHeader>
-                    <CModalTitle>Xác nhận chuyển trạng thái</CModalTitle>
+                    <CModalTitle className="fw-bold">Xác nhận chuyển trạng thái</CModalTitle>
                 </CModalHeader>
-                <CModalBody>
-                    Bạn có chắc chắn muốn chuyển trạng thái Lead này sang <strong className="text-primary">{targetStatus}</strong>?
+                <CModalBody className="p-4">
+                    Bạn có chắc chắn muốn chuyển trạng thái Lead này sang <strong className="text-warning">{statusLabels[targetStatus] || targetStatus}</strong>?
                     {targetStatus === "Lost" && (
                         <div className="mt-4">
                             <label className="form-label text-danger fw-bold">Lý do mất khách (Bắt buộc):</label>
@@ -374,8 +392,8 @@ function LeadDetailModal({ visible, setVisible, leadId, onRefresh }) {
                     )}
                 </CModalBody>
                 <CModalFooter>
-                    <CButton color="secondary" onClick={() => setConfirmModalVisible(false)}>Hủy</CButton>
-                    <CButton color="primary" onClick={confirmStatusChange} disabled={targetStatus === "Lost" && !statusForm.lostReason.trim()}>Xác nhận</CButton>
+                    <CButton color="secondary" variant="outline" onClick={() => setConfirmModalVisible(false)}>Hủy</CButton>
+                    <CButton color="warning" className="text-white fw-semibold" onClick={confirmStatusChange} disabled={targetStatus === "Lost" && !statusForm.lostReason.trim()}>Xác nhận</CButton>
                 </CModalFooter>
             </CModal>
         </>

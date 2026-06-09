@@ -31,3 +31,13 @@ export const collectPayment = async (id, data) => {
     const response = await api.post(`/api/invoices/${id}/payment`, data)
     return response.data.data
 }
+
+export const cancelInvoice = async (id) => {
+    const response = await api.patch(`/api/invoices/${id}/cancel`)
+    return response.data.data
+}
+
+export const getInvoiceQrDetails = async (id) => {
+    const response = await api.get(`/api/invoices/${id}/qr`)
+    return response.data.data
+}

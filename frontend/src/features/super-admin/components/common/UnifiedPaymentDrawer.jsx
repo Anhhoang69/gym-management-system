@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, CheckCircle, CreditCard, Banknote, QrCode, Loader2, Gift, Zap, BadgeCheck, Sparkles } from 'lucide-react';
-import { getInvoiceQr, collectPayment } from '../../services/invoiceService';
+import { getInvoiceQrDetails, collectPayment } from '../../services/invoiceService';
 import { activateContract } from '../../services/contractService';
 import { createVNPayUrl, getPaymentStatus } from '../../../payment/services/vnpayService';
 
@@ -16,7 +16,7 @@ const UnifiedPaymentDrawer = ({
   onSuccess
 }) => {
   const [paymentMethod, setPaymentMethod] = useState('Cash');
-  const [qrCodeUrl, setQrCodeUrl] = useState(null);
+  const [qrDetails, setQrDetails] = useState(null);
   const [isLoadingQr, setIsLoadingQr] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [step, setStep] = useState('payment'); // 'payment', 'success'
@@ -55,12 +55,12 @@ const UnifiedPaymentDrawer = ({
   const fetchQrCode = async (id) => {
     try {
       setIsLoadingQr(true);
-      const qrUrl = await getInvoiceQr(id);
-      if (qrUrl) {
-        setQrCodeUrl(qrUrl);
+      const data = await getInvoiceQrDetails(id);
+      if (data) {
+        setQrDetails(data);
       }
     } catch (err) {
-      console.error("Failed to load QR code:", err);
+      console.error("Failed to load QR details:", err);
     } finally {
       setIsLoadingQr(false);
     }
@@ -379,9 +379,9 @@ const UnifiedPaymentDrawer = ({
                     <div className="h-48 w-48 flex items-center justify-center bg-white rounded-xl border border-slate-100 shadow-sm">
                       <Loader2 className="animate-spin text-indigo-600" size={32} />
                     </div>
-                  ) : qrCodeUrl ? (
+                  ) : qrDetails?.qrImageUrl ? (
                     <div className="p-3 bg-white rounded-xl border border-slate-100 shadow-sm">
-                      <img src={qrCodeUrl} alt="VietQR" className="h-48 w-48 object-contain rounded-lg" />
+                      <img src={qrDetails.qrImageUrl} alt="VietQR" className="h-48 w-48 object-contain rounded-lg" />
                     </div>
                   ) : (
                     <div className="h-48 w-48 flex flex-col items-center justify-center bg-white rounded-xl border border-slate-100 shadow-sm text-slate-400 text-center px-4">
@@ -389,6 +389,55 @@ const UnifiedPaymentDrawer = ({
                       <span className="text-xs font-semibold">Không thể tải mã QR lúc này</span>
                     </div>
                   )}
+
+                  {/* Manual Account Details */}
+                  {qrDetails && (
+                    <div className="w-full mt-4 bg-white p-3 rounded-lg border text-xs space-y-2">
+                      <div className="d-flex justify-content-between">
+                        <span className="text-muted">Ngân hàng:</span>
+                        <span className="fw-bold text-dark">{qrDetails.bankId}</span>
+                      </div>
+                      <div className="d-flex justify-content-between align-items-center">
+                        <span className="text-muted">Số tài khoản:</span>
+                        <div className="d-flex align-items-center gap-1.5">
+                          <span className="fw-bold text-dark">{qrDetails.accountNo}</span>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(qrDetails.accountNo);
+                              alert("Đã sao chép số tài khoản!");
+                            }}
+                            className="btn btn-link p-0 text-decoration-none text-indigo-600 font-semibold"
+                            style={{ fontSize: "11px" }}
+                          >
+                            Sao chép
+                          </button>
+                        </div>
+                      </div>
+                      <div className="d-flex justify-content-between">
+                        <span className="text-muted">Chủ tài khoản:</span>
+                        <span className="fw-bold text-dark text-uppercase">{qrDetails.accountName}</span>
+                      </div>
+                      <div className="d-flex justify-content-between align-items-center">
+                        <span className="text-muted">Nội dung chuyển khoản:</span>
+                        <div className="d-flex align-items-center gap-1.5">
+                          <span className="fw-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">{qrDetails.transferDescription}</span>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(qrDetails.transferDescription);
+                              alert("Đã sao chép nội dung chuyển khoản!");
+                            }}
+                            className="btn btn-link p-0 text-decoration-none text-indigo-600 font-semibold"
+                            style={{ fontSize: "11px" }}
+                          >
+                            Sao chép
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <p className="text-xs text-slate-500 mt-4 text-center leading-relaxed font-medium">
                     Vui lòng yêu cầu khách hàng quét mã này. <br /> Nhấn xác nhận khi nhận được tiền.
                   </p>

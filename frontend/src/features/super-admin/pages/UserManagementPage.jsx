@@ -37,6 +37,7 @@ function UserManagementPage() {
   const [search, setSearch] = useState("")
   const [role, setRole] = useState("")
   const [branch, setBranch] = useState("")
+  const [status, setStatus] = useState("")
 
   const [selectedIds, setSelectedIds] = useState([])
 
@@ -93,7 +94,8 @@ function UserManagementPage() {
         pageSize,
         search,
         role,
-        branch
+        branch,
+        status
       )
 
       setUsers(data?.items || [])
@@ -138,7 +140,7 @@ function UserManagementPage() {
     }, 300)
 
     return () => clearTimeout(timeout)
-  }, [search, role, branch])
+  }, [search, role, branch, status])
 
   useEffect(() => {
     loadStats()
@@ -204,42 +206,47 @@ function UserManagementPage() {
   // ================= UI =================
 
   return (
-    <div>
+    <div className="d-flex flex-column" style={{ height: "calc(100vh - 130px)", overflow: "hidden" }}>
 
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <h3 className="fw-bold mb-0">Quản Lý Người Dùng</h3>
+      <div className="flex-shrink-0">
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h3 className="fw-bold mb-0">Quản Lý Người Dùng</h3>
 
-        <button
-          className="btn btn-warning px-4 fw-semibold"
-          onClick={() => setShowCreateModal(true)}
-        >
-          + Tạo Người Dùng Mới
-        </button>
+          <button
+            className="btn btn-warning px-4 fw-semibold"
+            onClick={() => setShowCreateModal(true)}
+          >
+            + Tạo Người Dùng Mới
+          </button>
+        </div>
+
+        <StatsCards stats={stats} />
+
+        <div className="mt-3">
+          <UserFilters
+            search={search}
+            setSearch={setSearch}
+            role={role}
+            setRole={setRole}
+            branch={branch}
+            setBranch={setBranch}
+            status={status}
+            setStatus={setStatus}
+            branches={branches} // 🔥 FIX QUAN TRỌNG
+            selectedCount={selectedIds.length}
+            onBulkEmail={onBulkEmail}
+            onBulkSuspend={onBulkSuspend}
+            onClearSelection={clearSelection}
+          />
+        </div>
       </div>
 
-      <StatsCards stats={stats} />
-
-      <div className="mt-3">
-        <UserFilters
-          search={search}
-          setSearch={setSearch}
-          role={role}
-          setRole={setRole}
-          branch={branch}
-          setBranch={setBranch}
-          branches={branches} // 🔥 FIX QUAN TRỌNG
-          selectedCount={selectedIds.length}
-          onBulkEmail={onBulkEmail}
-          onBulkSuspend={onBulkSuspend}
-          onClearSelection={clearSelection}
-        />
-      </div>
-
-      <div className="mt-3" style={{
-        maxHeight: "42vh",
+      <div className="flex-grow-1 mt-3" style={{
         overflowY: "auto",
-        border: "1px solid #eee",
-        borderRadius: "8px"
+        border: "1px solid #e5e7eb",
+        borderRadius: "8px",
+        background: "#fff",
+        boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05)"
       }}>
         <UsersTable
           users={users}
@@ -252,7 +259,7 @@ function UserManagementPage() {
         />
       </div>
 
-      <div className="d-flex justify-content-between align-items-center mt-3">
+      <div className="flex-shrink-0 d-flex justify-content-between align-items-center mt-3">
         <small className="text-muted">
           Hiển thị {(page - 1) * pageSize + 1}–
           {Math.min(page * pageSize, totalItems)} của {totalItems}

@@ -1,17 +1,22 @@
+import { useLanguage } from '../../../../shared/contexts/LanguageContext';
+
 export default function ContactForm() {
+  const { t } = useLanguage();
+
   return (
     <form className="rounded-2xl p-6 border transition-all duration-300 shadow-sm hover:shadow-md" style={{ backgroundColor: 'var(--bg-third)', borderColor: 'var(--border)' }}>
       <h2 className="text-xl font-extrabold text-center mb-6 uppercase tracking-tight" style={{ color: 'var(--brand)' }}>
-        Gửi yêu cầu tư vấn
+        {t('contactPage.formTitle')}
       </h2>
 
       <div className="space-y-4">
-        <Input label="Họ và tên" required />
-        <Input label="Email" type="email" required />
-        <Input label="Số điện thoại" required />
+        <Input label={t('contactPage.fullName')} required />
+        <Input label={t('contactPage.email')} type="email" required />
+        <Input label={t('contactPage.phone')} required />
 
         <Select
-          label="Chi nhánh"
+          label={t('contactPage.branch')}
+          placeholder={t('contactPage.selectBranch')}
           options={[
             "EnerGym Quận 1",
             "EnerGym Bình Thạnh",
@@ -19,7 +24,7 @@ export default function ContactForm() {
           ]}
         />
 
-        <Textarea label="Nội dung" required />
+        <Textarea label={t('contactPage.content')} required />
       </div>
 
       <button
@@ -30,7 +35,7 @@ export default function ContactForm() {
           color: 'var(--on-brand)',
         }}
       >
-        Gửi Ngay
+        {t('contactPage.submit')}
       </button>
     </form>
   );
@@ -64,7 +69,7 @@ function Input({ label, type = "text", required = false }) {
 /* ===================== */
 /* SELECT */
 /* ===================== */
-function Select({ label, options = [], required = false }) {
+function Select({ label, options = [], required = false, placeholder = "Chọn chi nhánh" }) {
   return (
     <div>
       <label className="block text-xs font-bold mb-1" style={{ color: 'var(--text-secondary)' }}>
@@ -81,7 +86,7 @@ function Select({ label, options = [], required = false }) {
           color: 'var(--text-primary)'
         }}
       >
-        <option value="">Chọn chi nhánh</option>
+        <option value="">{placeholder}</option>
         {options.map((opt) => (
           <option key={opt} value={opt}>{opt}</option>
         ))}

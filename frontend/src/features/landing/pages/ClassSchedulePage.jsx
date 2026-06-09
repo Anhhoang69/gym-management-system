@@ -7,11 +7,110 @@ import { FaCalendarAlt, FaClock, FaMapMarkerAlt, FaUserTie, FaTimes, FaCheckCirc
 import { getClasses } from "../../super-admin/services/classService"
 import { getMyBookings, cancelBooking } from "../services/memberService"
 import ClassBookingModal from "../components/ClassBookingModal"
+import { useLanguage } from '../../../shared/contexts/LanguageContext';
 
 // Setup moment localizer
 const localizer = momentLocalizer(moment)
 
+const scheduleTranslations = {
+  vi: {
+    loading: "Đang tải lịch học...",
+    booked: "ĐÃ ĐẶT",
+    legendRegistered: "Đã đăng ký",
+    legendAvailable: "Còn chỗ",
+    legendFull: "Đã đầy",
+    legendEnded: "Đã kết thúc",
+    sidebarTitle: "Lớp đã đăng ký",
+    classesCount: "{count} lớp",
+    loginPrompt: "Vui lòng đăng nhập để xem các lớp đã đặt chỗ.",
+    noClasses: "Chưa đăng ký lớp nào",
+    bookingTip: "Chọn các lớp có sẵn trên lịch và click \"Đặt chỗ ngay\"!",
+    statusCompleted: "Đã học",
+    statusUpcoming: "Sắp tới",
+    ptLabel: "PT: ",
+    roomLabel: "Phòng: ",
+    cancelBookingBtn: "Hủy đặt chỗ",
+    // Cancel Modal
+    cancelTitle: "Hủy đặt chỗ lớp học",
+    cancelSubtitle: "Bạn đang hủy đặt chỗ cho lớp {className}",
+    cancelPrompt: "Xin vui lòng chọn hoặc nhập lý do để chúng tôi cải thiện chất lượng phục vụ tốt hơn:",
+    charCount: "{count}/150 ký tự",
+    backBtn: "Quay lại",
+    confirmCancelBtn: "Xác nhận hủy",
+    customReasonPlaceholder: "Nhập lý do khác của bạn ở đây...",
+    // Reasons
+    reasonBusy: "Bận lịch cá nhân",
+    reasonHealth: "Lý do sức khỏe",
+    reasonPlans: "Thay đổi kế hoạch",
+    reasonCommute: "Thời tiết xấu/Di chuyển",
+    // Success Modal
+    successTitle: "Hủy đặt chỗ thành công!",
+    successMsg: "Vị trí của bạn đã được giải phóng. Bạn có thể chọn và đăng ký lớp học khác bất kỳ lúc nào!",
+    okBtn: "Đồng ý",
+    // Calendar Toolbar Messages
+    calToday: 'Hôm nay',
+    calPrevious: 'Trước',
+    calNext: 'Tiếp',
+    calMonth: 'Tháng',
+    calWeek: 'Tuần',
+    calDay: 'Ngày',
+    calAgenda: 'Lịch trình',
+  },
+  en: {
+    loading: "Loading schedule...",
+    booked: "BOOKED",
+    legendRegistered: "Registered",
+    legendAvailable: "Available",
+    legendFull: "Full",
+    legendEnded: "Completed",
+    sidebarTitle: "Registered Classes",
+    classesCount: "{count} classes",
+    loginPrompt: "Please log in to view your booked classes.",
+    noClasses: "No classes registered",
+    bookingTip: "Select an available class on the calendar and click \"Book Now\"!",
+    statusCompleted: "Completed",
+    statusUpcoming: "Upcoming",
+    ptLabel: "PT: ",
+    roomLabel: "Room: ",
+    cancelBookingBtn: "Cancel Booking",
+    // Cancel Modal
+    cancelTitle: "Cancel Class Booking",
+    cancelSubtitle: "You are canceling your booking for {className}",
+    cancelPrompt: "Please select or enter a reason to help us improve our service:",
+    charCount: "{count}/150 characters",
+    backBtn: "Back",
+    confirmCancelBtn: "Confirm Cancel",
+    customReasonPlaceholder: "Enter your custom reason here...",
+    // Reasons
+    reasonBusy: "Busy schedule",
+    reasonHealth: "Health issues",
+    reasonPlans: "Change of plans",
+    reasonCommute: "Bad weather/Commute",
+    // Success Modal
+    successTitle: "Booking Canceled!",
+    successMsg: "Your spot has been released. You can browse and book another class at any time!",
+    okBtn: "Dismiss",
+    // Calendar Toolbar Messages
+    calToday: 'Today',
+    calPrevious: 'Previous',
+    calNext: 'Next',
+    calMonth: 'Month',
+    calWeek: 'Week',
+    calDay: 'Day',
+    calAgenda: 'Agenda',
+  }
+};
+
 export default function ClassSchedulePage() {
+  const { locale } = useLanguage();
+  const tSched = (key, params = {}) => {
+    let text = scheduleTranslations[locale]?.[key] || scheduleTranslations.vi[key] || key;
+    Object.keys(params).forEach(pKey => {
+      text = text.replace(`{${pKey}}`, params[pKey]);
+    });
+    return text;
+  };
+
   const [events, setEvents] = useState([])
   const [myBookings, setMyBookings] = useState([])
   const [showDetailModal, setShowDetailModal] = useState(false)
@@ -25,14 +124,14 @@ export default function ClassSchedulePage() {
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
   const [targetBooking, setTargetBooking] = useState(null)
-  const [cancelReason, setCancelReason] = useState("Bận lịch cá nhân")
+  const [cancelReason, setCancelReason] = useState(tSched('reasonBusy'))
   const [submittingCancel, setSubmittingCancel] = useState(false)
 
   const quickReasons = [
-    "Bận lịch cá nhân",
-    "Lý do sức khỏe",
-    "Thay đổi kế hoạch",
-    "Thời tiết xấu/Di chuyển"
+    tSched('reasonBusy'),
+    tSched('reasonHealth'),
+    tSched('reasonPlans'),
+    tSched('reasonCommute')
   ]
 
   const cleanClassTitle = (title) => {
@@ -53,7 +152,7 @@ export default function ClassSchedulePage() {
       if (isTimeOnly) {
         const combined = new Date(`${cleanDate}T${booking.startTime}`);
         if (!isNaN(combined.getTime())) {
-          return combined.toLocaleString('vi-VN', {
+          return combined.toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
             hour: '2-digit',
             minute: '2-digit',
             day: '2-digit',
@@ -66,7 +165,7 @@ export default function ClassSchedulePage() {
 
     const dateObj = new Date(booking.startTime);
     if (!isNaN(dateObj.getTime())) {
-      return dateObj.toLocaleString('vi-VN', {
+      return dateObj.toLocaleString(locale === 'vi' ? 'vi-VN' : 'en-US', {
         hour: '2-digit',
         minute: '2-digit',
         day: '2-digit',
@@ -136,7 +235,7 @@ export default function ClassSchedulePage() {
 
   const handleCancelBooking = (booking) => {
     setTargetBooking(booking)
-    setCancelReason("Bận lịch cá nhân")
+    setCancelReason(tSched('reasonBusy'))
     setIsCancelModalOpen(true)
   }
 
@@ -166,7 +265,7 @@ export default function ClassSchedulePage() {
             {loading ? (
               <div className="w-full h-full flex flex-col items-center justify-center text-[var(--text-secondary)]">
                 <div className="w-10 h-10 border-4 border-[var(--border)] border-t-[var(--brand)] rounded-full animate-spin mb-4"></div>
-                <p>Đang tải lịch học...</p>
+                <p>{tSched('loading')}</p>
               </div>
             ) : (
               <Calendar
@@ -184,27 +283,28 @@ export default function ClassSchedulePage() {
                 min={new Date(0, 0, 0, 5, 0, 0)} // Start from 5:00 AM
                 max={new Date(0, 0, 0, 23, 0, 0)} // End at 11:00 PM
                 messages={{
-                  today: 'Hôm nay',
-                  previous: 'Trước',
-                  next: 'Tiếp',
-                  month: 'Tháng',
-                  week: 'Tuần',
-                  day: 'Ngày',
-                  agenda: 'Lịch trình',
-                  showMore: (total) => `+ Xem thêm (${total})`
+                  today: tSched('calToday'),
+                  previous: tSched('calPrevious'),
+                  next: tSched('calNext'),
+                  month: tSched('calMonth'),
+                  week: tSched('calWeek'),
+                  day: tSched('calDay'),
+                  agenda: tSched('calAgenda'),
+                  showMore: (total) => `+ ${locale === 'vi' ? 'Xem thêm' : 'Show more'} (${total})`
                 }}
                 components={{
                   event: ({ event }) => (
                     <div className="flex items-center gap-1.5 h-full w-full overflow-hidden text-[10px] font-semibold leading-none py-0.5">
                       {event.isBooked && (
                         <span className="flex-shrink-0 inline-flex items-center gap-0.5 bg-amber-400 text-purple-950 font-extrabold rounded-md px-1 py-0.5 text-[8px] tracking-wide border border-amber-300 shadow-sm leading-none">
-                          <FaCheckCircle size={8} /> ĐÃ ĐẶT
+                          <FaCheckCircle size={8} /> {tSched('booked')}
                         </span>
                       )}
                       <span className="truncate">{event.title}</span>
                     </div>
                   )
                 }}
+
                 eventPropGetter={(event) => {
                   let backgroundColor = '#3B82F6' // default blue (available)
                   let border = 'none'
@@ -241,16 +341,16 @@ export default function ClassSchedulePage() {
             {/* Legend */}
             <div className="flex gap-6 text-xs font-medium text-[var(--text-secondary)]">
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-purple-600 shadow-sm border border-yellow-400"></span> Đã đăng ký
+                <span className="w-3 h-3 rounded-full bg-purple-600 shadow-sm border border-yellow-400"></span> {tSched('legendRegistered')}
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-blue-500 shadow-sm"></span> Còn chỗ
+                <span className="w-3 h-3 rounded-full bg-blue-500 shadow-sm"></span> {tSched('legendAvailable')}
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-yellow-500 shadow-sm"></span> Đã đầy
+                <span className="w-3 h-3 rounded-full bg-yellow-500 shadow-sm"></span> {tSched('legendFull')}
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-green-500 shadow-sm"></span> Đã kết thúc
+                <span className="w-3 h-3 rounded-full bg-green-500 shadow-sm"></span> {tSched('legendEnded')}
               </div>
             </div>
           </div>
@@ -263,25 +363,25 @@ export default function ClassSchedulePage() {
               <span className="p-1.5 rounded-lg bg-purple-500/15 text-purple-500 flex items-center justify-center">
                 <FaCalendarAlt size={12} />
               </span>
-              Lớp đã đăng ký
+              {tSched('sidebarTitle')}
             </span>
             <span className="bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 px-1.5 py-0.2 rounded-full font-bold" style={{ fontSize: '9px' }}>
-              {myBookings.filter(b => b.status !== 'Cancelled' && b.bookingStatus !== 'Cancelled').length} lớp
+              {tSched('classesCount', { count: myBookings.filter(b => b.status !== 'Cancelled' && b.bookingStatus !== 'Cancelled').length })}
             </span>
           </h3>
 
           <div className="flex-grow overflow-y-auto pr-1 space-y-2.5 custom-scrollbar">
             {!localStorage.getItem("token") ? (
               <div className="py-10 text-center text-[var(--text-secondary)]">
-                <p className="text-xs">Vui lòng đăng nhập để xem các lớp đã đặt chỗ.</p>
+                <p className="text-xs">{tSched('loginPrompt')}</p>
               </div>
             ) : myBookings.filter(b => b.status !== 'Cancelled' && b.bookingStatus !== 'Cancelled').length === 0 ? (
               <div className="py-10 text-center text-[var(--text-secondary)] flex flex-col items-center gap-1.5">
                 <div className="w-10 h-10 rounded-full bg-[var(--hover)] flex items-center justify-center text-purple-500/60 mb-0.5">
                   <FaCalendarAlt size={16} />
                 </div>
-                <p className="text-xs font-semibold text-[var(--text-primary)]">Chưa đăng ký lớp nào</p>
-                <p className="text-[10px] max-w-[180px] mx-auto text-[var(--text-secondary)]">Chọn các lớp có sẵn trên lịch và click "Đặt chỗ ngay"!</p>
+                <p className="text-xs font-semibold text-[var(--text-primary)]">{tSched('noClasses')}</p>
+                <p className="text-[10px] max-w-[180px] mx-auto text-[var(--text-secondary)]">{tSched('bookingTip')}</p>
               </div>
             ) : (
               myBookings
@@ -295,13 +395,13 @@ export default function ClassSchedulePage() {
                     >
                       <div className="flex justify-between items-start gap-1.5 mb-1.5">
                         <span className="font-bold text-[var(--text-primary)] line-clamp-2 leading-snug" style={{ fontSize: '11px' }}>
-                          {cleanClassTitle(booking.className || booking.title || "Lớp học")}
+                          {cleanClassTitle(booking.className || booking.title || (locale === 'vi' ? "Lớp học" : "Class"))}
                         </span>
                         <span className={`px-1.5 py-0.2 rounded-full text-[8px] font-bold flex-shrink-0 ${isCompleted
                             ? 'bg-blue-50 text-blue-600 dark:bg-blue-950/20 dark:text-blue-400'
                             : 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400'
                           }`}>
-                          {isCompleted ? 'Đã học' : 'Sắp tới'}
+                          {isCompleted ? tSched('statusCompleted') : tSched('statusUpcoming')}
                         </span>
                       </div>
 
@@ -313,13 +413,13 @@ export default function ClassSchedulePage() {
                         {booking.trainerName && (
                           <div className="flex items-center gap-1">
                             <FaUserTie className="opacity-80 flex-shrink-0" size={9} />
-                            <span>PT: {booking.trainerName}</span>
+                            <span>{tSched('ptLabel')}{booking.trainerName}</span>
                           </div>
                         )}
                         {booking.roomName && (
                           <div className="flex items-center gap-1">
                             <FaMapMarkerAlt className="opacity-80 flex-shrink-0" size={9} />
-                            <span>Phòng: {booking.roomName} {booking.roomNumber ? `(${booking.roomNumber})` : ''}</span>
+                            <span>{locale === 'vi' ? 'Phòng' : 'Room'}: {booking.roomName} {booking.roomNumber ? `(${booking.roomNumber})` : ''}</span>
                           </div>
                         )}
                       </div>
@@ -330,7 +430,7 @@ export default function ClassSchedulePage() {
                           className="w-full py-1 font-bold text-rose-500 hover:bg-rose-500/10 border border-rose-500/20 rounded-lg transition-colors duration-200 mt-0.5 flex items-center justify-center gap-1 cursor-pointer"
                           style={{ fontSize: '9px' }}
                         >
-                          <FaTimes size={8} /> Hủy đặt chỗ
+                          <FaTimes size={8} /> {tSched('cancelBookingBtn')}
                         </button>
                       )}
                     </div>
@@ -362,15 +462,15 @@ export default function ClassSchedulePage() {
                 <FaExclamationTriangle size={20} />
               </span>
               <div>
-                <h3 className="font-bold text-base">Hủy đặt chỗ lớp học</h3>
-                <p className="text-[10px] text-white/80 font-medium">Bạn đang hủy đặt chỗ cho lớp {cleanClassTitle(targetBooking.className || targetBooking.title)}</p>
+                <h3 className="font-bold text-base">{tSched('cancelTitle')}</h3>
+                <p className="text-[10px] text-white/80 font-medium">{tSched('cancelSubtitle', { className: cleanClassTitle(targetBooking.className || targetBooking.title) })}</p>
               </div>
             </div>
 
             {/* Modal Body */}
             <div className="p-5">
               <p className="text-xs text-[var(--text-secondary)] mb-4 font-medium leading-relaxed">
-                Xin vui lòng chọn hoặc nhập lý do để chúng tôi cải thiện chất lượng phục vụ tốt hơn:
+                {tSched('cancelPrompt')}
               </p>
 
               {/* Quick Select Suggestion Chips */}
@@ -399,12 +499,12 @@ export default function ClassSchedulePage() {
                 <textarea
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
-                  placeholder="Nhập lý do khác của bạn ở đây..."
+                  placeholder={tSched('customReasonPlaceholder')}
                   className="w-full pl-8 pr-3 py-2 text-xs border border-[var(--border)] rounded-xl bg-[var(--bg-third)] focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-[var(--text-primary)] transition-all resize-none h-20"
                   maxLength={150}
                 />
                 <div className="text-right text-[10px] text-gray-400 mt-1">
-                  {cancelReason.length}/150 ký tự
+                  {tSched('charCount', { count: cancelReason.length })}
                 </div>
               </div>
 
@@ -415,7 +515,7 @@ export default function ClassSchedulePage() {
                   disabled={submittingCancel}
                   className="px-4 py-2 rounded-xl text-xs font-bold text-[var(--text-secondary)] border border-[var(--border)] hover:bg-[var(--hover)] transition-all cursor-pointer"
                 >
-                  Quay lại
+                  {tSched('backBtn')}
                 </button>
                 <button
                   onClick={handleConfirmCancel}
@@ -424,7 +524,7 @@ export default function ClassSchedulePage() {
                 >
                   {submittingCancel ? (
                     <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : "Xác nhận hủy"}
+                  ) : tSched('confirmCancelBtn')}
                 </button>
               </div>
             </div>
@@ -445,16 +545,16 @@ export default function ClassSchedulePage() {
               <FaCheckCircle size={28} className="relative z-10" />
             </div>
 
-            <h3 className="font-bold text-sm text-[var(--text-primary)] mb-1">Hủy đặt chỗ thành công!</h3>
+            <h3 className="font-bold text-sm text-[var(--text-primary)] mb-1">{tSched('successTitle')}</h3>
             <p className="text-xs text-[var(--text-secondary)] mb-5 px-2 leading-relaxed">
-              Vị trí của bạn đã được giải phóng. Bạn có thể chọn và đăng ký lớp học khác bất kỳ lúc nào!
+              {tSched('successMsg')}
             </p>
 
             <button
               onClick={() => setIsSuccessModalOpen(false)}
               className="w-full py-2 rounded-xl text-xs font-bold text-black bg-yellow-500 hover:bg-yellow-600 shadow-md shadow-yellow-500/20 hover:shadow-lg transition-all cursor-pointer"
             >
-              Đồng ý
+              {tSched('okBtn')}
             </button>
           </div>
         </div>

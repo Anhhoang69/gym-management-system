@@ -4,6 +4,7 @@ import { HiOutlineLocationMarker, HiOutlineClock, HiOutlinePhone } from 'react-i
 import Banner from '../components/branch/Banner';
 import FAQSection from '../components/branch/FAQSection';
 import CTASection from '../components/CTASection';
+import { useLanguage } from '../../../shared/contexts/LanguageContext';
 
 const branchDetails = {
   hcm: [
@@ -79,6 +80,7 @@ const ITEMS_PER_PAGE = 4;
 export default function BranchCityPage() {
   const { city } = useParams();
   const branches = branchDetails[city] || [];
+  const { t } = useLanguage();
 
   const [currentPage, setCurrentPage] = useState(1);
   const listRef = useRef(null);
@@ -95,16 +97,24 @@ export default function BranchCityPage() {
     setCurrentPage(1);
   }, [city]);
 
+  const getCityTitle = () => {
+    if (city?.toLowerCase() === 'hcm') return t('branchesPage.cityHCM');
+    if (city?.toLowerCase() === 'hanoi') return t('branchesPage.cityHN');
+    if (city?.toLowerCase() === 'danang') return t('branchesPage.cityDN');
+    if (city?.toLowerCase() === 'cantho') return t('branchesPage.cityCT');
+    return city?.toUpperCase();
+  };
+
   return (
     <div className="w-full bg-(--bg) text-(--text-primary)">
       {/* ===== Banner ===== */}
       <Banner
-        title={city?.toUpperCase() === 'HCM' ? 'HỒ CHÍ MINH' : city?.toUpperCase()}
-        subtitle="Chọn chi nhánh gần bạn nhất và bắt đầu hành trình tập luyện hôm nay"
+        title={getCityTitle()}
+        subtitle={t('branchesPage.subtitle')}
         image="/images/branch-banner.jpg"
         breadcrumb={[
-          { label: 'Chi nhánh', to: '/branches' },
-          { label: `TP. ${city?.toUpperCase()}` },
+          { label: t('nav.branches'), to: '/branches' },
+          { label: `TP. ${getCityTitle()}` },
         ]}
         showSearch={false}
       />
@@ -114,20 +124,19 @@ export default function BranchCityPage() {
         {/* EMPTY STATE */}
         {branches.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-(--border) bg-(--bg-secondary) px-6 py-16 text-center">
-            <h2 className="text-2xl font-bold">Hiện chưa có chi nhánh tại khu vực này</h2>
+            <h2 className="text-2xl font-bold">{t('branchesPage.emptyTitle')}</h2>
             <p className="mt-3 max-w-md text-(--text-secondary)">
-              EnerGym đang mở rộng hệ thống. Hãy quay lại sau hoặc đăng ký để nhận thông báo khi có
-              chi nhánh mới.
+              {t('branchesPage.emptyDesc')}
             </p>
             <div className="mt-6 flex gap-4">
               <Link to="/branches" className="text-(--brand) underline underline-offset-4">
-                Xem các thành phố khác
+                {t('branchesPage.otherCities')}
               </Link>
               <Link
                 to="/contact"
                 className="rounded-md bg-(--brand) px-5 py-2 font-semibold text-black"
               >
-                Liên hệ tư vấn
+                {t('branchesPage.consultation')}
               </Link>
             </div>
           </div>
@@ -165,7 +174,7 @@ export default function BranchCityPage() {
                   <div className="flex items-center gap-3">
                     <HiOutlineClock className="shrink-0 text-xl text-(--brand)" />
                     <p className="text-base sm:text-lg">
-                      <span className="font-semibold">Giờ mở cửa:</span> {b.time}
+                      <span className="font-semibold">{t('branchesPage.hoursLabel')}</span> {b.time}
                     </p>
                   </div>
 
@@ -173,7 +182,7 @@ export default function BranchCityPage() {
                   <div className="flex items-center gap-3">
                     <HiOutlinePhone className="shrink-0 text-xl text-(--brand)" />
                     <p className="text-base sm:text-lg">
-                      <span className="font-semibold">Hotline:</span> {b.phone}
+                      <span className="font-semibold">{t('branchesPage.hotlineLabel')}</span> {b.phone}
                     </p>
                   </div>
                 </div>
@@ -183,14 +192,14 @@ export default function BranchCityPage() {
                     to={`/branches/${city}/${b.slug || 'detail'}`}
                     className="text-base font-medium text-(--text-primary) underline underline-offset-4 transition hover:text-(--brand) sm:text-lg"
                   >
-                    Xem chi nhánh &gt;
+                    {t('branchesPage.viewBranch')}
                   </Link>
 
                   <Link
                     to="/contact"
                     className="rounded-full bg-(--brand) px-10 py-3 text-sm font-bold text-black shadow-md transition-all duration-300 hover:scale-105 hover:bg-yellow-300 active:scale-95"
                   >
-                    Đăng ký ngay
+                    {t('branchesPage.registerNow')}
                   </Link>
                 </div>
               </div>
@@ -214,9 +223,9 @@ export default function BranchCityPage() {
           <button
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => p - 1)}
-            className="px-4 py-2 text-sm font-medium transition hover:text-(--brand) disabled:opacity-30"
+            className="px-4 py-2 text-sm font-medium transition hover:text-(--brand) disabled:opacity-30 cursor-pointer"
           >
-            ← Previous
+            {t('branchesPage.prev')}
           </button>
 
           <div className="flex gap-2">
@@ -224,7 +233,7 @@ export default function BranchCityPage() {
               <button
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
-                className={`h-10 w-10 rounded-lg text-sm font-bold transition-all ${
+                className={`h-10 w-10 rounded-lg text-sm font-bold transition-all cursor-pointer ${
                   currentPage === i + 1
                     ? 'bg-(--brand) text-black shadow-md'
                     : 'border border-(--border) bg-(--bg-secondary) hover:bg-(--hover)'
@@ -238,9 +247,9 @@ export default function BranchCityPage() {
           <button
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => p + 1)}
-            className="px-4 py-2 text-sm font-medium transition hover:text-(--brand) disabled:opacity-30"
+            className="px-4 py-2 text-sm font-medium transition hover:text-(--brand) disabled:opacity-30 cursor-pointer"
           >
-            Next →
+            {t('branchesPage.next')}
           </button>
         </div>
       )}
@@ -250,3 +259,4 @@ export default function BranchCityPage() {
     </div>
   );
 }
+

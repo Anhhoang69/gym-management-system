@@ -123,31 +123,6 @@ function AdminHeader() {
         {/* RIGHT MENU */}
 
         <CHeaderNav className="d-flex align-items-center gap-3">
-
-          {/* SEARCH */}
-
-          <div style={{ width: 260, position: "relative" }}>
-
-            <CFormInput
-              placeholder="Tìm kiếm..."
-              style={{ paddingRight: 35 }}
-            />
-
-            <CIcon
-              icon={cilSearch}
-              size="sm"
-              style={{
-                position: "absolute",
-                right: 12,
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "#6c757d",
-                cursor: "pointer"
-              }}
-            />
-
-          </div>
-
           {/* CREATE NOTIFICATION */}
           <CButton 
             color="primary" 
@@ -156,12 +131,10 @@ function AdminHeader() {
             onClick={() => setShowCreateNotification(true)}
           >
             <CIcon icon={cilBell} />
-            <span className="d-none d-md-inline">Notification</span>
+            <span className="d-none d-md-inline">Tạo thông báo</span>
           </CButton>
 
           {/* THEME TOGGLE */}
-
-
           <button
             onClick={toggleTheme}
             aria-label="Toggle theme"
@@ -173,13 +146,11 @@ function AdminHeader() {
               background: "transparent"
             }}
           >
-
             {isDark ? (
-              <FaMoon size={18} />
+              <FaMoon size={18} className="text-secondary" />
             ) : (
-              <FaSun size={18} />
+              <FaSun size={18} className="text-secondary" />
             )}
-
           </button>
 
           {/* REUSABLE NOTIFICATION DROPDOWN */}

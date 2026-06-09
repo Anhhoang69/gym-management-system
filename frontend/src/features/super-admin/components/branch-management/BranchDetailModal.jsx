@@ -352,50 +352,64 @@ function BranchDetailModal({
 
             </CModalBody>
 
-            <CModalFooter>
+            <CModalFooter className="d-flex justify-content-between align-items-center">
 
-                {!editMode && (
+                <div>
+                    {!editMode && (
+                        <CButton
+                            color="danger"
+                            variant="outline"
+                            className="px-4 fw-semibold"
+                            onClick={() => onDelete(branch)}
+                        >
+                            Xóa chi nhánh
+                        </CButton>
+                    )}
+                </div>
 
-                    <CButton
-                        color="warning"
-                        onClick={() => setEditMode(true)}
-                    >
-                        Chỉnh sửa
-                    </CButton>
-
-                )}
-
-                {editMode && (
-
-                    <CButton
-                        color="success"
-                        onClick={handleSave}
-                    >
-                        Lưu thay đổi
-                    </CButton>
-
-                )}
-
-                {!editMode && (
-
-                    <CButton
-                        color="danger"
-                        onClick={() => onDelete(branch)}
-                    >
-                        Xóa chi nhánh
-                    </CButton>
-
-                )}
-
-                <CButton
-                    color="secondary"
-                    onClick={() => {
-                        setVisible(false)
-                        setEditMode(false)
-                    }}
-                >
-                    Đóng
-                </CButton>
+                <div className="d-flex gap-2">
+                    {!editMode ? (
+                        <>
+                            <CButton
+                                color="warning"
+                                className="px-4 fw-semibold"
+                                onClick={() => setEditMode(true)}
+                            >
+                                Chỉnh sửa
+                            </CButton>
+                            <CButton
+                                color="light"
+                                className="border px-4 fw-semibold"
+                                onClick={() => {
+                                    setVisible(false)
+                                    setEditMode(false)
+                                }}
+                            >
+                                Đóng
+                            </CButton>
+                        </>
+                    ) : (
+                        <>
+                            <CButton
+                                color="success"
+                                className="px-4 fw-semibold text-white"
+                                onClick={handleSave}
+                            >
+                                Lưu thay đổi
+                            </CButton>
+                            <CButton
+                                color="light"
+                                className="border px-4 fw-semibold"
+                                onClick={() => {
+                                    setForm({ ...branch })
+                                    setEditMode(false)
+                                }}
+                            >
+                                Hủy
+                            </CButton>
+                        </>
+                    )}
+                </div>
 
             </CModalFooter>
 

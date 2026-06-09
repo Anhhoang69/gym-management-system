@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import FAQItem from './FAQItem';
+import { useLanguage } from '../../../../shared/contexts/LanguageContext';
 
 const faqData = [
   {
@@ -44,8 +45,15 @@ const ITEMS_PER_PAGE = 5;
 
 export default function FAQList({ searchQuery, activeFilter }) {
   const [currentPage, setCurrentPage] = useState(1);
+  const { t } = useLanguage();
 
-  const filteredFAQs = faqData.filter((faq) => {
+  const translatedFAQs = faqData.map((faq, index) => ({
+    ...faq,
+    question: t(`faqPage.items.${index}.question`),
+    answer: t(`faqPage.items.${index}.answer`)
+  }));
+
+  const filteredFAQs = translatedFAQs.filter((faq) => {
     const matchesSearch =
       faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
       faq.answer.toLowerCase().includes(searchQuery.toLowerCase());

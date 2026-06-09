@@ -1,5 +1,21 @@
 import { useState, useEffect } from "react"
-import { CNav, CNavItem, CNavLink, CTabContent, CTabPane } from "@coreui/react"
+import {
+  CNav,
+  CNavItem,
+  CNavLink,
+  CTabContent,
+  CTabPane,
+  CDropdown,
+  CDropdownToggle,
+  CDropdownMenu,
+  CDropdownItem,
+  CModal,
+  CModalHeader,
+  CModalTitle,
+  CModalBody,
+  CModalFooter,
+  CButton
+} from "@coreui/react"
 
 // Financial Components
 import FinancialStats from "../components/financial-reports/FinancialStats"
@@ -25,6 +41,7 @@ import CheckInByDayChart from "../components/check-in/CheckInByDayChart"
 import CheckInByHourChart from "../components/check-in/CheckInByHourChart"
 
 import { getRevenueReport, getSalesFunnelReport, getPtPerformanceReport, getCheckInReport, exportReport } from "../services/reportService"
+import { getBranches } from "../services/branchService"
 
 function FinancialReportsPage() {
   const [activeTab, setActiveTab] = useState(1)
@@ -33,22 +50,81 @@ function FinancialReportsPage() {
   const [ptData, setPtData] = useState([])
   const [checkInData, setCheckInData] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [filter, setFilter] = useState("month") // month, quarter, year
+
+  // Filter States
+  const [branches, setBranches] = useState([])
+  const [selectedBranchId, setSelectedBranchId] = useState("")
+  const [timeType, setTimeType] = useState("period") // period, monthYear, custom
+  const [period, setPeriod] = useState("month") // month, quarter, year
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const [fromDate, setFromDate] = useState("")
+  const [toDate, setToDate] = useState("")
+
+  // Modal Temp States (for applying changes only when user clicks Apply)
+  const [showFilterModal, setShowFilterModal] = useState(false)
+  const [tempBranchId, setTempBranchId] = useState("")
+  const [tempTimeType, setTempTimeType] = useState("period")
+  const [tempPeriod, setTempPeriod] = useState("month")
+  const [tempMonth, setTempMonth] = useState(new Date().getMonth() + 1)
+  const [tempYear, setTempYear] = useState(new Date().getFullYear())
+  const [tempFromDate, setTempFromDate] = useState("")
+  const [tempToDate, setTempToDate] = useState("")
+
+  // Fetch branches on mount
+  useEffect(() => {
+    const loadBranchesList = async () => {
+      try {
+        const data = await getBranches()
+        setBranches(data || [])
+      } catch (err) {
+        console.error("Failed to load branches", err)
+      }
+    }
+    loadBranchesList()
+  }, [])
+
+  const getFilterParams = () => {
+    const params = {}
+    
+    if (selectedBranchId) {
+      params.branchId = selectedBranchId
+    }
+
+    if (timeType === "period") {
+      const now = new Date()
+      if (period === "month") {
+        params.month = now.getMonth() + 1
+        params.year = now.getFullYear()
+      } else if (period === "quarter") {
+        const fromMonth = Math.floor(now.getMonth() / 3) * 3 + 1
+        params.fromDate = new Date(now.getFullYear(), fromMonth - 1, 1).toISOString()
+        params.toDate = new Date(now.getFullYear(), fromMonth + 2, 0).toISOString()
+      } else if (period === "year") {
+        params.year = now.getFullYear()
+      }
+    } else if (timeType === "monthYear") {
+      if (selectedMonth !== "all") {
+        params.month = parseInt(selectedMonth)
+      }
+      params.year = parseInt(selectedYear)
+    } else if (timeType === "custom") {
+      if (fromDate) {
+        params.fromDate = new Date(fromDate).toISOString()
+      }
+      if (toDate) {
+        params.toDate = new Date(toDate).toISOString()
+      }
+    }
+    
+    return params
+  }
 
   useEffect(() => {
     const fetchReports = async () => {
       setLoading(true)
       try {
-        let params = {}
-        const now = new Date()
-        if (filter === "month") {
-          params = { month: now.getMonth() + 1, year: now.getFullYear() }
-        } else if (filter === "quarter") {
-          const fromMonth = Math.floor(now.getMonth() / 3) * 3 + 1
-          params = { fromDate: new Date(now.getFullYear(), fromMonth - 1, 1).toISOString(), toDate: new Date(now.getFullYear(), fromMonth + 2, 0).toISOString() }
-        } else if (filter === "year") {
-          params = { year: now.getFullYear() }
-        }
+        const params = getFilterParams()
 
         const [revenueRes, salesRes, ptRes, checkInRes] = await Promise.all([
           getRevenueReport(params),
@@ -68,33 +144,66 @@ function FinancialReportsPage() {
       }
     }
     fetchReports()
-  }, [filter])
+  }, [selectedBranchId, timeType, period, selectedMonth, selectedYear, fromDate, toDate])
 
   const handleExport = async () => {
     try {
-      let params = {}
-      const now = new Date()
-      if (filter === "month") {
-        params = { month: now.getMonth() + 1, year: now.getFullYear() }
-      } else if (filter === "year") {
-        params = { year: now.getFullYear() }
-      }
-      // Export based on active tab
-      let reportType = 'revenue'
-      if (activeTab === 2) reportType = 'sales-funnel'
-      if (activeTab === 3) reportType = 'pt-performance'
-      if (activeTab === 4) reportType = 'check-in'
+      const params = getFilterParams()
+      
+      let reportType = "revenue"
+      if (activeTab === 2) reportType = "sales-funnel"
+      if (activeTab === 3) reportType = "pt-performance"
+      if (activeTab === 4) reportType = "check-in"
 
       const blob = await exportReport(reportType, params)
       const url = window.URL.createObjectURL(new Blob([blob]))
-      const link = document.createElement('a')
+      const link = document.createElement("a")
       link.href = url
-      link.setAttribute('download', `${reportType}-report.csv`)
+      link.setAttribute("download", `${reportType}-report.csv`)
       document.body.appendChild(link)
       link.click()
+      document.body.removeChild(link)
     } catch (error) {
       console.error("Export failed", error)
     }
+  }
+
+  const handleOpenFilterModal = () => {
+    setTempBranchId(selectedBranchId)
+    setTempTimeType(timeType)
+    setTempPeriod(period)
+    setTempMonth(selectedMonth)
+    setTempYear(selectedYear)
+    setTempFromDate(fromDate)
+    setTempToDate(toDate)
+    setShowFilterModal(true)
+  }
+
+  const handleApplyFilters = () => {
+    setSelectedBranchId(tempBranchId)
+    setTimeType(tempTimeType)
+    setPeriod(tempPeriod)
+    setSelectedMonth(tempMonth)
+    setSelectedYear(tempYear)
+    setFromDate(tempFromDate)
+    setToDate(tempToDate)
+    setShowFilterModal(false)
+  }
+
+  const getTimeFilterLabel = () => {
+    if (timeType === "period") {
+      if (period === "month") return "Tháng này"
+      if (period === "quarter") return "Quý này"
+      if (period === "year") return "Đầu năm đến nay"
+    } else if (timeType === "monthYear") {
+      const monthLabel = selectedMonth === "all" ? "Tất cả các tháng" : `Tháng ${selectedMonth}`
+      return `${monthLabel} / Năm ${selectedYear}`
+    } else if (timeType === "custom") {
+      const from = fromDate ? new Date(fromDate).toLocaleDateString("vi-VN") : "..."
+      const to = toDate ? new Date(toDate).toLocaleDateString("vi-VN") : "..."
+      return `${from} - ${to}`
+    }
+    return "Tất cả"
   }
 
   return (
@@ -105,22 +214,32 @@ function FinancialReportsPage() {
         <div className="d-flex justify-content-between align-items-center mb-3">
           <div>
             <h3 className="fw-bold mb-1">Hệ Thống Báo Cáo</h3>
+            <div className="d-flex flex-wrap gap-2 align-items-center" style={{ fontSize: "13px" }}>
+              <span className="text-muted">Bộ lọc hiện tại:</span>
+              <span className="fw-semibold text-secondary">
+                {branches.find(b => (b.branchId || b.id) === selectedBranchId)?.name || "Tất cả chi nhánh"}
+              </span>
+              <span className="text-muted">•</span>
+              <span className="fw-semibold text-secondary">
+                {getTimeFilterLabel()}
+              </span>
+            </div>
           </div>
 
           <div className="d-flex gap-2 align-items-center">
-            <select
-              className="form-select form-select-sm"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              style={{ width: "160px" }}
-            >
-              <option value="month">Tháng này</option>
-              <option value="quarter">Quý này</option>
-              <option value="year">Đầu năm đến nay</option>
-            </select>
-            <button className="btn btn-outline-primary btn-sm" onClick={handleExport}>
-              Xuất CSV
-            </button>
+            <CDropdown alignment="end">
+              <CDropdownToggle color="light" caret={false} className="border shadow-sm py-1 px-2 fw-semibold" style={{ minWidth: "40px" }}>
+                ⋮
+              </CDropdownToggle>
+              <CDropdownMenu style={{ minWidth: "200px" }}>
+                <CDropdownItem onClick={handleOpenFilterModal} style={{ cursor: "pointer" }}>
+                  Cấu hình bộ lọc
+                </CDropdownItem>
+                <CDropdownItem onClick={handleExport} style={{ cursor: "pointer" }}>
+                  Xuất báo cáo (CSV)
+                </CDropdownItem>
+              </CDropdownMenu>
+            </CDropdown>
           </div>
         </div>
 
@@ -233,6 +352,123 @@ function FinancialReportsPage() {
       )}
 
       </div>
+
+      {/* Modal Cấu hình bộ lọc */}
+      <CModal visible={showFilterModal} onClose={() => setShowFilterModal(false)} alignment="center">
+        <CModalHeader closeButton>
+          <CModalTitle className="fw-bold">Cấu hình bộ lọc báo cáo</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          {/* Branch filter */}
+          <div className="mb-3">
+            <label className="form-label fw-semibold text-muted">Chi Nhánh</label>
+            <select
+              className="form-select"
+              value={tempBranchId}
+              onChange={(e) => setTempBranchId(e.target.value)}
+            >
+              <option value="">Tất cả chi nhánh</option>
+              {branches.map(b => (
+                <option key={b.branchId || b.id} value={b.branchId || b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Time Type filter */}
+          <div className="mb-3">
+            <label className="form-label fw-semibold text-muted">Loại bộ lọc thời gian</label>
+            <select
+              className="form-select"
+              value={tempTimeType}
+              onChange={(e) => setTempTimeType(e.target.value)}
+            >
+              <option value="period">Theo chu kỳ mặc định</option>
+              <option value="monthYear">Theo tháng & năm</option>
+              <option value="custom">Khoảng ngày tùy chọn</option>
+            </select>
+          </div>
+
+          {/* Dynamic inputs based on timeType */}
+          {tempTimeType === "period" && (
+            <div className="mb-3">
+              <label className="form-label fw-semibold text-muted">Chu kỳ</label>
+              <select
+                className="form-select"
+                value={tempPeriod}
+                onChange={(e) => setTempPeriod(e.target.value)}
+              >
+                <option value="month">Tháng này</option>
+                <option value="quarter">Quý này</option>
+                <option value="year">Đầu năm đến nay</option>
+              </select>
+            </div>
+          )}
+
+          {tempTimeType === "monthYear" && (
+            <div className="row g-2 mb-3">
+              <div className="col-6">
+                <label className="form-label fw-semibold text-muted">Tháng</label>
+                <select
+                  className="form-select"
+                  value={tempMonth}
+                  onChange={(e) => setTempMonth(e.target.value)}
+                >
+                  <option value="all">Tất cả tháng</option>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
+                    <option key={m} value={m}>Tháng {m}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-6">
+                <label className="form-label fw-semibold text-muted">Năm</label>
+                <select
+                  className="form-select"
+                  value={tempYear}
+                  onChange={(e) => setTempYear(e.target.value)}
+                >
+                  {[2024, 2025, 2026, 2027].map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {tempTimeType === "custom" && (
+            <div className="row g-2 mb-3">
+              <div className="col-6">
+                <label className="form-label fw-semibold text-muted">Từ ngày</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={tempFromDate}
+                  onChange={(e) => setTempFromDate(e.target.value)}
+                />
+              </div>
+              <div className="col-6">
+                <label className="form-label fw-semibold text-muted">Đến ngày</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={tempToDate}
+                  onChange={(e) => setTempToDate(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" variant="ghost" onClick={() => setShowFilterModal(false)}>
+            Hủy
+          </CButton>
+          <CButton color="primary" onClick={handleApplyFilters}>
+            Áp dụng
+          </CButton>
+        </CModalFooter>
+      </CModal>
+
     </div>
   )
 }

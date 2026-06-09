@@ -383,11 +383,16 @@ function PackageManagementPage() {
           />
         </CModalBody>
         <CModalFooter className="bg-white border-top">
-            <CButton color="secondary" variant="ghost" className="px-4" onClick={() => setShowForm(false)}>
-                Hủy bỏ
+            <CButton color="secondary" variant="outline" className="px-4" onClick={() => setShowForm(false)}>
+                Hủy
             </CButton>
-            <CButton color="success" className="px-5 text-white fw-bold shadow-sm" type="submit" form="package-form">
-                Lưu Gói Tập
+            <CButton 
+              color={editingPackage ? "warning" : "success"} 
+              className={`px-5 fw-bold shadow-sm ${editingPackage ? '' : 'text-white'}`} 
+              type="submit" 
+              form="package-form"
+            >
+                {editingPackage ? "Lưu Thay Đổi" : "Tạo Gói Tập"}
             </CButton>
         </CModalFooter>
       </CModal>

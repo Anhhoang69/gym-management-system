@@ -120,41 +120,43 @@ function RoomManagementPage() {
   }
 
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h3 className="fw-bold mb-1">Quản Lý Phòng</h3>
-          <p className="text-muted mb-0">
-            Quản lý thông tin, thiết bị và bảo trì tất cả các phòng
-          </p>
+    <div className="d-flex flex-column" style={{ height: "calc(100vh - 130px)", overflow: "hidden" }}>
+      <div className="flex-shrink-0">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h3 className="fw-bold mb-1">Quản Lý Phòng</h3>
+            <p className="text-muted mb-0">
+              Quản lý thông tin, thiết bị và bảo trì tất cả các phòng
+            </p>
+          </div>
+
+          <button
+            className="btn btn-warning px-4 fw-semibold"
+            onClick={() => setShowCreateModal(true)}
+          >
+            + Thêm Phòng Mới
+          </button>
         </div>
 
-        <button
-          className="btn btn-warning px-4 fw-semibold"
-          onClick={() => setShowCreateModal(true)}
-        >
-          + Thêm Phòng Mới
-        </button>
+        <div>
+          <RoomFilters
+            search={search}
+            setSearch={setSearch}
+            status={status}
+            setStatus={setStatus}
+            branch={branchId}
+            setBranch={setBranchId}
+            branches={branches}
+          />
+        </div>
       </div>
 
-      <div className="mt-4">
-        <RoomFilters
-          search={search}
-          setSearch={setSearch}
-          status={status}
-          setStatus={setStatus}
-          branch={branchId}
-          setBranch={setBranchId}
-          branches={branches}
-        />
-      </div>
-
-      <div className="mt-3" style={{
-        maxHeight: "45vh",
+      <div className="flex-grow-1 mt-3" style={{
         overflowY: "auto",
-        border: "1px solid #eee",
+        border: "1px solid #e5e7eb",
         borderRadius: "8px",
-        backgroundColor: "white"
+        backgroundColor: "white",
+        boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05)"
       }}>
         <RoomTable
           rooms={currentRooms}
@@ -164,7 +166,7 @@ function RoomManagementPage() {
         />
       </div>
 
-      <div className="d-flex justify-content-between align-items-center mt-3">
+      <div className="flex-shrink-0 d-flex justify-content-between align-items-center mt-3">
         <small className="text-muted">
           Hiển thị {rooms.length === 0 ? 0 : (page - 1) * pageSize + 1}–
           {Math.min(page * pageSize, rooms.length)} của {rooms.length}
