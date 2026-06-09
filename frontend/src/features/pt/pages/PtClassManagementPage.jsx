@@ -48,7 +48,7 @@ function PtClassManagementPage() {
     }
 
     return (
-        <div style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div className="d-flex justify-content-between align-items-center mb-3">
                 <div>
                     <h3 className="fw-bold mb-1">Quản Lý Lớp Học Của Tôi</h3>
@@ -56,7 +56,7 @@ function PtClassManagementPage() {
                 </div>
             </div>
 
-            <div className="flex-grow-1 bg-white p-3 rounded-3 shadow-sm border border-light">
+            <div className="flex-grow-1 bg-white p-3 rounded-3 shadow-sm border border-light d-flex flex-column overflow-hidden">
                 <Calendar
                     localizer={localizer}
                     events={events}
@@ -68,6 +68,8 @@ function PtClassManagementPage() {
                     view={currentView}
                     onView={(view) => setCurrentView(view)}
                     onSelectEvent={handleSelectEvent}
+                    min={new Date(0, 0, 0, 5, 0, 0)} // Start from 5:00 AM
+                    max={new Date(0, 0, 0, 23, 0, 0)} // End at 11:00 PM
                     messages={{
                         today: 'Hôm nay',
                         previous: 'Trước',

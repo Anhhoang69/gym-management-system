@@ -279,7 +279,7 @@ export default function LandingHeader() {
           justify-between
           border-b
           border-(--border)
-          bg-(--bg-secondary)
+          bg-[var(--bg-secondary)]/80
           px-6
           xl:px-8
           text-(--text-primary)
@@ -368,15 +368,16 @@ export default function LandingHeader() {
           })}
         </ul>
 
-        {/* RIGHT SIDE */}
+        {/* ACTIONS */}
         <div className="flex items-center gap-3">
 
-          {/* THEME */}
+          {/* DESKTOP THEME */}
           <button
             onClick={toggleTheme}
             aria-label="Toggle theme"
             className="
-              flex
+              hidden
+              xl:flex
               h-10
               w-10
               items-center
@@ -393,8 +394,8 @@ export default function LandingHeader() {
             {isDark ? <FaMoon size={18} /> : <FaSun size={18} />}
           </button>
 
-          {/* LANGUAGE SELECT DROPDOWN */}
-          <div className="relative lang-menu mr-1 shrink-0">
+          {/* DESKTOP LANGUAGE SELECT DROPDOWN */}
+          <div className="hidden xl:block relative lang-menu mr-1 shrink-0">
             <button
               onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
               className="
@@ -503,13 +504,13 @@ export default function LandingHeader() {
             )}
           </div>
 
-
-          {/* NOT LOGIN */}
+          {/* DESKTOP NOT LOGIN */}
           {!user && (
             <button
               onClick={() => navigate('/login')}
               className="
-                inline-flex
+                hidden
+                xl:inline-flex
                 h-11
                 items-center
                 justify-center
@@ -530,13 +531,12 @@ export default function LandingHeader() {
             </button>
           )}
 
-          {/* LOGIN SUCCESS */}
+          {/* LOGIN SUCCESS (NOTIFICATION DIRECTLY SUPPORTED ON MOBILE) */}
           {user && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 xl:gap-3">
 
-              {/* NOTIFICATION */}
+              {/* NOTIFICATION (Mobile & Desktop) */}
               <div className="relative flex items-center notif-menu">
-
                 <button
                   onClick={handleOpenNotif}
                   className="
@@ -584,11 +584,13 @@ export default function LandingHeader() {
                   <div
                     className="
                       absolute
-                      right-0
+                      right-[-12px]
+                      sm:right-0
                       top-full
                       mt-2
                       z-50
-                      w-80
+                      w-[calc(100vw-32px)]
+                      sm:w-80
                       overflow-hidden
                       rounded-2xl
                       border
@@ -697,13 +699,11 @@ export default function LandingHeader() {
                 )}
               </div>
 
-              {/* USER */}
-              <div className="relative flex items-center user-menu">
-
+              {/* DESKTOP USER PROFILE */}
+              <div className="hidden xl:flex relative items-center user-menu">
                 <div
                   onClick={() => {
                     setIsDropdownOpen((prev) => !prev);
-
                     setIsNotifOpen(false);
                   }}
                   className="
@@ -789,7 +789,6 @@ export default function LandingHeader() {
                     <div
                       onClick={() => {
                         navigate('/profile');
-
                         setIsDropdownOpen(false);
                       }}
                       className="
@@ -814,7 +813,6 @@ export default function LandingHeader() {
                     <div
                       onClick={() => {
                         navigate('/my-bookings');
-
                         setIsDropdownOpen(false);
                       }}
                       className="
@@ -841,7 +839,6 @@ export default function LandingHeader() {
                     <div
                       onClick={() => {
                         handleLogout();
-
                         setIsDropdownOpen(false);
                       }}
                       className="
@@ -869,7 +866,7 @@ export default function LandingHeader() {
             </div>
           )}
 
-          {/* MOBILE BUTTON */}
+          {/* MOBILE MENU TOGGLE BUTTON */}
           <button
             onClick={() => setIsNavOpen(true)}
             className="
@@ -894,24 +891,48 @@ export default function LandingHeader() {
         </div>
       </nav>
 
-      {/* MOBILE MENU */}
+      {/* MOBILE MENU BACKDROP OVERLAY */}
+      {isNavOpen && (
+        <div
+          onClick={() => setIsNavOpen(false)}
+          className="
+            fixed
+            inset-0
+            z-50
+            bg-black/60
+            backdrop-blur-sm
+            transition-opacity
+            duration-300
+            xl:hidden
+          "
+        />
+      )}
+
+      {/* MOBILE MENU DRAWER */}
       <div
         className={`
           fixed
-          inset-0
+          top-0
+          right-0
+          bottom-0
           z-50
           flex
+          w-[85%]
+          max-w-[360px]
           flex-col
-          bg-[var(--bg)]
+          bg-[var(--bg-secondary)]
           text-[var(--text-primary)]
+          border-l
+          border-[var(--border)]
+          shadow-2xl
           transition-transform
           duration-300
-          ${isNavOpen
-            ? 'translate-x-0'
-            : 'translate-x-full'
-          }
+          ease-in-out
+          xl:hidden
+          ${isNavOpen ? 'translate-x-0' : 'translate-x-full'}
         `}
       >
+        {/* DRAWER HEADER */}
         <div
           className="
             flex
@@ -919,13 +940,14 @@ export default function LandingHeader() {
             justify-between
             border-b
             border-[var(--border)]
-            bg-[var(--bg-secondary)]
+            bg-[var(--bg-third)]
             p-4
           "
         >
           <Link
             to="/"
             onClick={() => setIsNavOpen(false)}
+            className="flex items-center shrink-0"
           >
             <img
               src={LogoWhite}
@@ -940,50 +962,292 @@ export default function LandingHeader() {
             />
           </Link>
 
-          <button
-            onClick={() => setIsNavOpen(false)}
-            className="p-2"
-          >
-            <FaTimes size={28} />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* THEME TOGGLE */}
+            <button
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className="
+                flex
+                h-9
+                w-9
+                items-center
+                justify-center
+                rounded-full
+                text-[var(--text-secondary)]
+                hover:text-[var(--brand)]
+                hover:bg-black/5
+                dark:hover:bg-white/10
+                transition-colors
+              "
+            >
+              {isDark ? <FaMoon size={16} /> : <FaSun size={16} />}
+            </button>
+
+            {/* CLOSE BUTTON */}
+            <button
+              onClick={() => setIsNavOpen(false)}
+              className="
+                flex
+                h-9
+                w-9
+                items-center
+                justify-center
+                rounded-full
+                text-[var(--text-secondary)]
+                hover:text-[var(--brand)]
+                hover:bg-black/5
+                dark:hover:bg-white/10
+                transition-colors
+              "
+            >
+              <FaTimes size={22} />
+            </button>
+          </div>
         </div>
 
-        <ul className="flex flex-col gap-6 overflow-y-auto p-6">
-          {menuItems.map((item) => {
-            const isActive =
-              item.path === '/'
-                ? location.pathname === '/'
-                : location.pathname.startsWith(item.path);
+        {/* DRAWER BODY - NAV LINKS */}
+        <div className="flex-1 overflow-y-auto px-4 py-6 no-scrollbar">
+          <ul className="flex flex-col gap-1.5 m-0 p-0 list-none">
+            {menuItems.map((item) => {
+              const isActive =
+                item.path === '/'
+                  ? location.pathname === '/'
+                  : location.pathname.startsWith(item.path);
 
-            return (
-              <li key={item.path}>
-                <Link
-                  to={item.path}
-                  onClick={() => setIsNavOpen(false)}
-                  className={`
+              return (
+                <li key={item.path} className="m-0 p-0">
+                  <Link
+                    to={item.path}
+                    onClick={() => setIsNavOpen(false)}
+                    className={`
+                      flex
+                      items-center
+                      gap-3
+                      rounded-xl
+                      px-4
+                      py-3
+                      text-sm
+                      font-semibold
+                      transition-all
+                      duration-200
+                      ${isActive
+                        ? 'bg-[var(--brand)]/10 !text-[var(--brand)] border-l-4 border-[var(--brand)] pl-3'
+                        : 'text-[var(--text-primary)] hover:bg-black/5 dark:hover:bg-white/10'
+                      }
+                    `}
+                  >
+                    {item.icon && (
+                      <span className={isActive ? 'text-[var(--brand)]' : 'text-[var(--text-secondary)]'}>
+                        {item.icon}
+                      </span>
+                    )}
+
+                    <span>{item.name}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        {/* DRAWER FOOTER - SETTINGS & AUTH */}
+        <div
+          className="
+            border-t
+            border-[var(--border)]
+            bg-[var(--bg-third)]
+            p-4
+            flex
+            flex-col
+            gap-4
+          "
+        >
+          {/* LANGUAGE SWITCHER */}
+          <div className="flex flex-col gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+              {locale === 'vi' ? 'Ngôn ngữ' : 'Language'}
+            </span>
+            <div className="grid grid-cols-2 gap-1 rounded-lg bg-black/5 dark:bg-white/5 p-1">
+              <button
+                onClick={() => changeLanguage('vi')}
+                className={`
+                  flex
+                  items-center
+                  justify-center
+                  gap-1.5
+                  py-1.5
+                  rounded-md
+                  text-[11px]
+                  font-bold
+                  transition-all
+                  cursor-pointer
+                  ${locale === 'vi'
+                    ? 'bg-[var(--brand)] text-black shadow-sm'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }
+                `}
+              >
+                <span>🇻🇳</span> VI
+              </button>
+              <button
+                onClick={() => changeLanguage('en')}
+                className={`
+                  flex
+                  items-center
+                  justify-center
+                  gap-1.5
+                  py-1.5
+                  rounded-md
+                  text-[11px]
+                  font-bold
+                  transition-all
+                  cursor-pointer
+                  ${locale === 'en'
+                    ? 'bg-[var(--brand)] text-black shadow-sm'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                  }
+                `}
+              >
+                <span>🇺🇸</span> EN
+              </button>
+            </div>
+          </div>
+
+          {/* USER ACTIONS */}
+          <div className="mt-1 pt-3 border-t border-[var(--border)]/50">
+            {!user ? (
+              <button
+                onClick={() => {
+                  setIsNavOpen(false);
+                  navigate('/login');
+                }}
+                className="
+                  flex
+                  w-full
+                  h-11
+                  items-center
+                  justify-center
+                  rounded-xl
+                  bg-gradient-to-r
+                  from-yellow-500
+                  to-yellow-400
+                  text-sm
+                  font-bold
+                  text-black
+                  shadow-[0_4px_12px_rgba(255,193,7,0.2)]
+                  transition-all
+                  active:scale-[0.98]
+                "
+              >
+                {t('nav.login')}
+              </button>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {/* User Card */}
+                <div className="flex items-center gap-3 bg-black/5 dark:bg-white/5 p-3 rounded-xl">
+                  <img
+                    src={user.avatarUrl || "https://i.pravatar.cc/150"}
+                    alt="avatar"
+                    className="h-9 w-9 rounded-full border border-[var(--border)] object-cover"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="truncate text-xs font-bold text-[var(--text-primary)]">
+                      {user.fullName || user.email.split('@')[0]}
+                    </div>
+                    <div className="text-[9px] uppercase tracking-wide text-[var(--text-secondary)] mt-0.5">
+                      {user.roles?.[0] || 'Member'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sub Menu Links */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => {
+                      setIsNavOpen(false);
+                      navigate('/profile');
+                    }}
+                    className="
+                      flex
+                      items-center
+                      justify-center
+                      gap-2
+                      h-9
+                      rounded-lg
+                      border
+                      border-[var(--border)]
+                      bg-transparent
+                      text-[11px]
+                      font-bold
+                      text-[var(--text-primary)]
+                      hover:bg-black/5
+                      dark:hover:bg-white/10
+                      transition-colors
+                    "
+                  >
+                    <FaUser size={11} className="text-[var(--text-secondary)]" />
+                    {t('nav.profile')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsNavOpen(false);
+                      navigate('/my-bookings');
+                    }}
+                    className="
+                      flex
+                      items-center
+                      justify-center
+                      gap-2
+                      h-9
+                      rounded-lg
+                      border
+                      border-[var(--border)]
+                      bg-transparent
+                      text-[11px]
+                      font-bold
+                      text-[var(--text-primary)]
+                      hover:bg-black/5
+                      dark:hover:bg-white/10
+                      transition-colors
+                    "
+                  >
+                    <FaCalendarAlt size={11} className="text-[var(--text-secondary)]" />
+                    {t('nav.myBookings')}
+                  </button>
+                </div>
+
+                {/* Logout Button */}
+                <button
+                  onClick={() => {
+                    setIsNavOpen(false);
+                    handleLogout();
+                  }}
+                  className="
                     flex
+                    w-full
+                    h-9
                     items-center
-                    gap-3
-                    text-lg
-                    transition-colors
-                    ${isActive
-                      ? '!text-[var(--brand)] font-bold'
-                      : 'text-[var(--text-primary)] hover:!text-[var(--brand)]'
-                    }
-                  `}
+                    justify-center
+                    gap-2
+                    rounded-lg
+                    border
+                    border-red-500/30
+                    bg-red-500/5
+                    hover:bg-red-500/10
+                    text-[11px]
+                    font-bold
+                    text-red-500
+                    transition-all
+                  "
                 >
-                  {item.icon && (
-                    <span className="text-[var(--brand)]">
-                      {item.icon}
-                    </span>
-                  )}
-
-                  {item.name}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+                  <FaSignOutAlt size={12} />
+                  {t('nav.logout')}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </>
   );

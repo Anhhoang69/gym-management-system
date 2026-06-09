@@ -8,7 +8,7 @@ export default function HeroSection() {
     
     return (
         <section
-            className="relative min-h-screen lg:h-screen bg-cover bg-center flex flex-col justify-center overflow-hidden"
+            className="relative min-h-screen lg:h-screen bg-cover bg-center flex flex-col justify-center pt-16 pb-12 md:pt-20 md:pb-16 lg:py-0 overflow-hidden"
             style={{ backgroundImage: `url(${heroGym})` }}
         >
             {/* overlay */}
