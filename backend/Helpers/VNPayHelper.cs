@@ -49,7 +49,7 @@ public static class VNPayHelper
 
         var query = new StringBuilder();
         foreach (var (k, v) in vnpParams)
-            query.Append($"&{Uri.EscapeDataString(k)}={Uri.EscapeDataString(v)}");
+            query.Append($"&{k}={Uri.EscapeDataString(v)}");
 
         query.Append($"&vnp_SecureHash={secureHash}");
 
@@ -104,9 +104,9 @@ public static class VNPayHelper
         foreach (var (k, v) in dict)
         {
             if (sb.Length > 0) sb.Append('&');
-            sb.Append(Uri.EscapeDataString(k));
+            sb.Append(k);
             sb.Append('=');
-            sb.Append(Uri.EscapeDataString(v));
+            sb.Append(v);
         }
         return sb.ToString();
     }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { getTokenUsage } from "../services/aiService"
 import { ChevronDown, BarChart2 } from "lucide-react"
+import { useLanguage } from "../../../shared/contexts/LanguageContext"
 
 // Check if user has token stats access
 function hasTokenAccess() {
@@ -59,6 +60,7 @@ const ROLE_COLORS = {
 }
 
 export default function AITokenDashboard({ collapsed = false, onExpand }) {
+  const { locale } = useLanguage()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(false)
@@ -118,9 +120,13 @@ export default function AITokenDashboard({ collapsed = false, onExpand }) {
       {expanded && (
         <div className="mt-2.5">
           {loading ? (
-            <div className="text-xs text-[var(--text-secondary)] py-1">Đang tải...</div>
+            <div className="text-xs text-[var(--text-secondary)] py-1">
+              {locale === 'vi' ? "Đang tải..." : "Loading..."}
+            </div>
           ) : !data ? (
-            <div className="text-xs text-[var(--text-secondary)] py-1">Không có dữ liệu.</div>
+            <div className="text-xs text-[var(--text-secondary)] py-1">
+              {locale === 'vi' ? "Không có dữ liệu." : "No data available."}
+            </div>
           ) : (
             <>
               {/* Stats grid */}
@@ -135,7 +141,7 @@ export default function AITokenDashboard({ collapsed = false, onExpand }) {
               {breakdown.length > 0 && (
                 <div className="mt-3">
                   <div className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
-                    Theo role (30 ngày)
+                    {locale === 'vi' ? "Theo role (30 ngày)" : "By role (30 days)"}
                   </div>
                   {breakdown.map((b, i) => (
                     <BarRow

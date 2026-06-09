@@ -1,11 +1,59 @@
 import { useState, useEffect } from "react"
 import { FaTimes, FaCalendarAlt, FaClock, FaUserTie, FaMapMarkerAlt, FaUsers, FaDumbbell, FaCheckCircle, FaExclamationCircle } from "react-icons/fa"
 import { bookClass } from "../../../features/super-admin/services/classService"
+import { useLanguage } from "../../../shared/contexts/LanguageContext"
+
+const bookingTranslations = {
+  vi: {
+    upcoming: "Sắp diễn ra",
+    inProgress: "Đang diễn ra",
+    completed: "Đã kết thúc",
+    cancelled: "Đã hủy",
+    noDescription: "Không có mô tả cho lớp học này.",
+    dateLabel: "Ngày học",
+    timeLabel: "Thời gian",
+    trainerLabel: "Huấn luyện viên",
+    notAssigned: "Chưa phân công",
+    roomLabel: "Phòng tập",
+    capacityLabel: "Sĩ số lớp học",
+    alreadyRegistered: "Bạn đã đăng ký tham gia lớp học này.",
+    bookingSuccess: "Đặt chỗ thành công! Bạn có thể xem lại trong mục Lớp đã đăng ký.",
+    btnRegistered: "Đã Đăng Ký Lớp Học",
+    btnFull: "Lớp Đã Kín Chỗ",
+    btnEnded: "Lớp Đã Kết Thúc",
+    btnCancelled: "Lớp Đã Bị Hủy",
+    btnBookNow: "Đặt Chỗ Ngay",
+    errorDefault: "Có lỗi xảy ra khi đặt chỗ. Vui lòng thử lại sau."
+  },
+  en: {
+    upcoming: "Upcoming",
+    inProgress: "In Progress",
+    completed: "Completed",
+    cancelled: "Canceled",
+    noDescription: "No description available for this class.",
+    dateLabel: "Date",
+    timeLabel: "Time",
+    trainerLabel: "Trainer",
+    notAssigned: "Not assigned",
+    roomLabel: "Room",
+    capacityLabel: "Class Capacity",
+    alreadyRegistered: "You have registered for this class.",
+    bookingSuccess: "Booking successful! You can view it in your Registered list.",
+    btnRegistered: "Registered",
+    btnFull: "Class Full",
+    btnEnded: "Class Ended",
+    btnCancelled: "Class Canceled",
+    btnBookNow: "Book Now",
+    errorDefault: "An error occurred while booking. Please try again later."
+  }
+};
 
 export default function ClassBookingModal({ visible, setVisible, classData, onRefresh }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
+  const { locale } = useLanguage()
+  const tBook = (key) => bookingTranslations[locale]?.[key] || bookingTranslations.vi[key] || key;
 
   // Reset state when modal opens
   useEffect(() => {
@@ -27,7 +75,7 @@ export default function ClassBookingModal({ visible, setVisible, classData, onRe
       if (onRefresh) onRefresh()
     } catch (err) {
       console.error(err)
-      setError(err.response?.data?.message || err.response?.data?.errors || "Có lỗi xảy ra khi đặt chỗ. Vui lòng thử lại sau.")
+      setError(err.response?.data?.message || err.response?.data?.errors || tBook('errorDefault'))
     } finally {
       setLoading(false)
     }
@@ -65,9 +113,9 @@ export default function ClassBookingModal({ visible, setVisible, classData, onRe
               classData.status === 'Cancelled' ? 'bg-red-500/20 text-red-400' : 
               'bg-blue-500/20 text-blue-400'
             }`}>
-              {classData.status === 'Scheduled' ? 'Sắp diễn ra' : 
-               classData.status === 'InProgress' ? 'Đang diễn ra' : 
-               classData.status === 'Completed' ? 'Đã kết thúc' : 'Đã hủy'}
+              {classData.status === 'Scheduled' ? tBook('upcoming') : 
+               classData.status === 'InProgress' ? tBook('inProgress') : 
+               classData.status === 'Completed' ? tBook('completed') : tBook('cancelled')}
             </span>
           </div>
           
@@ -86,14 +134,14 @@ export default function ClassBookingModal({ visible, setVisible, classData, onRe
         {/* Body */}
         <div className="p-6">
           <p className="text-gray-600 text-sm mb-6 pb-4 border-b border-gray-100">
-            {classData.description || "Không có mô tả cho lớp học này."}
+            {classData.description || tBook('noDescription')}
           </p>
 
           <div className="grid grid-cols-2 gap-y-5 gap-x-4 mb-6">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 text-yellow-500"><FaCalendarAlt size={16} /></div>
               <div>
-                <div className="text-xs text-gray-500 mb-0.5">Ngày học</div>
+                <div className="text-xs text-gray-500 mb-0.5">{tBook('dateLabel')}</div>
                 <div className="text-sm font-semibold text-gray-800">{classData.date}</div>
               </div>
             </div>
@@ -101,7 +149,7 @@ export default function ClassBookingModal({ visible, setVisible, classData, onRe
             <div className="flex items-start gap-3">
               <div className="mt-0.5 text-yellow-500"><FaClock size={16} /></div>
               <div>
-                <div className="text-xs text-gray-500 mb-0.5">Thời gian</div>
+                <div className="text-xs text-gray-500 mb-0.5">{tBook('timeLabel')}</div>
                 <div className="text-sm font-semibold text-gray-800">
                   {classData.startTime?.substring(0,5)} - {classData.endTime?.substring(0,5)}
                 </div>
@@ -111,15 +159,15 @@ export default function ClassBookingModal({ visible, setVisible, classData, onRe
             <div className="flex items-start gap-3">
               <div className="mt-0.5 text-yellow-500"><FaUserTie size={16} /></div>
               <div>
-                <div className="text-xs text-gray-500 mb-0.5">Huấn luyện viên</div>
-                <div className="text-sm font-semibold text-gray-800">{classData.trainerName || "Chưa phân công"}</div>
+                <div className="text-xs text-gray-500 mb-0.5">{tBook('trainerLabel')}</div>
+                <div className="text-sm font-semibold text-gray-800">{classData.trainerName || tBook('notAssigned')}</div>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
               <div className="mt-0.5 text-yellow-500"><FaMapMarkerAlt size={16} /></div>
               <div>
-                <div className="text-xs text-gray-500 mb-0.5">Phòng tập</div>
+                <div className="text-xs text-gray-500 mb-0.5">{tBook('roomLabel')}</div>
                 <div className="text-sm font-semibold text-gray-800">
                   {classData.roomName} {classData.roomNumber ? `(${classData.roomNumber})` : ''}
                 </div>
@@ -130,7 +178,7 @@ export default function ClassBookingModal({ visible, setVisible, classData, onRe
               <div className="mt-0.5 text-yellow-500"><FaUsers size={16} /></div>
               <div className="w-full">
                 <div className="text-xs text-gray-500 mb-1 flex justify-between">
-                  <span>Sĩ số lớp học</span>
+                  <span>{tBook('capacityLabel')}</span>
                   <span className="font-medium">
                     <span className={isFull ? 'text-red-500' : 'text-green-600'}>
                       {classData.bookedCount}
@@ -159,14 +207,14 @@ export default function ClassBookingModal({ visible, setVisible, classData, onRe
           {classData.isBooked && !success && (
             <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-start gap-2">
               <FaCheckCircle className="mt-0.5 flex-shrink-0" />
-              <span>Bạn đã đăng ký tham gia lớp học này.</span>
+              <span>{tBook('alreadyRegistered')}</span>
             </div>
           )}
 
           {success && (
             <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg flex items-start gap-2">
               <FaCheckCircle className="mt-0.5 flex-shrink-0" />
-              <span>Đặt chỗ thành công! Bạn có thể xem lại trong mục Lớp của tôi.</span>
+              <span>{tBook('bookingSuccess')}</span>
             </div>
           )}
 
@@ -183,15 +231,15 @@ export default function ClassBookingModal({ visible, setVisible, classData, onRe
             {loading ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
             ) : isBooked ? (
-              <><FaCheckCircle size={16} /> Đã Đăng Ký Lớp Học</>
+              <><FaCheckCircle size={16} /> {tBook('btnRegistered')}</>
             ) : isFull ? (
-              "Lớp Đã Kín Chỗ"
+              tBook('btnFull')
             ) : isPast ? (
-              "Lớp Đã Kết Thúc"
+              tBook('btnEnded')
             ) : isCancelled ? (
-              "Lớp Đã Bị Hủy"
+              tBook('btnCancelled')
             ) : (
-              <><FaDumbbell size={16} /> Đặt Chỗ Ngay</>
+              <><FaDumbbell size={16} /> {tBook('btnBookNow')}</>
             )}
           </button>
         </div>

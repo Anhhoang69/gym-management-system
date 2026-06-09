@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../../shared/contexts/LanguageContext';
 
 import {
   FaBars,
@@ -25,7 +26,9 @@ import LogoWhite from '../../../assets/LogoWhiteText.svg';
 import LogoBlack from '../../../assets/LogoBlackText.svg';
 
 export default function LandingHeader() {
+  const { locale, changeLanguage, t } = useLanguage();
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
 
   const [isDark, setIsDark] = useState(
     document.documentElement.classList.contains('dark')
@@ -99,6 +102,10 @@ export default function LandingHeader() {
 
       if (!e.target.closest('.notif-menu')) {
         setIsNotifOpen(false);
+      }
+
+      if (!e.target.closest('.lang-menu')) {
+        setIsLangDropdownOpen(false);
       }
     };
 
@@ -194,48 +201,49 @@ export default function LandingHeader() {
 
   const allMenuItems = [
     {
-      name: 'Trang chủ',
+      name: t('nav.home'),
       path: '/'
     },
 
     {
-      name: 'Chi nhánh',
+      name: t('nav.branches'),
       path: '/branches'
     },
 
     {
-      name: 'Huấn luyện viên',
+      name: t('nav.trainers'),
       path: '/trainers'
     },
 
     {
-      name: 'Gói tập',
+      name: t('nav.packages'),
       path: '/packages'
     },
 
     {
-      name: 'Lớp học',
+      name: t('nav.classes'),
       path: '/classes',
       memberOnly: true
     },
 
     {
-      name: 'Trợ lý AI',
+      name: t('nav.aiAssistant'),
       path: '/ai',
       icon: <FaFire />,
       memberOnly: true
     },
 
     {
-      name: 'FAQ',
+      name: t('nav.faq'),
       path: '/faqs'
     },
 
     {
-      name: 'Liên hệ',
+      name: t('nav.contact'),
       path: '/contact'
     }
   ];
+
 
   const menuItems = allMenuItems.filter((item) => {
     if (item.memberOnly) {
@@ -369,18 +377,132 @@ export default function LandingHeader() {
             aria-label="Toggle theme"
             className="
               flex
-              h-9
-              w-9
+              h-10
+              w-10
               items-center
               justify-center
               rounded-full
-              transition-colors
+              text-(--text-secondary)
+              hover:text-(--brand)
               hover:bg-black/5
               dark:hover:bg-white/10
+              transition-colors
+              duration-200
             "
           >
-            {isDark ? <FaMoon /> : <FaSun />}
+            {isDark ? <FaMoon size={18} /> : <FaSun size={18} />}
           </button>
+
+          {/* LANGUAGE SELECT DROPDOWN */}
+          <div className="relative lang-menu mr-1 shrink-0">
+            <button
+              onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
+              className="
+                flex
+                h-10
+                w-[90px]
+                items-center
+                justify-between
+                rounded-none
+                border
+                border-(--border)
+                bg-black/5
+                dark:bg-white/5
+                px-2.5
+                text-xs
+                font-bold
+                text-(--text-secondary)
+                hover:text-(--brand)
+                hover:border-(--brand)
+                transition-all
+                duration-200
+                cursor-pointer
+              "
+            >
+              <span className="flex items-center gap-1">
+                <span>{locale === 'vi' ? '🇻🇳' : '🇺🇸'}</span>
+                <span>{locale === 'vi' ? 'VI' : 'EN'}</span>
+              </span>
+              <svg
+                className={`h-3.5 w-3.5 transition-transform duration-200 ${isLangDropdownOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {isLangDropdownOpen && (
+              <div
+                className="
+                  absolute
+                  right-0
+                  mt-0
+                  w-[90px]
+                  origin-top-right
+                  rounded-none
+                  border
+                  border-(--border)
+                  bg-(--surface)
+                  overflow-hidden
+                  shadow-xl
+                  z-50
+                  animate-[fade-in-up_0.2s_ease-out]
+                "
+              >
+                <button
+                  onClick={() => {
+                    changeLanguage('vi');
+                    setIsLangDropdownOpen(false);
+                  }}
+                  className={`
+                    flex
+                    w-full
+                    items-center
+                    justify-center
+                    gap-1.5
+                    py-2
+                    text-xs
+                    font-bold
+                    transition-colors
+                    cursor-pointer
+                    ${locale === 'vi'
+                      ? 'bg-(--brand) text-black font-bold'
+                      : 'text-(--text-primary) hover:bg-black/5 dark:hover:bg-white/10'
+                    }
+                  `}
+                >
+                  <span>🇻🇳</span> VI
+                </button>
+                <button
+                  onClick={() => {
+                    changeLanguage('en');
+                    setIsLangDropdownOpen(false);
+                  }}
+                  className={`
+                    flex
+                    w-full
+                    items-center
+                    justify-center
+                    gap-1.5
+                    py-2
+                    text-xs
+                    font-bold
+                    transition-colors
+                    cursor-pointer
+                    ${locale === 'en'
+                      ? 'bg-(--brand) text-black font-bold'
+                      : 'text-(--text-primary) hover:bg-black/5 dark:hover:bg-white/10'
+                    }
+                  `}
+                >
+                  <span>🇺🇸</span> EN
+                </button>
+              </div>
+            )}
+          </div>
+
 
           {/* NOT LOGIN */}
           {!user && (
@@ -404,7 +526,7 @@ export default function LandingHeader() {
                 hover:scale-105
               "
             >
-              Đăng nhập
+              {t('nav.login')}
             </button>
           )}
 
@@ -425,10 +547,11 @@ export default function LandingHeader() {
                     items-center
                     justify-center
                     rounded-full
-                    text-[var(--text-secondary)]
+                    text-(--text-secondary)
                     transition-colors
+                    duration-200
                     hover:bg-black/5
-                    hover:text-[var(--brand)]
+                    hover:text-(--brand)
                     dark:hover:bg-white/10
                   "
                 >
@@ -462,16 +585,17 @@ export default function LandingHeader() {
                     className="
                       absolute
                       right-0
-                      top-[55px]
+                      top-full
+                      mt-2
                       z-50
                       w-80
                       overflow-hidden
-                      rounded-none
+                      rounded-2xl
                       border
-                      border-t-0
-                      border-[var(--border)]
-                      bg-[var(--bg-secondary)]
+                      border-(--border)
+                      bg-(--surface)
                       shadow-xl
+                      animate-[fade-in-up_0.2s_ease-out]
                     "
                   >
                     <div
@@ -480,7 +604,7 @@ export default function LandingHeader() {
                         items-center
                         justify-between
                         border-b
-                        border-[var(--border)]
+                        border-(--border)
                         px-4
                         py-3
                       "
@@ -489,10 +613,10 @@ export default function LandingHeader() {
                         className="
                           text-sm
                           font-bold
-                          text-[var(--text-primary)]
+                          text-(--text-primary)
                         "
                       >
-                        Thông báo
+                        {t('nav.notifications')}
                       </span>
 
                       {unreadCount > 0 && (
@@ -501,11 +625,11 @@ export default function LandingHeader() {
                           className="
                             text-xs
                             font-semibold
-                            text-[var(--brand)]
+                            text-(--brand)
                             hover:underline
                           "
                         >
-                          Đánh dấu đã đọc
+                          {t('nav.markAllRead')}
                         </button>
                       )}
                     </div>
@@ -517,10 +641,10 @@ export default function LandingHeader() {
                             p-4
                             text-center
                             text-sm
-                            text-[var(--text-secondary)]
+                            text-(--text-secondary)
                           "
                         >
-                          Chưa có thông báo nào
+                          {t('nav.noNotifications')}
                         </div>
                       ) : (
                         notifications.map((n) => (
@@ -535,14 +659,14 @@ export default function LandingHeader() {
                             className={`
                               cursor-pointer
                               border-b
-                              border-[var(--border)]
+                              border-(--border)
                               p-3
                               transition-colors
                               hover:bg-black/5
                               dark:hover:bg-white/10
                               ${n.isRead
                                 ? 'opacity-60 bg-transparent'
-                                : 'bg-[var(--brand)]/5 dark:bg-[var(--brand)]/10'
+                                : 'bg-(--brand)/5 dark:bg-(--brand)/10'
                               }
                             `}
                           >
@@ -550,7 +674,7 @@ export default function LandingHeader() {
                               className="
                                 text-xs
                                 font-semibold
-                                text-[var(--text-primary)]
+                                text-(--text-primary)
                               "
                             >
                               {n.title}
@@ -560,7 +684,7 @@ export default function LandingHeader() {
                               className="
                                 mt-1
                                 text-[11px]
-                                text-[var(--text-secondary)]
+                                text-(--text-secondary)
                               "
                             >
                               {n.message}
@@ -603,7 +727,7 @@ export default function LandingHeader() {
                       w-9
                       rounded-full
                       border
-                      border-[var(--border)]
+                      border-(--border)
                       object-cover
                     "
                   />
@@ -622,7 +746,7 @@ export default function LandingHeader() {
                         truncate
                         text-sm
                         font-semibold
-                        text-[var(--text-primary)]
+                        text-(--text-primary)
                       "
                     >
                       {user.fullName || user.email.split('@')[0]}
@@ -634,7 +758,7 @@ export default function LandingHeader() {
                         text-[11px]
                         uppercase
                         tracking-wide
-                        text-[var(--text-secondary)]
+                        text-(--text-secondary)
                       "
                     >
                       {user.roles?.[0] || 'Member'}
@@ -646,19 +770,20 @@ export default function LandingHeader() {
                 {isDropdownOpen && (
                   <div
                     className="
-                      fixed
+                      absolute
                       right-0
-                      top-[70px]
+                      top-full
+                      mt-2
                       z-50
                       w-44
                       overflow-hidden
-                      rounded-none
+                      rounded-2xl
                       border
-                      border-t-0
                       border-(--border)
-                      bg-(--bg-secondary)
+                      bg-(--surface)
                       py-1.5
                       shadow-xl
+                      animate-[fade-in-up_0.2s_ease-out]
                     "
                   >
                     <div
@@ -682,7 +807,7 @@ export default function LandingHeader() {
                     >
                       <FaUser className="text-(--text-secondary)" size={13} />
                       <span className="text-xs font-semibold">
-                        Hồ sơ cá nhân
+                        {t('nav.profile')}
                       </span>
                     </div>
 
@@ -707,7 +832,7 @@ export default function LandingHeader() {
                     >
                       <FaCalendarAlt className="text-(--text-secondary)" size={13} />
                       <span className="text-xs font-semibold">
-                        Lớp của tôi
+                        {t('nav.myBookings')}
                       </span>
                     </div>
 
@@ -735,7 +860,7 @@ export default function LandingHeader() {
                       <FaSignOutAlt size={13} />
 
                       <span className="text-xs font-semibold">
-                        Đăng xuất
+                        {t('nav.logout')}
                       </span>
                     </div>
                   </div>
@@ -747,9 +872,24 @@ export default function LandingHeader() {
           {/* MOBILE BUTTON */}
           <button
             onClick={() => setIsNavOpen(true)}
-            className="ml-1 xl:hidden"
+            className="
+              ml-1
+              xl:hidden
+              flex
+              h-10
+              w-10
+              items-center
+              justify-center
+              rounded-full
+              text-(--text-secondary)
+              hover:text-(--brand)
+              hover:bg-black/5
+              dark:hover:bg-white/10
+              transition-colors
+              duration-200
+            "
           >
-            <FaBars size={24} />
+            <FaBars size={20} />
           </button>
         </div>
       </nav>

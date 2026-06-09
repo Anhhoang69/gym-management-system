@@ -3,6 +3,7 @@ import Banner from '../components/branch/Banner';
 import { Link } from 'react-router-dom';
 import FAQSection from '../components/branch/FAQSection';
 import CTASection from '../components/CTASection';
+import { useLanguage } from '../../../shared/contexts/LanguageContext';
 
 const branches = [
   { city: 'Hà Nội', link: '/branches/hanoi', img: '/images/branch-hanoi.jpg' },
@@ -20,12 +21,21 @@ export default function BranchesPage() {
   const [search, setSearch] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const { t } = useLanguage();
 
   const listRef = useRef(null);
 
-  const filteredBranches = branches.filter((b) =>
-    b.city.toLowerCase().includes(search.toLowerCase())
-  );
+  const cityMap = {
+    'Hồ Chí Minh': t('branchesPage.cityHCM'),
+    'Hà Nội': t('branchesPage.cityHN'),
+    'Đà Nẵng': t('branchesPage.cityDN'),
+    'Cần Thơ': t('branchesPage.cityCT'),
+  };
+
+  const filteredBranches = branches.filter((b) => {
+    const cityName = cityMap[b.city] || b.city;
+    return cityName.toLowerCase().includes(search.toLowerCase());
+  });
 
   const totalPages = Math.ceil(filteredBranches.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -51,14 +61,14 @@ export default function BranchesPage() {
   return (
     <div className="w-full bg-(--bg) text-(--text-primary)">
       <Banner
-        title="30+ CHI NHÁNH"
-        subtitle="Chọn chi nhánh gần bạn nhất và bắt đầu hành trình tập luyện hôm nay."
+        title={t('branchesPage.title')}
+        subtitle={t('branchesPage.subtitle')}
         image="/images/branch-banner.jpg"
         search={search}
         setSearch={setSearch}
         showDropdown={showDropdown}
         setShowDropdown={setShowDropdown}
-        filteredBranches={filteredBranches}
+        filteredBranches={filteredBranches.map(b => ({ ...b, city: cityMap[b.city] || b.city }))}
         handleSelect={(city) => {
           setSearch(city);
           setShowDropdown(false);
@@ -67,37 +77,40 @@ export default function BranchesPage() {
 
       {/* Branch List */}
       <div ref={listRef} className="w-full space-y-8 px-4 pt-10 pb-2 sm:px-6 lg:px-10">
-        {currentBranches.map((b, i) => (
-          <div
-            key={i}
-            className="group w-full rounded-2xl border border-(--border) bg-(--bg-secondary) transition-all duration-300 hover:shadow-xl"
-          >
-            <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-8 sm:px-6 sm:py-10 md:grid-cols-2 lg:gap-14 lg:px-10">
-              {/* CONTENT */}
-              <div className="space-y-6">
-                <h2 className="text-[2rem] leading-tight font-bold tracking-tight text-(--text-primary) sm:text-[2.4rem] lg:text-[2.8rem]">
-                  {b.city}
-                </h2>
+        {currentBranches.map((b, i) => {
+          const translatedCity = cityMap[b.city] || b.city;
+          return (
+            <div
+              key={i}
+              className="group w-full rounded-2xl border border-(--border) bg-(--bg-secondary) transition-all duration-300 hover:shadow-xl"
+            >
+              <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-8 sm:px-6 sm:py-10 md:grid-cols-2 lg:gap-14 lg:px-10">
+                {/* CONTENT */}
+                <div className="space-y-6">
+                  <h2 className="text-[2rem] leading-tight font-bold tracking-tight text-(--text-primary) sm:text-[2.4rem] lg:text-[2.8rem]">
+                    {translatedCity}
+                  </h2>
 
-                <Link
-                  to={b.link}
-                  className="inline-block text-base font-medium text-(--brand) underline underline-offset-4 transition hover:opacity-80 sm:text-lg"
-                >
-                  Xem phòng tập tại {b.city} &gt;
-                </Link>
-              </div>
+                  <Link
+                    to={b.link}
+                    className="inline-block text-base font-medium text-(--brand) underline underline-offset-4 transition hover:opacity-80 sm:text-lg"
+                  >
+                    {t('branchesPage.viewGyms', { city: translatedCity })}
+                  </Link>
+                </div>
 
-              {/* IMAGE - Bo góc và hiệu ứng zoom khi hover vào card */}
-              <div className="relative overflow-hidden rounded-xl shadow-lg">
-                <img
-                  src={b.img}
-                  alt={b.city}
-                  className="h-[220px] w-full object-cover transition-transform duration-500 group-hover:scale-110 sm:h-[280px] lg:h-[340px]"
-                />
+                {/* IMAGE - Bo góc và hiệu ứng zoom khi hover vào card */}
+                <div className="relative overflow-hidden rounded-xl shadow-lg">
+                  <img
+                    src={b.img}
+                    alt={translatedCity}
+                    className="h-[220px] w-full object-cover transition-transform duration-500 group-hover:scale-110 sm:h-[280px] lg:h-[340px]"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Pagination - Thiết kế mới đồng bộ */}
@@ -106,9 +119,9 @@ export default function BranchesPage() {
           <button
             disabled={currentPage === 1}
             onClick={() => setCurrentPage((p) => p - 1)}
-            className="px-4 py-2 text-sm font-medium transition hover:text-(--brand) disabled:opacity-30"
+            className="px-4 py-2 text-sm font-medium transition hover:text-(--brand) disabled:opacity-30 cursor-pointer"
           >
-            ← Previous
+            {t('branchesPage.prev')}
           </button>
 
           <div className="flex gap-2">
@@ -116,7 +129,7 @@ export default function BranchesPage() {
               <button
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
-                className={`h-10 w-10 rounded-lg text-sm font-bold transition-all ${
+                className={`h-10 w-10 rounded-lg text-sm font-bold transition-all cursor-pointer ${
                   currentPage === i + 1
                     ? 'bg-(--brand) text-black shadow-md'
                     : 'border border-(--border) bg-(--bg-secondary) hover:bg-(--hover)'
@@ -130,9 +143,9 @@ export default function BranchesPage() {
           <button
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage((p) => p + 1)}
-            className="px-4 py-2 text-sm font-medium transition hover:text-(--brand) disabled:opacity-30"
+            className="px-4 py-2 text-sm font-medium transition hover:text-(--brand) disabled:opacity-30 cursor-pointer"
           >
-            Next →
+            {t('branchesPage.next')}
           </button>
         </div>
       )}
@@ -143,3 +156,4 @@ export default function BranchesPage() {
     </div>
   );
 }
+

@@ -3,9 +3,9 @@ import api from "../../../shared/api/api"
 // ================= USERS =================
 
 // GET /api/users
-export const getUsers = async (page = 1, pageSize = 10, search = "", role = "", branchId = "") => {
+export const getUsers = async (page = 1, pageSize = 10, search = "", role = "", branchId = "", status = "") => {
   const res = await api.get("/api/users", {
-    params: { page, pageSize, search, role, branchId }
+    params: { page, pageSize, search, role, branchId, status }
   })
   return res.data.data
 }

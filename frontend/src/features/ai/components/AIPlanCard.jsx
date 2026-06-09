@@ -1,8 +1,10 @@
 import { useState } from "react"
 import { Dumbbell, Apple, Target, Calendar, Flame, Scale, ChevronDown, ChevronUp, AlertCircle } from "lucide-react"
+import { useLanguage } from "../../../shared/contexts/LanguageContext"
 
 // ─── Exercise Row ─────────────────────────────────────────────────────────────
 function ExerciseRow({ ex }) {
+  const { locale } = useLanguage()
   return (
     <div
       className="flex flex-row items-center justify-between gap-2.5 px-3.5 py-2.5 bg-[var(--bg-third)] rounded-xl border border-[var(--border)] transition-shadow duration-200"
@@ -19,7 +21,7 @@ function ExerciseRow({ ex }) {
         <span
           className="bg-[var(--hover)] text-[var(--text-secondary)] border border-[var(--border)] rounded-md px-2 py-0.5 text-xs font-medium"
         >
-          nghỉ {ex.Rest || ex.rest}
+          {locale === 'vi' ? 'nghỉ' : 'rest'} {ex.Rest || ex.rest}
         </span>
       </div>
     </div>
@@ -51,6 +53,7 @@ function MealRow({ meal }) {
 
 // ─── Day Section (collapsible) ────────────────────────────────────────────────
 function DaySection({ day, isActive, onClick }) {
+  const { locale } = useLanguage()
   const exercises = day.Exercises || day.exercises || []
   return (
     <div className="mb-2">
@@ -76,7 +79,7 @@ function DaySection({ day, isActive, onClick }) {
         <div className="mt-1.5 flex flex-col gap-1.5 pl-1">
           {exercises.length === 0 ? (
             <div className="text-xs text-[var(--text-secondary)] px-3.5 py-2">
-              Ngày nghỉ phục hồi
+              {locale === 'vi' ? "Ngày nghỉ phục hồi" : "Rest & recovery day"}
             </div>
           ) : (
             exercises.map((ex, j) => <ExerciseRow key={j} ex={ex} />)
@@ -89,6 +92,7 @@ function DaySection({ day, isActive, onClick }) {
 
 // ─── Main AIPlanCard ──────────────────────────────────────────────────────────
 export default function AIPlanCard({ data }) {
+  const { locale } = useLanguage()
   const plan = data?.WorkoutPlan || data?.workoutPlan
   const nutrition = data?.nutritionAdvice || data?.NutritionAdvice
 
@@ -99,7 +103,7 @@ export default function AIPlanCard({ data }) {
     return (
       <div className="text-sm text-red-500 p-4 flex items-center gap-2 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-xl">
         <AlertCircle size={16} />
-        <span>Không đọc được dữ liệu kế hoạch 😥</span>
+        <span>{locale === 'vi' ? "Không đọc được dữ liệu kế hoạch 😥" : "Failed to parse plan data 😥"}</span>
       </div>
     )
   }
@@ -113,14 +117,14 @@ export default function AIPlanCard({ data }) {
       <div className="pb-3.5 mb-3.5 border-b border-[var(--border)]">
         <h2 className="text-[17px] font-black flex items-center gap-2 m-0">
           <Target className="text-red-500" size={18} />
-          {plan.Goal || plan.goal || "Kế hoạch tập luyện"}
+          {plan.Goal || plan.goal || (locale === 'vi' ? "Kế hoạch tập luyện" : "Training Plan")}
         </h2>
         <p className="text-[13px] text-[var(--text-secondary)] mt-1.5 flex items-center gap-1.5">
           <Calendar className="text-blue-500" size={14} />
-          {plan.DaysPerWeek || plan.daysPerWeek || "?"} buổi/tuần
+          {plan.DaysPerWeek || plan.daysPerWeek || "?"} {locale === 'vi' ? "buổi/tuần" : "sessions/week"}
           &nbsp;·&nbsp;
           <span className="text-[var(--brand)] font-bold">
-            Được tạo bởi EnerGym AI
+            {locale === 'vi' ? "Được tạo bởi EnerGym AI" : "Created by EnerGym AI"}
           </span>
         </p>
       </div>
@@ -135,7 +139,7 @@ export default function AIPlanCard({ data }) {
               : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           }`}
         >
-          <Dumbbell size={14} /> Lịch tập
+          <Dumbbell size={14} /> {locale === 'vi' ? "Lịch tập" : "Workout Schedule"}
         </button>
         {nutrition && (
           <button 
@@ -146,7 +150,7 @@ export default function AIPlanCard({ data }) {
                 : "border-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             }`}
           >
-            <Apple size={14} /> Dinh dưỡng
+            <Apple size={14} /> {locale === 'vi' ? "Dinh dưỡng" : "Nutrition Plan"}
           </button>
         )}
       </div>
@@ -159,7 +163,7 @@ export default function AIPlanCard({ data }) {
           <div>
             {schedule.length === 0 ? (
               <div className="text-[var(--text-secondary)] text-sm">
-                Không có lịch tập.
+                {locale === 'vi' ? "Không có lịch tập." : "No workout schedule."}
               </div>
             ) : (
               schedule.map((day, i) => (
@@ -217,7 +221,7 @@ export default function AIPlanCard({ data }) {
             {/* Meal plan */}
             <div>
               <h3 className="text-sm font-bold mb-2.5 text-[var(--text-primary)]">
-                Thực đơn tham khảo
+                {locale === 'vi' ? "Thực đơn tham khảo" : "Sample Meal Plan"}
               </h3>
               <div className="flex flex-col gap-2">
                 {(nutrition.MealPlan || nutrition.mealPlan || []).map((meal, i) => (

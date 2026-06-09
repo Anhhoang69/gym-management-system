@@ -1,4 +1,4 @@
-import { CCard, CCardBody, CBadge } from "@coreui/react"
+import { CCard, CCardBody, CBadge, CDropdown, CDropdownToggle, CDropdownMenu, CDropdownItem } from "@coreui/react"
 
 function PackageCard({ pkg, onEdit, onDelete, onToggleStatus }) {
 
@@ -40,9 +40,29 @@ function PackageCard({ pkg, onEdit, onDelete, onToggleStatus }) {
 
         {/* HEADER */}
         <div className="mb-3 mt-1">
-          <div className="d-flex align-items-center gap-2 mb-1">
-            <h5 className="fw-bold mb-0 text-dark">{pkg.name}</h5>
-            {!isActive && <CBadge color="secondary" shape="rounded-pill" style={{ fontSize: '10px' }}>Ngừng bán</CBadge>}
+          <div className="d-flex justify-content-between align-items-start gap-2 mb-1">
+            <div className="d-flex align-items-center gap-2 flex-wrap">
+              <h5 className="fw-bold mb-0 text-dark">{pkg.name}</h5>
+              {!isActive && <CBadge color="secondary" shape="rounded-pill" style={{ fontSize: '10px' }}>Ngừng bán</CBadge>}
+            </div>
+
+            {/* 3-Dots actions dropdown */}
+            <CDropdown alignment="end" className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+              <CDropdownToggle color="light" size="sm" caret={false} className="border-0 bg-transparent p-0 text-muted lh-1" style={{ fontSize: "20px", cursor: "pointer", outline: "none", boxShadow: "none" }}>
+                ⋮
+              </CDropdownToggle>
+              <CDropdownMenu>
+                <CDropdownItem onClick={() => onEdit(pkg)}>
+                  Chỉnh sửa
+                </CDropdownItem>
+                <CDropdownItem onClick={() => onToggleStatus && onToggleStatus(pkg.id, pkg.status)}>
+                  {isActive ? "Tạm ngưng" : "Kích hoạt"}
+                </CDropdownItem>
+                <CDropdownItem className="text-danger border-top" onClick={() => onDelete(pkg)}>
+                  Xóa
+                </CDropdownItem>
+              </CDropdownMenu>
+            </CDropdown>
           </div>
           <p className="text-muted small mb-0" style={{
             display: "-webkit-box",
@@ -81,7 +101,7 @@ function PackageCard({ pkg, onEdit, onDelete, onToggleStatus }) {
         </ul>
 
         {/* INFO MINI-CARDS */}
-        <div className="d-flex justify-content-between mb-3 bg-light rounded-3 p-2">
+        <div className="d-flex justify-content-between mt-auto mb-0 bg-light rounded-3 p-2">
           <div className="text-center w-100 border-end">
             <div className="fw-bold text-dark">{pkg.maxCheckinsPerWeek > 99 ? '∞' : pkg.maxCheckinsPerWeek}</div>
             <div className="text-muted" style={{ fontSize: '11px' }}>Check-in/tuần</div>
@@ -94,31 +114,6 @@ function PackageCard({ pkg, onEdit, onDelete, onToggleStatus }) {
             <div className="fw-bold text-dark">{pkg.totalSubscribers}</div>
             <div className="text-muted" style={{ fontSize: '11px' }}>Hội viên</div>
           </div>
-        </div>
-
-        {/* ACTIONS */}
-        <div className="d-flex gap-2 mt-auto">
-          <button
-            className="btn btn-outline-primary flex-fill fw-semibold"
-            style={{ fontSize: '12px', padding: '6px 4px' }}
-            onClick={() => onEdit(pkg)}
-          >
-            Chỉnh sửa
-          </button>
-          <button
-            className={`btn flex-fill fw-semibold ${isActive ? 'btn-outline-warning' : 'btn-outline-success'}`}
-            style={{ fontSize: '12px', padding: '6px 4px' }}
-            onClick={() => onToggleStatus && onToggleStatus(pkg.id, pkg.status)}
-          >
-            {isActive ? "Tạm ngưng" : "Kích hoạt"}
-          </button>
-          <button
-            className="btn btn-outline-danger flex-fill fw-semibold"
-            style={{ fontSize: '12px', padding: '6px 4px' }}
-            onClick={() => onDelete(pkg)}
-          >
-            Xóa
-          </button>
         </div>
 
       </CCardBody>

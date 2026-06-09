@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react"
 import { getAvailableTools } from "../services/aiService"
 import { ChevronDown, Terminal } from "lucide-react"
+import { useLanguage } from "../../../shared/contexts/LanguageContext"
 
 export default function AIToolsPanel({ collapsed = false, onExpand }) {
+  const { locale } = useLanguage()
   const [tools, setTools] = useState([])
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState(false)
@@ -24,7 +26,7 @@ export default function AIToolsPanel({ collapsed = false, onExpand }) {
         >
           <Terminal size={18} className="text-[var(--brand)]" />
           <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-xl text-xs font-semibold text-[var(--text-primary)] whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-200 shadow-lg z-50">
-            Tools khả dụng ({tools.length})
+            {locale === 'vi' ? `Tools khả dụng (${tools.length})` : `Available Tools (${tools.length})`}
           </div>
         </button>
       </div>
@@ -39,7 +41,7 @@ export default function AIToolsPanel({ collapsed = false, onExpand }) {
         className="w-full flex items-center justify-between bg-none border-none cursor-pointer py-0.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
       >
         <span className="text-[11px] font-bold uppercase tracking-wider">
-          Tools khả dụng
+          {locale === 'vi' ? "Tools khả dụng" : "Available Tools"}
         </span>
         <span className="flex items-center gap-1.5">
           {!loading && (
@@ -59,11 +61,11 @@ export default function AIToolsPanel({ collapsed = false, onExpand }) {
         <div className="mt-2 flex flex-col gap-1.5">
           {loading ? (
             <div className="text-xs text-[var(--text-secondary)] py-1">
-              Đang tải...
+              {locale === 'vi' ? "Đang tải..." : "Loading..."}
             </div>
           ) : tools.length === 0 ? (
             <div className="text-xs text-[var(--text-secondary)] py-1">
-              Không có tool nào.
+              {locale === 'vi' ? "Không có tool nào." : "No tools available."}
             </div>
           ) : (
             tools.map((tool, i) => (

@@ -1,4 +1,5 @@
 import { FaCheck, FaTimes, FaArrowRight } from "react-icons/fa";
+import { useLanguage } from "../../../../shared/contexts/LanguageContext";
 
 export default function PackageCard({
     image,
@@ -11,6 +12,8 @@ export default function PackageCard({
     isCurrentPackage = false,
     onRegister,
 }) {
+    const { t } = useLanguage();
+
     return (
         <div
             className={`
@@ -50,7 +53,9 @@ export default function PackageCard({
 
                     {/* PRICE */}
                     <div className="mt-1 flex items-end justify-center gap-1">
-                        <span className="text-2xl font-extrabold text-white">{price}đ</span>
+                        <span className="text-2xl font-extrabold text-white">
+                            {price === "Liên hệ" || price === "Contact" ? price : `${price} ${t('packages.currency')}`}
+                        </span>
                         <span className="text-xs font-medium text-yellow-400 mb-1">/{period}</span>
                     </div>
 
@@ -89,7 +94,7 @@ export default function PackageCard({
                         text-sm font-bold text-green-400
                     "
                     >
-                        Đang sử dụng
+                        {t('packages.active')}
                     </div>
                 ) : (
                     <button style={{ borderRadius: '50px' }}
@@ -109,7 +114,7 @@ export default function PackageCard({
                             hover:text-black
                         "
                     >
-                        Đăng Ký Ngay
+                        {t('packages.registerNow')}
                         <FaArrowRight className="transition-transform group-hover:translate-x-1" />
                     </button>
                 )}
@@ -117,3 +122,4 @@ export default function PackageCard({
         </div>
     );
 }
+

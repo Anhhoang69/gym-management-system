@@ -114,7 +114,8 @@ function VerifyOTPPage() {
           user = {
             ...user,
             branchId: meData.branchId || user.branchId || "",
-            fullName: meData.fullName || meData.name || ""
+            fullName: meData.fullName || meData.name || "",
+            staffPosition: meData.staffPosition || meData.role || user.staffPosition || ""
           }
           localStorage.setItem("user", JSON.stringify(user))
 

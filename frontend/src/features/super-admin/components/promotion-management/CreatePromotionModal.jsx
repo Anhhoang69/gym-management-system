@@ -196,7 +196,7 @@ function CreatePromotionModal({
               </option>
 
               <option value="FixedAmount">
-                Fixed Amount ($)
+                Fixed Amount (₫)
               </option>
             </CFormSelect>
 
@@ -309,16 +309,18 @@ function CreatePromotionModal({
 
         <CButton
           color="secondary"
+          variant="outline"
           onClick={() => setVisible(false)}
         >
           Hủy
         </CButton>
 
         <CButton
-          color="warning"
+          color="success"
+          className="text-white fw-bold shadow-sm"
           onClick={handleCreate}
         >
-          Tạo khuyến mãi
+          Tạo Khuyến Mãi
         </CButton>
 
       </CModalFooter>
