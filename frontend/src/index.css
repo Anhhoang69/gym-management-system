@@ -158,15 +158,15 @@ a {
   }
 }
 
-.animate-\\[slow-zoom_20s_ease-in-out_infinite_alternate\\] {
+.animate-slow-zoom {
   animation: slow-zoom 20s ease-in-out infinite alternate;
 }
 
-.animate-\\[fade-in-up_0\\.3s_ease-out\\] {
+.animate-fade-in-up {
   animation: fade-in-up 0.3s ease-out;
 }
 
-.animate-\\[shimmer_1\\.5s_infinite\\] {
+.animate-shimmer {
   animation: shimmer 1.5s infinite;
 }
 

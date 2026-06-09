@@ -1,13 +1,14 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { CheckCircle2, Clock, FileText, CreditCard, AlertTriangle, Loader2, ShieldCheck } from 'lucide-react';
 import { getPaymentStatus } from '../services/vnpayService';
+import logoBlack from '../../../assets/LogoBlackText.svg';
+import logoWhite from '../../../assets/LogoWhiteText.svg';
 
 /**
  * VNPayConfirmPage — Public page, không cần auth.
  * Hiển thị ngay sau khi register thành công.
- * Nhận props từ URL search params: paymentUrl, invoiceCode, amount, txnRef, expiredAt.
- * Sau khi user bấm "Thanh toán ngay" → redirect sang VNPay.
- * Nếu invoiceId được cung cấp → poll status để biết khi nào IPN về.
+ * Sử dụng Tailwind CSS, hỗ trợ Light/Dark Mode theo hệ thống.
  */
 export default function VNPayConfirmPage() {
   const [searchParams] = useSearchParams();
@@ -23,10 +24,20 @@ export default function VNPayConfirmPage() {
   const [countdown, setCountdown] = useState('');
   const [isExpired, setIsExpired] = useState(false);
   const [pollStatus, setPollStatus] = useState(null); // null | 'checking' | 'paid' | 'failed'
+  const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
   const pollRef = useRef(null);
   const openedRef = useRef(false);
 
   const expiredAt = expiredAtStr ? new Date(expiredAtStr) : null;
+
+  // Sync Dark/Light mode class
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   // Countdown timer
   useEffect(() => {
@@ -48,11 +59,11 @@ export default function VNPayConfirmPage() {
     return () => clearInterval(timer);
   }, [expiredAtStr]);
 
-  // Poll status sau khi đã mở tab VNPay
+  // Poll status after VNPay tab is opened
   useEffect(() => {
     if (!invoiceId || !openedRef.current) return;
     let attempts = 0;
-    const maxAttempts = 40; // 40 * 3s = 2 phút
+    const maxAttempts = 40; // 40 * 3s = 2 mins
     setPollStatus('checking');
 
     pollRef.current = setInterval(async () => {
@@ -82,7 +93,6 @@ export default function VNPayConfirmPage() {
     if (!paymentUrl) return;
     openedRef.current = true;
     window.open(paymentUrl, '_blank');
-    // Force trigger poll if invoiceId exists
     if (invoiceId) {
       setPollStatus('checking');
       let attempts = 0;
@@ -111,14 +121,19 @@ export default function VNPayConfirmPage() {
 
   if (pollStatus === 'paid') {
     return (
-      <div style={styles.wrapper}>
-        <div style={{ ...styles.card, borderTop: '4px solid #2e7d32' }}>
-          <div style={styles.bigIcon}>🎉</div>
-          <h1 style={{ ...styles.title, color: '#2e7d32' }}>Thanh toán thành công!</h1>
-          <p style={styles.subtitle}>
-            Thẻ tập của bạn đã được kích hoạt. Thông tin sẽ được gửi đến email.
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[var(--bg)] text-[var(--text-primary)] transition-colors duration-300">
+        <div className="w-full max-w-[460px] p-8 md:p-10 rounded-2xl shadow-xl bg-[var(--bg-third)] border border-[var(--border)] text-center animate-[fade-in-up_0.3s_ease-out] flex flex-col items-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/10 mb-6">
+            <CheckCircle2 size={40} className="text-emerald-500" />
+          </div>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-emerald-500">Thanh toán thành công!</h1>
+          <p className="text-sm mt-3 text-[var(--text-secondary)] leading-relaxed">
+            Thẻ tập của bạn đã được kích hoạt. Thông tin chi tiết đã được gửi đến email đăng ký.
           </p>
-          <button style={styles.primaryBtn} onClick={() => navigate('/login')}>
+          <button
+            onClick={() => navigate('/login')}
+            className="w-full mt-8 py-3.5 px-6 rounded-xl font-semibold text-black bg-[var(--brand)] hover:brightness-95 active:scale-[0.98] transition-all duration-250 shadow-md shadow-[var(--brand)]/10"
+          >
             Đăng nhập để xem thẻ tập →
           </button>
         </div>
@@ -128,50 +143,77 @@ export default function VNPayConfirmPage() {
 
   if (!paymentUrl) {
     return (
-      <div style={styles.wrapper}>
-        <div style={styles.card}>
-          <div style={styles.bigIcon}>⚠️</div>
-          <h1 style={styles.title}>Không tìm thấy link thanh toán</h1>
-          <p style={styles.subtitle}>Vui lòng kiểm tra email hoặc liên hệ nhân viên.</p>
-          <button style={styles.primaryBtn} onClick={() => navigate('/')}>Về trang chủ</button>
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[var(--bg)] text-[var(--text-primary)] transition-colors duration-300">
+        <div className="w-full max-w-[460px] p-8 md:p-10 rounded-2xl shadow-xl bg-[var(--bg-third)] border border-[var(--border)] text-center animate-[fade-in-up_0.3s_ease-out] flex flex-col items-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-500/10 mb-6">
+            <AlertTriangle size={40} className="text-amber-500" />
+          </div>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Không tìm thấy link</h1>
+          <p className="text-sm mt-3 text-[var(--text-secondary)] leading-relaxed">
+            Vui lòng kiểm tra email hoặc liên hệ với nhân viên EnerGym để được trợ giúp.
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="w-full mt-8 py-3.5 px-6 rounded-xl font-semibold text-black bg-[var(--brand)] hover:brightness-95 active:scale-[0.98] transition-all duration-250 shadow-md"
+          >
+            Về trang chủ
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={styles.wrapper}>
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-[var(--bg)] text-[var(--text-primary)] transition-colors duration-300">
       {/* Header */}
-      <div style={styles.header}>
-        <div style={styles.logo}>💪 GYM Management System</div>
+      <div className="mb-6 text-center">
+        <img
+          src={isDark ? logoWhite : logoBlack}
+          alt="EnerGym Logo"
+          className="h-12 object-contain"
+        />
       </div>
 
-      <div style={styles.card}>
+      <div className="w-full max-w-[460px] p-8 md:p-10 rounded-2xl shadow-xl bg-[var(--bg-third)] border border-[var(--border)] text-center animate-[fade-in-up_0.3s_ease-out]">
         {/* Greeting */}
-        <div style={styles.successBadge}>✅ Đăng ký thành công!</div>
-        <h1 style={styles.title}>
-          {memberName ? `Xin chào ${memberName}!` : 'Chào mừng bạn!'}
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/25">
+          <CheckCircle2 size={13} />
+          Đăng ký tài khoản thành công!
+        </div>
+        
+        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight mt-5 text-[var(--text-primary)]">
+          {memberName ? `Xin chào ${memberName}!` : 'Chào mừng bạn đến với EnerGym!'}
         </h1>
-        <p style={styles.subtitle}>
-          Bạn chỉ cần thanh toán hóa đơn bên dưới để kích hoạt thẻ tập ngay hôm nay.
+        
+        <p className="text-sm mt-3 text-[var(--text-secondary)] leading-relaxed">
+          Bạn chỉ cần hoàn tất thanh toán hóa đơn bên dưới qua VNPay để kích hoạt thẻ tập ngay lập tức.
         </p>
 
         {/* Invoice info */}
-        <div style={styles.infoBox}>
-          <div style={styles.infoRow}>
-            <span style={styles.infoLabel}>📋 Mã hóa đơn</span>
-            <span style={{ ...styles.infoValue, fontFamily: 'monospace' }}>{invoiceCode || '—'}</span>
+        <div className="mt-6 p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-left">
+          <div className="flex justify-between items-center py-2.5 border-b border-[var(--border)]">
+            <span className="text-xs font-medium text-[var(--text-secondary)] flex items-center gap-1.5">
+              <FileText size={14} className="text-[var(--text-secondary)]" />
+              Mã hóa đơn
+            </span>
+            <span className="text-sm font-semibold font-mono text-[var(--text-primary)]">{invoiceCode || '—'}</span>
           </div>
-          <div style={styles.infoRow}>
-            <span style={styles.infoLabel}>💰 Số tiền</span>
-            <span style={{ ...styles.infoValue, color: '#c62828', fontSize: 18, fontWeight: 700 }}>
+          <div className="flex justify-between items-center py-2.5 border-b border-[var(--border)]">
+            <span className="text-xs font-medium text-[var(--text-secondary)] flex items-center gap-1.5">
+              <CreditCard size={14} className="text-[var(--text-secondary)]" />
+              Số tiền cần trả
+            </span>
+            <span className="text-sm font-extrabold text-[var(--brand)]">
               {formatAmount(amount)}
             </span>
           </div>
           {expiredAt && !isExpired && (
-            <div style={styles.infoRow}>
-              <span style={styles.infoLabel}>⏱ Link hết hạn sau</span>
-              <span style={{ ...styles.infoValue, color: countdown < '05:00' ? '#c62828' : '#e65100', fontSize: 18, fontWeight: 700, fontFamily: 'monospace' }}>
+            <div className="flex justify-between items-center py-2.5 border-b border-[var(--border)] last:border-0">
+              <span className="text-xs font-medium text-[var(--text-secondary)] flex items-center gap-1.5">
+                <Clock size={14} className="text-[var(--text-secondary)]" />
+                Link hết hạn sau
+              </span>
+              <span className={`text-sm font-bold font-mono ${countdown < '05:00' ? 'text-red-500' : 'text-[var(--text-primary)]'}`}>
                 {countdown}
               </span>
             </div>
@@ -180,203 +222,73 @@ export default function VNPayConfirmPage() {
 
         {/* Expired warning */}
         {isExpired && (
-          <div style={styles.expiredBanner}>
-            ⏰ Link thanh toán đã hết hạn. Vui lòng đăng nhập để tạo link mới.
+          <div className="mt-4 flex items-center gap-2.5 p-3.5 rounded-xl text-xs bg-red-500/10 text-red-500 border border-red-500/20 text-left">
+            <AlertTriangle size={16} className="flex-shrink-0" />
+            <span>Liên kết thanh toán đã hết hạn. Vui lòng đăng nhập để tạo liên kết mới.</span>
           </div>
         )}
 
         {/* Poll status */}
         {pollStatus === 'checking' && (
-          <div style={styles.pollingBanner}>
-            <div style={styles.smallSpinner} />
-            Đang chờ xác nhận thanh toán từ VNPay...
+          <div className="mt-4 flex items-center gap-2.5 p-3.5 rounded-xl text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20 text-left">
+            <Loader2 className="animate-spin flex-shrink-0" size={16} />
+            <span>Đang chờ xác nhận giao dịch từ cổng VNPay...</span>
           </div>
         )}
 
         {pollStatus === 'failed' && (
-          <div style={styles.failedBanner}>
-            ❌ Giao dịch thất bại hoặc bị hủy. Bạn có thể thử thanh toán lại.
+          <div className="mt-4 flex items-center gap-2.5 p-3.5 rounded-xl text-xs bg-amber-500/10 text-amber-500 border border-amber-500/20 text-left">
+            <AlertTriangle size={16} className="flex-shrink-0" />
+            <span>Giao dịch không thành công hoặc bị hủy. Bạn có thể bấm thử lại.</span>
           </div>
         )}
 
         {/* CTA Buttons */}
         {!isExpired ? (
           <button
-            style={pollStatus === 'checking' ? { ...styles.payBtn, opacity: 0.7 } : styles.payBtn}
             onClick={handlePayNow}
+            disabled={pollStatus === 'checking'}
+            className="w-full mt-6 py-3.5 px-6 rounded-xl font-bold text-black bg-[var(--brand)] hover:brightness-95 active:scale-[0.98] transition-all duration-200 shadow-md shadow-[var(--brand)]/15 flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {pollStatus === 'checking'
-              ? '⏳ Đang chờ VNPay phản hồi...'
-              : '💳 Thanh toán ngay qua VNPay'}
+            {pollStatus === 'checking' ? (
+              <>
+                <Loader2 className="animate-spin" size={18} />
+                Đang kiểm tra kết quả...
+              </>
+            ) : (
+              <>
+                <CreditCard size={18} />
+                Thanh toán ngay qua VNPay
+              </>
+            )}
           </button>
         ) : (
-          <button style={styles.payBtn} onClick={() => navigate('/login')}>
-            🔑 Đăng nhập để tạo link mới
+          <button
+            onClick={() => navigate('/login')}
+            className="w-full mt-6 py-3.5 px-6 rounded-xl font-bold text-black bg-[var(--brand)] hover:brightness-95 active:scale-[0.98] transition-all duration-200"
+          >
+            Đăng nhập để tạo link mới
           </button>
         )}
 
-        <button style={styles.skipBtn} onClick={() => navigate('/login')}>
+        <button
+          onClick={() => navigate('/login')}
+          className="w-full mt-3 py-3 px-6 rounded-xl font-semibold text-[var(--text-secondary)] bg-transparent hover:text-[var(--text-primary)] transition-all duration-200 text-xs underline cursor-pointer"
+        >
           Tôi sẽ thanh toán sau
         </button>
 
         {/* Note */}
-        <div style={styles.noteBox}>
-          <p style={{ margin: 0, fontSize: 12, color: '#888', lineHeight: 1.6 }}>
-            🔒 Thanh toán được bảo mật bởi VNPay — cổng thanh toán hàng đầu Việt Nam.
-            {' '}Thẻ test: <code>9704198526191432198</code> / OTP: <code>123456</code>
+        <div className="mt-6 p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border)] text-center">
+          <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed flex items-center justify-center gap-1.5 font-medium">
+            <ShieldCheck size={14} className="text-emerald-500" />
+            <span>Bảo mật thanh toán bởi VNPay.</span>
+          </p>
+          <p className="text-[11px] text-gray-500 mt-1 font-mono">
+            Thẻ test: 9704198526191432198 | OTP: 123456
           </p>
         </div>
       </div>
     </div>
   );
 }
-
-const styles = {
-  wrapper: {
-    minHeight: '100vh',
-    background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '24px',
-    fontFamily: "'Inter', 'Arial', sans-serif",
-  },
-  header: {
-    marginBottom: '24px',
-    textAlign: 'center',
-  },
-  logo: {
-    color: '#e2b96f',
-    fontSize: '22px',
-    fontWeight: '700',
-    letterSpacing: '0.5px',
-  },
-  card: {
-    background: '#ffffff',
-    borderRadius: '20px',
-    padding: '40px 36px',
-    maxWidth: '480px',
-    width: '100%',
-    boxShadow: '0 24px 80px rgba(0,0,0,0.4)',
-    textAlign: 'center',
-  },
-  successBadge: {
-    display: 'inline-block',
-    background: '#e8f5e9',
-    color: '#2e7d32',
-    borderRadius: '20px',
-    padding: '6px 16px',
-    fontSize: '13px',
-    fontWeight: '600',
-    marginBottom: '16px',
-  },
-  bigIcon: { fontSize: '64px', marginBottom: '12px' },
-  title: {
-    fontSize: '24px',
-    fontWeight: '700',
-    color: '#1a1a2e',
-    margin: '0 0 10px',
-  },
-  subtitle: {
-    fontSize: '14px',
-    color: '#666',
-    lineHeight: '1.6',
-    margin: '0 0 24px',
-  },
-  infoBox: {
-    background: '#f8fafb',
-    borderRadius: '12px',
-    padding: '16px',
-    margin: '0 0 20px',
-    textAlign: 'left',
-  },
-  infoRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '8px 0',
-    borderBottom: '1px solid #eee',
-  },
-  infoLabel: { color: '#888', fontSize: '13px' },
-  infoValue: { color: '#1a1a2e', fontWeight: '600', fontSize: '14px' },
-  expiredBanner: {
-    background: '#fff3e0',
-    color: '#e65100',
-    borderRadius: '8px',
-    padding: '12px',
-    fontSize: '13px',
-    margin: '0 0 16px',
-    border: '1px solid #ffcc02',
-  },
-  pollingBanner: {
-    background: '#e3f2fd',
-    color: '#1565c0',
-    borderRadius: '8px',
-    padding: '12px',
-    fontSize: '13px',
-    margin: '0 0 16px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    justifyContent: 'center',
-  },
-  failedBanner: {
-    background: '#ffebee',
-    color: '#c62828',
-    borderRadius: '8px',
-    padding: '12px',
-    fontSize: '13px',
-    margin: '0 0 16px',
-  },
-  payBtn: {
-    background: 'linear-gradient(135deg, #e65100, #ff8f00)',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '10px',
-    padding: '16px 24px',
-    fontSize: '16px',
-    fontWeight: '700',
-    cursor: 'pointer',
-    width: '100%',
-    marginBottom: '12px',
-    transition: 'transform 0.15s',
-    boxShadow: '0 4px 20px rgba(230,81,0,0.3)',
-  },
-  skipBtn: {
-    background: 'transparent',
-    color: '#888',
-    border: 'none',
-    fontSize: '13px',
-    cursor: 'pointer',
-    textDecoration: 'underline',
-    padding: '4px',
-    marginBottom: '20px',
-  },
-  primaryBtn: {
-    background: 'linear-gradient(135deg, #1a1a2e, #16213e)',
-    color: '#e2b96f',
-    border: 'none',
-    borderRadius: '10px',
-    padding: '14px 24px',
-    fontSize: '15px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    width: '100%',
-    marginTop: '8px',
-  },
-  noteBox: {
-    background: '#f5f5f5',
-    borderRadius: '8px',
-    padding: '12px',
-  },
-  smallSpinner: {
-    width: '16px',
-    height: '16px',
-    border: '2px solid #ccc',
-    borderTop: '2px solid #1565c0',
-    borderRadius: '50%',
-    animation: 'spin 0.8s linear infinite',
-    flexShrink: 0,
-  },
-};
