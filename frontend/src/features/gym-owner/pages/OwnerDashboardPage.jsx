@@ -23,9 +23,13 @@ function OwnerDashboardPage() {
     const fetchData = async () => {
       try {
         setLoading(true)
+        const currentYear = new Date().getFullYear()
+        const fromDate = `${currentYear}-01-01T00:00:00Z`
+        const toDate = `${currentYear}-12-31T23:59:59Z`
+
         const [overview, revenue] = await Promise.all([
           getOverview(),
-          getRevenueReport({ month: new Date().getMonth() + 1, year: new Date().getFullYear() })
+          getRevenueReport({ fromDate, toDate })
         ])
         setOverviewData(overview)
         setRevenueData(revenue)
@@ -101,7 +105,7 @@ function OwnerDashboardPage() {
               <RevenueChart revenueData={revenueData} />
             </div>
             <div className="col-md-6">
-              <MemberDistribution />
+              <MemberDistribution revenueData={revenueData} />
             </div>
           </div>
 

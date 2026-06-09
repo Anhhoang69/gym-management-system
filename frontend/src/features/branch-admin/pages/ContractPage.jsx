@@ -3,13 +3,7 @@ import ContractsTable from "../../super-admin/components/contract/ContractsTable
 import DraftContractsTable from "../../super-admin/components/contract/DraftContractsTable"
 import InvoicesTable from "../../super-admin/components/contract/InvoicesTable"
 import CreateContractModal from "../../super-admin/components/contract/CreateContractModal"
-
-import {
-  cilFile,
-  cilCheckCircle,
-  cilClock,
-  cilWarning
-} from "@coreui/icons"
+import SalesTable from "../../super-admin/components/revenue-sales/SalesTable"
 
 import { useState } from "react"
 import UnifiedPaymentDrawer from "../../super-admin/components/common/UnifiedPaymentDrawer"
@@ -66,12 +60,20 @@ function ContractsPage() {
         >
           Hóa đơn
         </button>
+        <button
+          className={`btn btn-link text-decoration-none px-0 pb-2 border-bottom border-2 rounded-0 ${activeTab === 'sales' ? 'border-primary fw-bold text-primary' : 'border-transparent text-muted'}`}
+          onClick={() => setActiveTab('sales')}
+        >
+          Lịch sử giao dịch
+        </button>
       </div>
 
       {/* Filters */}
-      <div className="mb-3">
-        <ContractFilters />
-      </div>
+      {activeTab !== 'sales' && (
+        <div className="mb-3">
+          <ContractFilters />
+        </div>
+      )}
 
       {/* Table */}
       <div>
@@ -114,6 +116,14 @@ function ContractsPage() {
               setShowPayment(true);
             }}
             fixedBranchId={myBranchId}
+          />
+        )}
+
+        {activeTab === 'sales' && (
+          <SalesTable
+            key={`sales-${refreshKey}`}
+            fixedBranchId={myBranchId}
+            hideBranchFilter={true}
           />
         )}
       </div>

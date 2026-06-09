@@ -11,6 +11,7 @@ import { getContracts } from "../../services/contractService"
 import { createInvoice } from "../../services/invoiceService"
 import moment from "moment"
 import { Banknote, FilePlus, Loader2 } from "lucide-react"
+import Pagination from "../../../../shared/components/Pagination"
 
 function ContractsTable({ onPayClick, onRefresh, fixedBranchId = "" }) {
   const [contracts, setContracts] = useState([])
@@ -172,29 +173,11 @@ function ContractsTable({ onPayClick, onRefresh, fixedBranchId = "" }) {
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="d-flex justify-content-end mt-3">
-                <CPagination>
-                  <CPaginationItem
-                    disabled={page === 1}
-                    onClick={() => setPage(page - 1)}
-                  >
-                    ‹
-                  </CPaginationItem>
-                  {[...Array(totalPages)].map((_, idx) => (
-                    <CPaginationItem
-                      key={idx}
-                      active={page === idx + 1}
-                      onClick={() => setPage(idx + 1)}
-                    >
-                      {idx + 1}
-                    </CPaginationItem>
-                  ))}
-                  <CPaginationItem
-                    disabled={page === totalPages}
-                    onClick={() => setPage(page + 1)}
-                  >
-                    ›
-                  </CPaginationItem>
-                </CPagination>
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onChange={setPage}
+                />
               </div>
             )}
           </>

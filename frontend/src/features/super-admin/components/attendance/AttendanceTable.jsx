@@ -6,6 +6,7 @@ import {
   CSpinner
 } from "@coreui/react"
 import { useMemo } from "react";
+import Pagination from "../../../../shared/components/Pagination"
 
 function AttendanceTable({ data = [], loading = false, currentPage = 1, onPageChange, itemsPerPage = 10 }) {
 
@@ -112,31 +113,11 @@ function AttendanceTable({ data = [], loading = false, currentPage = 1, onPageCh
                 <small className="text-muted">
                   Hiển thị {(currentPage - 1) * itemsPerPage + 1} đến {Math.min(currentPage * itemsPerPage, data.length)} trong tổng số {data.length}
                 </small>
-                <CPagination className="mb-0">
-                  <CPaginationItem 
-                    disabled={currentPage === 1}
-                    onClick={() => onPageChange(currentPage - 1)}
-                  >
-                    ‹
-                  </CPaginationItem>
-                  
-                  {[...Array(totalPages)].map((_, i) => (
-                    <CPaginationItem 
-                      key={i + 1} 
-                      active={currentPage === i + 1}
-                      onClick={() => onPageChange(i + 1)}
-                    >
-                      {i + 1}
-                    </CPaginationItem>
-                  ))}
-
-                  <CPaginationItem 
-                    disabled={currentPage === totalPages}
-                    onClick={() => onPageChange(currentPage + 1)}
-                  >
-                    ›
-                  </CPaginationItem>
-                </CPagination>
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onChange={onPageChange}
+                />
               </div>
             )}
           </>
