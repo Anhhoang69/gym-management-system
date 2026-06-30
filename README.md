@@ -15,6 +15,7 @@
 
 **[🌐 Live Demo](https://energym-gamma.vercel.app/)** &nbsp;|&nbsp;
 **[📖 API Docs (Swagger)](https://gym-management-system-production-69.up.railway.app/swagger)**
+**[📄 Final Report](https://drive.google.com/file/d/1JneRAlu5fok5RY0OkbrggGkybgO8S8z0/view?usp=sharing)**
 
 </div>
 
