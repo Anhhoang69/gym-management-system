@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EnerGym — Product Writeup</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.6; max-width: 800px; margin: 40px auto; color: #222; }
+  h1 { font-size: 22pt; font-weight: bold; margin-bottom: 4px; }
+  h2 { font-size: 14pt; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-top: 32px; }
+  h3 { font-size: 12pt; font-weight: bold; margin-top: 20px; margin-bottom: 4px; }
+  p { margin: 8px 0; }
+  a { color: #1155CC; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th { background: #f3f3f3; font-weight: bold; text-align: left; padding: 8px 12px; border: 1px solid #ccc; }
+  td { padding: 8px 12px; border: 1px solid #ccc; }
+  .section { margin-bottom: 24px; }
+  ul { margin: 8px 0; padding-left: 24px; }
+  li { margin: 4px 0; }
+</style>
+</head>
+<body>
+
+<h1>EnerGym — Product Writeup</h1>
+<p>
+  <a href="https://energym-gamma.vercel.app/">🌐 Live App</a> &nbsp;|&nbsp;
+  <a href="https://gym-management-system-production-69.up.railway.app/swagger">📖 API Docs (Swagger)</a> &nbsp;|&nbsp;
+  <a href="https://github.com/Anhhoang69/gym-management-system">💻 GitHub</a>
+</p>
+
+<hr>
+
+<!-- ─── SECTION 1: PRODUCT OVERVIEW ─── -->
+<div class="section">
+<h2>1. EnerGym — Product Overview</h2>
+
+<h3>Demo Accounts (password: <code>123456Aa@</code>)</h3>
+<table>
+  <tr><th>Role</th><th>Email</th><th>Access Scope</th></tr>
+  <tr><td>Super Admin</td><td>superadmin@gymfit.vn</td><td>Full system control — all branches</td></tr>
+  <tr><td>Gym Owner</td><td>gymowner@gymfit.vn</td><td>Reports, payroll approval, internal requests</td></tr>
+  <tr><td>Branch Admin</td><td>branchadmin.q1@gymfit.vn</td><td>Branch Q1 — full operation control</td></tr>
+  <tr><td>PT</td><td>pt.nguyen@gymfit.vn</td><td>Teaching schedule, personal commission, payroll</td></tr>
+  <tr><td>Staff (Sales)</td><td>sales.q1@gymfit.vn</td><td>CRM leads, member contracts, payments</td></tr>
+  <tr><td>Receptionist</td><td>receptionist.q1@gymfit.vn</td><td>Walk-in registration, check-ins, booking lookup</td></tr>
+  <tr><td>Member</td><td>nguyen.van.an@gmail.com</td><td>Class booking, membership portal, AI chat</td></tr>
+</table>
+
+<h3>Tech Stack (quick reference)</h3>
+<table>
+  <tr><th>Layer</th><th>Technology</th></tr>
+  <tr><td>Backend</td><td>ASP.NET Core 9 · EF Core 9 · PostgreSQL · ASP.NET Identity · JWT</td></tr>
+  <tr><td>AI Integration</td><td>Microsoft Semantic Kernel 1.30 · OpenAI GPT-4o-mini · Ollama (local swap)</td></tr>
+  <tr><td>Frontend</td><td>React 19 · Vite 7 · React Router v7 · CoreUI React 5 · Chart.js</td></tr>
+  <tr><td>Payments</td><td>VNPay (HMAC-SHA512 with custom signing & Webhook) · VietQR (MB Bank)</td></tr>
+  <tr><td>Infrastructure</td><td>Railway (Docker-based) · Vercel · Supabase (Postgres) · Cloudinary (media)</td></tr>
+  <tr><td>Notifications</td><td>Brevo SMTP · HTML templates for OTP, invoice, contract activation</td></tr>
+</table>
+
+<h3>Scale</h3>
+<ul>
+  <li>~120+ REST API endpoints across 26 controllers</li>
+  <li>49 database tables (39 domain tables + 10 ASP.NET Identity tables)</li>
+  <li>20+ AI tools with role-based access control (RBAC)</li>
+  <li>7 user roles (7 distinct role-scoped portal scopes in one codebase)</li>
+  <li>2-person team · 4-month build</li>
+</ul>
+</div>
+
+<!-- ─── SECTION 2: WHAT THE APP DOES ─── -->
+<div class="section">
+<h2>2. What EnerGym Does</h2>
+
+<p>EnerGym is a <strong>multi-branch gym management SaaS</strong> — the operating system for a gym chain. It replaces the tangle of Excel, WhatsApp, and paper that most mid-size gym operators in Vietnam still run on.</p>
+
+<p>The platform covers the full operator workflow in one place:</p>
+<ul>
+  <li><strong>Booking engine</strong> — members book classes on a live calendar; staff see rosters and capacity in real time</li>
+  <li><strong>Contract &amp; payment flow</strong> — staff draft contracts, apply promotions, activate with one click; invoices and payment links (VNPay, VietQR) are generated automatically</li>
+  <li><strong>Lead CRM</strong> — sales pipeline from first contact to signed contract, with CSV import and staff assignment</li>
+  <li><strong>Payroll &amp; commission</strong> — automated salary calculation per formula, PT commission tied directly to activated contracts</li>
+  <li><strong>Revenue dashboard</strong> — real-time revenue, conversion rate, check-in traffic, and PT performance across branches</li>
+  <li><strong>AI revenue assistant</strong> — operators and staff query their own data in plain Vietnamese: "Who are my top leads this week?" or "What's branch Q1's revenue this month?" The AI answers using live data, scoped to what that role is allowed to see</li>
+</ul>
+
+<p>Seven roles access the system — Super Admin, Gym Owner, Branch Admin, Staff (Sales), Personal Trainer, Receptionist, and Member — each with a tailored portal and permission scope.</p>
+</div>
+
+<!-- ─── SECTION 3: WHY I BUILT IT ─── -->
+<div class="section">
+<h2>3. Why I Built It / The Story Behind EnerGym</h2>
+
+<p>I chose this project because it allowed me to build more than just software features. It required me to understand business workflows, make architectural decisions, balance development priorities, and integrate AI into a practical product. My goal was not only to complete a graduation project, but also to gain experience building software that solves real operational needs.</p>
+
+<p>The context: mid-size gym chains in Vietnam typically manage memberships in Excel, share contract drafts over Zalo, and calculate staff commissions manually at month end. Revenue data is siloed across branches. A manager overseeing four locations can't answer "what's our total revenue this week?" in under five minutes.</p>
+
+<p>We designed EnerGym to change that — one platform covering the full operator workflow, from the first sales lead to the last payroll record, with an AI assistant that answers operational questions in plain Vietnamese without requiring SQL or spreadsheets.</p>
+</div>
+
+<!-- ─── SECTION 4: HOW IT HELPS ─── -->
+<div class="section">
+<h2>4. How It Helps</h2>
+
+<p><strong>For operators (Branch Admin / Gym Owner / Super Admin):</strong></p>
+<ul>
+  <li>Revenue and KPIs visible in one dashboard — no spreadsheet reconciliation at month end</li>
+  <li>Contract activation triggers invoice generation and commission record automatically — staff can't forget a step</li>
+  <li>The AI assistant answers operational questions in seconds that previously required pulling someone off the floor to check a spreadsheet</li>
+</ul>
+
+<p><strong>For sales staff:</strong></p>
+<ul>
+  <li>Full CRM pipeline — track every lead from cold to signed without switching tools</li>
+  <li>Draft a contract, apply promotions, and send a VNPay payment link in under two minutes</li>
+  <li>Commission is calculated and visible automatically — no disputes at month end</li>
+</ul>
+
+<p><strong>For receptionists:</strong></p>
+<ul>
+  <li>Quick registration for walk-in members (profile setup, package selection, and instant invoicing)</li>
+  <li>Lookup class bookings, check-in history, and member attendance status on front-desk queries</li>
+</ul>
+
+<p><strong>For PTs:</strong></p>
+<ul>
+  <li>Teaching schedule, member rosters, and payroll in one place</li>
+  <li>Commission from member contracts is tracked per contract, not per month-end approximation</li>
+</ul>
+
+<p><strong>For members:</strong></p>
+<ul>
+  <li>Book classes, view their membership, track attendance, and chat with an AI fitness coach — all without calling the front desk</li>
+</ul>
+</div>
+
+<!-- ─── SECTION 5: MY DECISIONS & TRADEOFFS ─── -->
+<div class="section">
+<h2>5. Decisions That Were Mine to Make — and the Tradeoffs</h2>
+
+<h3>① Build the VNPay integration from scratch, not around a wrapper</h3>
+<p>There's no official VNPay SDK that I'd trust in production. I read the spec and implemented the full flow myself: HMAC-SHA512 signing with params sorted by ASCII key order, IPN webhook verification, idempotency logic to replace stale pending payments instead of creating duplicates, and the exact URI-encoding format VNPay requires (a mismatch here silently corrupts the signature).</p>
+<p><strong>Tradeoff:</strong> It was slower upfront. But I owned the entire payment layer — no black-box library that breaks on a VNPay API version bump and takes a maintainer's PR cycle to fix. For a revenue-critical path, that control was worth it.</p>
+
+<h3>② Microsoft Semantic Kernel over raw OpenAI API calls</h3>
+<p>I could have hit the OpenAI endpoint directly and parsed the JSON. Instead I used Microsoft Semantic Kernel, which gave me a proper tool-calling abstraction and a one-config swap between OpenAI and Ollama (a local LLM). The AI module ended up with 20+ tools, a function invocation filter for audit logging, and an RBAC layer that resolves which tools each user role can call at runtime.</p>
+<p><strong>Tradeoff:</strong> Heavier dependency and a steeper learning curve. SK 1.30 had breaking changes from earlier versions and sparse documentation for some patterns. But the abstraction paid off — swapping the LLM provider is now a config change, not a code rewrite. For operators who can't send employee data to US servers, that matters.</p>
+
+<h3>③ Role-scoped AI tools instead of one generic assistant</h3>
+<p>The easier path was one chatbot that could answer anything. I built 20+ tools grouped by domain (Revenue, Payroll, Leads, Booking, Attendance, Contract…) and filtered them per role at runtime via an <code>AIToolRegistry</code>. A branch manager asking "today's revenue?" gets branch-scoped numbers. The chain owner gets system-wide. A PT asking the same question gets their personal earnings. The LLM picks the right tool — my job was designing the permission layer and the context resolution that resolves userId → role → branchId before any tool runs.</p>
+<p><strong>Tradeoff:</strong> Far more engineering than a generic chatbot. But a generic assistant that shows a branch manager another branch's revenue is a product liability, not a feature. Trust in the data is the product.</p>
+
+<h3>④ Monolith with clean layered architecture over microservices</h3>
+<p>Two developers. Four months. A thesis deadline. Microservices would have added network contracts, service discovery, and distributed debugging overhead before we'd shipped a single feature. I chose a layered monolith — Controllers → Interfaces → Services → EF Core — with clear boundaries that don't bleed. Each service owns its domain; none import each other directly.</p>
+<p><strong>Tradeoff:</strong> Harder to scale individual components independently. But premature extraction is a known failure mode for small teams. The architecture is designed to be extracted later — domain boundaries are already drawn.</p>
+
+<h3>⑤ Code-First database design over DB-First</h3>
+<p>I designed the 49-table schema entirely in C# models and let EF Core generate migrations. This kept the schema version-controlled alongside the code, made rollbacks predictable, and enforced domain modeling discipline — every relationship is explicit in code before it exists in the database.</p>
+<p><strong>Tradeoff:</strong> EF Core migrations accumulate technical debt (36 migrations over the project lifespan), and complex queries sometimes need raw SQL to avoid N+1 issues. The payoff was a schema that evolved safely with the product without manual ALTER TABLE scripts.</p>
+</div>
+
+<hr>
+<p style="color:#888; font-size:9pt;">EnerGym · Final-year thesis project · 2026</p>
+
+</body>
+</html>
