@@ -119,16 +119,17 @@ DECLARE
   -- Staff configuration: (StaffId, Position, BaseSalary, BranchAdmin indicator)
   staff_config record;
 
-  -- Month config: (month, year, formula_id, status, period_days_ago_start, period_days_ago_end)
+  -- Month config: (month, year, formula_idx, calc_days, days_ago_end)
+  -- Month and Year will be dynamically calculated relative to NOW() in the execution loop
   months_cfg int[][] := ARRAY[
-    [11, 2025, 1, 210, 181],  -- T11/2025 Paid
-    [12, 2025, 1, 180, 151],  -- T12/2025 Paid
-    [1,  2026, 2, 150, 121],  -- T1/2026 Paid
-    [2,  2026, 2, 120, 91],   -- T2/2026 Paid
-    [3,  2026, 2, 90, 61],    -- T3/2026 Paid
-    [4,  2026, 2, 60, 31],    -- T4/2026 Paid
-    [5,  2026, 3, 30, 9],     -- T5/2026 Approved
-    [6,  2026, 3, 8, 1]       -- T6/2026 Draft (partial)
+    [0, 0, 1, 210, 181],
+    [0, 0, 1, 180, 151],
+    [0, 0, 2, 150, 121],
+    [0, 0, 2, 120, 91],
+    [0, 0, 2, 90, 61],
+    [0, 0, 2, 60, 31],
+    [0, 0, 3, 30, 9],
+    [0, 0, 3, 8, 1]
   ];
 
   formula_ids uuid[] := ARRAY[
@@ -221,8 +222,8 @@ DECLARE
 
 BEGIN
   FOR m_idx IN 1..8 LOOP
-    period_month := months_cfg[m_idx][1];
-    period_year  := months_cfg[m_idx][2];
+    period_month := EXTRACT(MONTH FROM (NOW() - ((8 - m_idx) || ' month')::interval));
+    period_year  := EXTRACT(YEAR FROM (NOW() - ((8 - m_idx) || ' month')::interval));
     formula_idx  := months_cfg[m_idx][3];
     formula_id   := formula_ids[formula_idx];
     calc_days    := months_cfg[m_idx][4] - 5;  -- calculated ~5 days after period end
